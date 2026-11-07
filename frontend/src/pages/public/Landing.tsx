@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { BarChart3, ClipboardCheck, Smartphone } from 'lucide-react'
 import { useApp } from '../../store/AppContext'
-import { LogoSlot } from '../../components/ui'
+import { Logo } from '../../components/ui'
 
 /** Selector de rol de la demo (no hi ha autenticació real). */
 export default function Landing() {
@@ -10,8 +10,7 @@ export default function Landing() {
   return (
     <div className="min-h-full flex flex-col items-center justify-center px-4 py-10 gap-8">
       <div className="flex flex-col items-center gap-4 text-center">
-        <LogoSlot />
-        <h1 className="serif text-[44px] sm:text-[56px] leading-none">Damm Pulse</h1>
+        <h1><Logo size="lg" /></h1>
         <p className="text-lg text-ink-muted max-w-xl">El clima laboral de Damm, de forma àgil, contínua i anònima. Prototip amb dades sintètiques.</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-3 w-full max-w-4xl">

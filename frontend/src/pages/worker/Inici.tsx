@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Check, ChevronRight, Gift } from 'lucide-react'
 import { HAIRS, SHIRTS, SKINS, ZONES } from '../../data/mock'
 import { useApp } from '../../store/AppContext'
-import { FestaCard, LogoSlot, PathIcon } from '../../components/ui'
+import { FestaCard, Logo, PathIcon } from '../../components/ui'
 import { AvatarModal } from '../../components/Panels'
 import { WEATHER } from '../../data/mock'
 
@@ -15,7 +15,7 @@ export default function WorkerInici() {
   return (
     <div className="max-w-[560px] mx-auto px-4 pt-4 pb-6 flex flex-col gap-3.5">
       <header className="flex justify-between items-center">
-        <div className="flex items-center gap-2.5"><LogoSlot size="sm" /><span className="serif text-[19px]">Damm Pulse</span></div>
+        <Logo size="sm" />
         <button onClick={() => setAv(true)} aria-label="El teu personatge" className="w-11 h-11 rounded-[14px] border border-line bg-paper grid place-items-center">
           <svg width="30" height="30" viewBox="0 0 40 40" aria-hidden><circle cx="20" cy="15" r="9" fill={SKINS[avatar.skin]} /><path d="M11 13a9 9 0 0 1 18 0c-3-3-6-4-9-4s-6 1-9 4z" fill={HAIRS[avatar.hair]} /><circle cx="17" cy="15.5" r="1.2" fill="#1F1A18" /><circle cx="23" cy="15.5" r="1.2" fill="#1F1A18" /><path d="M8 38c1-8 6-12 12-12s11 4 12 12z" fill={SHIRTS[avatar.shirt]} /></svg>
         </button>

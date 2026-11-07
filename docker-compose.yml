@@ -1,4 +1,4 @@
-# n8n local para Damm Pulse IA — http://localhost:5678
+# n8n local para People Damm — http://localhost:5678
 # Frontend (build estático servido con nginx) — http://localhost:8080
 # Las variables ${...} se leen del archivo .env de esta carpeta (ver .env.example).
 # Solo se pasan al contenedor las variables que usan los workflows: con

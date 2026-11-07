@@ -1,4 +1,4 @@
-# 🍺 Damm Pulse IA — Plataforma de Escucha Activa, Continua e Inteligente
+# 🍺 People Damm — Plataforma de Escucha Activa, Continua e Inteligente
 
 > **UAB THE HACK! 2026 · Reto Estrella Damm**  
 > *«¿Cómo podemos medir el clima laboral de manera ágil, continua e inteligente con IA? Escoltar millor, actuar abans.»*
@@ -12,7 +12,7 @@ En una organización tan diversa como **Damm** —con personas trabajando en **f
 2. **Talla única (*one-size-fits-all*):** Una misma encuesta larga no refleja las realidades tan distintas de un operario de turno de noche, un comercial o un manager.
 3. **Mucho texto, análisis tardío:** Cientos de comentarios abiertos se revisan a mano; cuando se detecta el problema, la oportunidad de actuar ya ha pasado.
 
-**Damm Pulse IA** transforma la medición del clima laboral en un **ciclo continuo, ético y asistido por IA de principio a fin**, conectando una **Web Base para People/RRHH** con flujos automatizados de **IA y análisis de datos en n8n**, publicación directa en **Typeform** (con experiencia móvil/QR para planta) e integración con **Microsoft 365 (Teams)**.
+**People Damm** transforma la medición del clima laboral en un **ciclo continuo, ético y asistido por IA de principio a fin**, conectando una **Web Base para People/RRHH** con flujos automatizados de **IA y análisis de datos en n8n**, publicación directa en **Typeform** (con experiencia móvil/QR para planta) e integración con **Microsoft 365 (Teams)**.
 
 ---
 

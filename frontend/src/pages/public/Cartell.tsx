@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { useApp } from '../../store/AppContext'
-import { LogoSlot } from '../../components/ui'
+import { Logo } from '../../components/ui'
 import { surveyUrl } from '../hr/Detall'
 
 /** Cartell A4 per penjar a planta. Es pot imprimir des del navegador. */
@@ -20,7 +20,7 @@ export default function Cartell() {
       </div>
       <div className="w-[595px] max-w-full aspect-[595/842] bg-paper shadow-lift flex flex-col">
         <div className="bg-red text-white px-10 pt-9 pb-8 flex flex-col gap-3">
-          <div className="flex justify-between items-center"><LogoSlot light /><span className="text-[13px] font-extrabold tracking-[.14em]">DAMM PULSE</span></div>
+          <div className="flex items-center"><Logo light /></div>
           <h1 className="serif text-[44px] leading-[1.02] mt-1">La teva opinió mou la fàbrica</h1>
           <p className="text-[18px] leading-snug opacity-95">{s.title}: explica-ho en {secs} segons.</p>
         </div>

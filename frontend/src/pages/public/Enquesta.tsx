@@ -59,7 +59,7 @@ export default function Enquesta() {
   return shell(
     <>
       {answered.includes(s.id) && <div className="bg-warn-bg text-warn-ink text-[13px] font-semibold px-5 py-2.5">Ja l’has resposta des d’aquest dispositiu. Pots tornar-la a provar (demo).</div>}
-      <div className="px-5 pt-4 flex items-center justify-between text-[13px] font-semibold text-ink-muted"><span className="truncate">{s.title}</span><span>Damm Pulse</span></div>
+      <div className="px-5 pt-4 flex items-center justify-between text-[13px] font-semibold text-ink-muted"><span className="truncate">{s.title}</span><span>People Damm</span></div>
       <div className="flex-1 min-h-0">
         <SurveyRunner questions={s.questions} onExit={() => nav('/app')} onDone={() => { submitResponse(s.id); setDone(true) }} />
       </div>
