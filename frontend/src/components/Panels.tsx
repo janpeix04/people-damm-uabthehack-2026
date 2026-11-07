@@ -1,20 +1,19 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Check, Mail } from 'lucide-react'
-import { HAIR_STYLES, HAIRS, IDEA_CATEGORIES, PLAZA_TOPICS, SHIRTS, SKINS, MOODS, zoneByKey } from '../data/mock'
+import { HAIR_STYLES, HAIRS, IDEA_CATEGORIES, PLAZA_MILESTONES, PLAZA_TOPICS, SHIRTS, SKINS, MOODS, zoneByKey } from '../data/mock'
 import type { Avatar, ZoneKey } from '../data/types'
 import { useApp } from '../store/AppContext'
 import { cn, fmt, Meter, Modal, PrivacyNote, toneBg, MoodBadge } from './ui'
 
-/** Fites col·lectives de la Festa de la plaça. */
+/** Fites col·lectives de la Festa de la setmana (participació a La Plaça). */
 export function FestaMilestones() {
-  const { festa } = useApp()
-  const miles = [{ at: 25, label: 'Guirnaldes', mark: '✓' }, { at: 40, label: 'Bancs nous', mark: '✓' }, { at: 60, label: 'Concert', mark: '♪' }, { at: 75, label: 'Focs', mark: '★' }]
-  const next = miles.find(m => festa.pct < m.at)
+  const { plazaWeek } = useApp()
+  const next = PLAZA_MILESTONES.find(m => plazaWeek.pct < m.at)
   return (
     <div className="grid grid-cols-4 gap-1.5 mt-3">
-      {miles.map(m => {
-        const done = festa.pct >= m.at, isNext = m === next
+      {PLAZA_MILESTONES.map(m => {
+        const done = plazaWeek.pct >= m.at, isNext = m === next
         return (
           <div key={m.label} className={cn('flex flex-col items-center gap-1 text-center text-[11px] font-semibold', done || isNext ? 'text-ink' : 'text-ink-muted')}>
             <span className={cn('w-[30px] h-[30px] rounded-full grid place-items-center', done ? 'bg-ok text-white' : isNext ? 'bg-gold text-white ring-4 ring-gold/20' : 'bg-[#EFE9E1] text-[#8A7F78]')}>{done ? '✓' : m.mark}</span>
@@ -23,6 +22,63 @@ export function FestaMilestones() {
         )
       })}
     </div>
+  )
+}
+
+/** Festa de la setmana: participació única a La Plaça (es reinicia cada dilluns). */
+export function FestaWeekPanel({ hr, className }: { hr?: boolean; className?: string }) {
+  const { plazaWeek: w } = useApp()
+  const missing = w.next ? (w.next.missing === 1 ? 'Falta 1 persona' : `Falten ${w.next.missing} persones`) : null
+  return (
+    <section aria-label="Festa de la setmana" className={cn('bg-paper/95 border border-line rounded-[18px] shadow-lift px-4 py-3', className)}>
+      <div className="flex justify-between items-baseline gap-2"><h2 className="serif text-[19px] sm:text-[21px]">Festa de la setmana</h2><strong className="text-sm tabular-nums">{Math.floor(w.pct)}%</strong></div>
+      <Meter value={w.pct} goal={w.goal} className="mt-2" />
+      <p className="text-[12px] text-ink-muted mt-1.5">
+        {missing ? <>{missing} per a <strong className="text-ink">{w.next!.label.toLowerCase()}</strong></> : 'Totes les fites aconseguides!'} · es reinicia {w.resetsIn === 1 ? 'demà' : 'dilluns'}
+      </p>
+      <div className="hidden sm:block"><FestaMilestones /></div>
+      <p className="hidden sm:block text-[11px] leading-snug text-ink-muted mt-2.5 pt-2 border-t border-cream-dk">
+        {hr
+          ? <>{w.participants} de {w.headcount} persones han participat a La Plaça aquesta setmana · la setmana passada, {w.lastWeek}%.</>
+          : <>Compta cada persona un cop per setmana: pregunta del dia, +1 o idea. {w.joined && <strong className="text-ok">✓ Ja hi has sumat.</strong>}</>}
+      </p>
+    </section>
+  )
+}
+
+/** Pregunta del dia: un toc per respondre; el resultat agregat només es veu un cop respost (i amb un mínim de respostes). */
+export function DailyQuestion({ hr, className }: { hr?: boolean; className?: string }) {
+  const { plazaWeek: w, answerDaily } = useApp()
+  const q = w.question
+  const showResults = hr || !!w.myAnswer
+  return (
+    <section aria-label="Pregunta del dia" className={cn('flex flex-col gap-2.5', className)}>
+      <div className="flex items-center justify-between gap-2"><span className="eyebrow !text-red">Pregunta del dia</span><span className="text-[11px] text-ink-muted">Anònima · un toc</span></div>
+      <h3 className="serif text-[20px] leading-tight">{q.text}</h3>
+      {!showResults && (
+        <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${q.options.length > 3 ? 2 : q.options.length}, minmax(0, 1fr))` }}>
+          {q.options.map(o => (
+            <button key={o.key} onClick={() => answerDaily(o.key)} className="rounded-[14px] border border-line bg-cream hover:bg-cream-dk transition px-2 py-2.5 flex flex-col items-center gap-1 text-[13px] font-bold">
+              <span className="text-[24px] leading-none" aria-hidden>{o.emoji}</span>{o.label}
+            </button>
+          ))}
+        </div>
+      )}
+      {showResults && (w.results ? (
+        <div className="flex flex-col gap-1.5">
+          {w.results.map(r => (
+            <div key={r.key} className="flex items-center gap-2 text-[13px]">
+              <span className="w-6 text-center" aria-hidden>{r.emoji}</span>
+              <span className="w-[96px] font-semibold truncate">{r.label}{!hr && w.myAnswer === r.key ? ' ✓' : ''}</span>
+              <span className="flex-1 h-2 rounded-full bg-cream-dk overflow-hidden"><span className="block h-full rounded-full bg-red" style={{ width: `${r.pct}%` }} /></span>
+              <span className="w-9 text-right tabular-nums text-ink-muted">{Math.round(r.pct)}%</span>
+            </div>
+          ))}
+          <p className="text-[11px] text-ink-muted">{w.todayTotal} respostes avui · només resultats agregats</p>
+        </div>
+      ) : <p className="text-[13px] text-ink-muted bg-cream rounded-[12px] p-3">Encara no hi ha prou respostes per mostrar el resultat (mínim 10).</p>)}
+      {!hr && w.myAnswer && <p className="text-[12px] font-semibold text-ok">Gràcies! Demà hi haurà una pregunta nova.</p>}
+    </section>
   )
 }
 

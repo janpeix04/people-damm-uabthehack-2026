@@ -5,7 +5,7 @@ import { useApp } from '../../store/AppContext'
 import { FestaCard, fmt, Meter, PathIcon, MoodBadge } from '../../components/ui'
 
 export default function HRInici() {
-  const { surveys, festa } = useApp()
+  const { hrSurveys: surveys, festa } = useApp()
   const open = surveys.filter(s => s.status === 'open')
   const kpis = [
     { label: 'Clima general', value: '6,5', note: '▼ 0,2 respecte a octubre', noteCls: 'text-[#B4261E]', w: 'uneasy' as const },

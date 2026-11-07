@@ -62,6 +62,20 @@ services:
       n8n:
         condition: service_healthy
 
+  hr-api:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-damm_pulse}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   frontend:
     build: ./frontend
     image: damm-frontend
@@ -70,6 +84,7 @@ services:
     # nginx fa de proxy de /webhook/* cap a n8n
     depends_on:
       - n8n
+      - hr-api
     ports:
       # Mismo criterio que n8n: solo localhost salvo N8N_BIND=0.0.0.0
       - "${N8N_BIND:-127.0.0.1}:${FRONTEND_PORT:-8080}:80"
@@ -91,6 +106,7 @@ services:
       - ./supabase/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
       - ./supabase/tests/database/001_privacy_invariants.sql:/docker-entrypoint-initdb.d/03-verify-invariants.sql:ro
       - ./supabase/migrations/20261108090000_worker_app_wallet_rewards.sql:/docker-entrypoint-initdb.d/04-worker-app.sql:ro
+      - ./supabase/migrations/20261108100000_plaza_preferences_reward_operations.sql:/docker-entrypoint-initdb.d/05-plaza-preferences-rewards.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-damm_pulse}"]
       interval: 10s

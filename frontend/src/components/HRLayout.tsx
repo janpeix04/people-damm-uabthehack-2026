@@ -18,7 +18,7 @@ export default function HRLayout() {
   // barra lateral plegable a l'ordinador (es recorda entre visites)
   const [mini, setMini] = useState(() => { try { return localStorage.getItem('damm-hr-sidebar') === 'mini' } catch { return false } })
   useEffect(() => { try { localStorage.setItem('damm-hr-sidebar', mini ? 'mini' : 'full') } catch { /* sense emmagatzematge */ } }, [mini])
-  const { surveys } = useApp()
+  const { hrSurveys: surveys } = useApp()
   const loc = useLocation()
   const active = surveys.filter(s => s.status === 'open').length
 

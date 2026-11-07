@@ -8,8 +8,10 @@ import { POINTS_PER_SURVEY } from '../../store/AppContext'
 /** Cartell A4 per penjar a planta. Es pot imprimir des del navegador. */
 export default function Cartell() {
   const { id } = useParams()
-  const { surveys } = useApp()
+  const { hrSurveys: surveys, hrLoading, hrError } = useApp()
   const s = surveys.find(x => x.id === id)
+  if (hrLoading) return <p role="status">Carregant enquesta?</p>
+  if (hrError) return <p role="alert">{hrError}</p>
   if (!s) return <div className="p-8">No trobem aquesta enquesta. <Link to="/rrhh/enquestes" className="font-bold text-red-dk">Tornar</Link></div>
   const url = surveyUrl(s.id)
   const secs = Math.max(30, s.questions.reduce((a, q) => a + q.secs, 0))
