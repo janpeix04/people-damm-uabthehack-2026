@@ -25,10 +25,30 @@ const DEFAULTS: Persisted = {
   redeemed: [],
 }
 
+function sanitizeSurvey(s: Survey): Survey {
+  return {
+    ...s,
+    channels: (s.channels || []).map(c => {
+      const str = c as string
+      if (str === 'whatsapp' || str === 'telegram' || str === 'tablet') {
+        return 'teams'
+      }
+      return c
+    }),
+  }
+}
+
 function load(): Persisted {
   try {
     const raw = localStorage.getItem(KEY)
-    if (raw) return { ...DEFAULTS, ...JSON.parse(raw) }
+    if (raw) {
+      const data = JSON.parse(raw)
+      return {
+        ...DEFAULTS,
+        ...data,
+        surveys: Array.isArray(data.surveys) ? data.surveys.map(sanitizeSurvey) : DEFAULTS.surveys,
+      }
+    }
   } catch { /* emmagatzematge no disponible */ }
   return DEFAULTS
 }

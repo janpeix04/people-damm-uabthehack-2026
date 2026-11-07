@@ -66,6 +66,9 @@ services:
     image: damm-frontend
     container_name: damm-frontend
     restart: unless-stopped
+    # nginx fa de proxy de /webhook/* cap a n8n
+    depends_on:
+      - n8n
     ports:
       # Mismo criterio que n8n: solo localhost salvo N8N_BIND=0.0.0.0
       - "${N8N_BIND:-127.0.0.1}:${FRONTEND_PORT:-8080}:80"

@@ -19,15 +19,12 @@ const codePrepareContextWf01 = `
 const item = $input.first().json;
 const body = item.body || item;
 
-const objetivo = String(body.objetivo || "Conocer la adaptación del equipo a los nuevos turnos y descansos").trim();
+const objetivo = String(body.objetivo || "Conocer la adaptación del equipo y descansos").trim();
 const colectiuRaw = String(body.colectiu || "Planta").trim();
 const centreTipus = String(body.centre_tipus || "Fàbrica").trim();
 const duradaMax = Number(body.durada_max || 90);
 const restriccions = String(body.restriccions || "No señalar a personas individuales ni evaluar desempeño personal").trim();
-const idioma = String(body.idioma || "Català").trim();
-
-const validColectius = ["Planta", "Logística", "Comercial", "Oficina", "Manager"];
-const colectiu = validColectius.find(c => c.toLowerCase() === colectiuRaw.toLowerCase()) || "Planta";
+const idioma = String(body.idioma || "Castellano").trim();
 
 const collectiveRules = {
   Planta: { max_preguntes: 4, escala_tipus: "1-5", canal_preferit: "Mòbil-QR", to: "Directe, clar, operatiu, sense argot corporatiu complex.", temps_recomanat_segons: 75 },
@@ -37,24 +34,31 @@ const collectiveRules = {
   Manager: { max_preguntes: 5, escala_tipus: "1-5", canal_preferit: "Teams / Correu", to: "Estratègic, lideratge d'equips, recursos i suport.", temps_recomanat_segons: 110 }
 };
 
-const perfil = collectiveRules[colectiu];
+const primaryKey = Object.keys(collectiveRules).find(k => colectiuRaw.toLowerCase().includes(k.toLowerCase())) || "Planta";
+const perfil = collectiveRules[primaryKey];
 
-const systemPrompt = \`Ets l'assistent expert en People Analytics i Clima Laboral de Damm per al projecte 'Escoltar millor, actuar abans'.
-Dissenya una microconsulta breu, neutral (sense preguntes inductives o leading questions) i adaptada al col·lectiu '\${colectiu}'.
-Retorna EXCLUSIVAMENT un objecte JSON vàlid sense markdown ni text addicional amb format:
-{"titulo": string, "introduccion_transparencia": string, "colectivo": string, "preguntas": [{"id": string, "enunciado": string, "tipo": "escala_1_5" | "text_obert", "obligatoria": boolean}]}\`;
+const systemPrompt = \`You are the expert People Analytics and Employee Feedback AI assistant for Damm brewery.
+Your mission is to design a concise, neutral (strictly without leading or biased questions) micro-survey for employees in '\${colectiuRaw}'.
+CRITICAL REQUIREMENT: You MUST generate ALL titles, introduction, and question texts strictly in the language '\${idioma}'.
+- If idioma is 'Castellano': write completely in Spanish (Castellano).
+- If idioma is 'Català': write completely in Catalan.
+- If idioma is 'English': write completely in English.
+Do NOT mix languages.
+Return EXCLUSIVELY a single valid JSON object without markdown fences, formatted as:
+{"titulo": string, "introduccion_transparencia": string, "colectivo": string, "idioma": string, "preguntas": [{"id": string, "enunciado": string, "tipo": "escala_1_5" | "text_obert", "obligatoria": boolean}]}\`;
 
-const userPrompt = \`Dissenya una microconsulta en idioma '\${idioma}' per al col·lectiu '\${colectiu}' (centre: \${centreTipus}).
+const userPrompt = \`Dissenya una microconsulta en idioma '\${idioma}' per al col·lectiu o departaments '\${colectiuRaw}' (centre: \${centreTipus}).
 Objectiu de RRHH: "\${objetivo}"
-Restriccions: "\${restriccions}"
-Durada màxima: \${duradaMax} segons.
-Regles: Màxim \${perfil.max_preguntes} preguntes, to \${perfil.to}, escala 1-5.\`;
+Restriccions addicionals: "\${restriccions}"
+Durada màxima estimada: \${duradaMax} segons.
+IMPORTANT: Tot el contingut generat (títol, introducció i preguntes) ha d'estar estrictament en idioma '\${idioma}'.
+Regles: Proposa entre 3 i 5 preguntes curtes i clares, principalment escala 1-5 i una de text lliure opcional.\`;
 
 return [
   {
     json: {
       objetivo,
-      colectiu,
+      colectiu: colectiuRaw,
       centre_tipus: centreTipus,
       durada_max: duradaMax,
       restriccions,
@@ -76,31 +80,74 @@ let survey = item.survey;
 // Si proviene de la respuesta OpenAI/ornith
 if (!survey && item.choices && Array.isArray(item.choices)) {
   try {
-    const rawText = item.choices[0]?.message?.content || "{}";
-    const cleaned = rawText.replace(/\`\`\`json/gi, "").replace(/\`\`\`/g, "").trim();
-    survey = JSON.parse(cleaned);
+    let rawText = String(item.choices[0]?.message?.content || "{}");
+    rawText = rawText.replace(/\`\`\`json/gi, "").replace(/\`\`\`/g, "").trim();
+    const start = rawText.indexOf("{");
+    const end = rawText.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      survey = JSON.parse(rawText.slice(start, end + 1));
+    }
   } catch (e) {
     survey = null;
   }
 }
 
 // Fallback preventivo si el LLM devolvió formato anómalo
-if (!survey || !survey.titulo || !Array.isArray(survey.preguntas)) {
+if (!survey || !survey.titulo || !Array.isArray(survey.preguntas) || survey.preguntas.length === 0) {
   const prevContext = $('Code - Adaptar Colectivo y Prompt').item.json;
-  survey = {
-    titulo: \`Pols d'Opinió: \${prevContext.colectiu} (\${prevContext.centre_tipus})\`,
-    introduccion_transparencia: "Consulta confidencial de clima laboral (k-anonimat garantit). Temps estimat: 75 segons.",
-    colectivo: prevContext.colectiu,
-    centre_tipus: prevContext.centre_tipus,
-    canal_sugerido: prevContext.perfil.canal_preferit,
-    idioma: prevContext.idioma,
-    estimacion_segundos: 75,
-    preguntas: [
-      { id: "p1_adaptacio", enunciado: "¿Com valores la teva adaptació i ritme de treball actual?", tipo: "escala_1_5", obligatoria: true },
-      { id: "p2_recursos", enunciado: "¿Com valores les eines i informació disponibles per fer la feina?", tipo: "escala_1_5", obligatoria: true },
-      { id: "p3_comentari", enunciado: "Comentaris o suggeriments lliures per millorar (Opcional):", tipo: "text_obert", obligatoria: false }
-    ]
-  };
+  const lang = String(prevContext.idioma || "Castellano").toLowerCase();
+  const isEsp = lang.includes("cast") || lang.includes("esp");
+  const isEng = lang.includes("eng") || lang.includes("ang");
+
+  if (isEsp) {
+    survey = {
+      titulo: \`Pulso de Opinión: \${prevContext.colectiu} (\${prevContext.centre_tipus})\`,
+      introduccion_transparencia: "Consulta confidencial de clima laboral (k-anonimato garantizado). Tiempo estimado: 60 segundos.",
+      colectivo: prevContext.colectiu,
+      centre_tipus: prevContext.centre_tipus,
+      canal_sugerido: prevContext.perfil.canal_preferit,
+      idioma: "Castellano",
+      estimacion_segundos: 60,
+      preguntas: [
+        { id: "p1_adaptacion", enunciado: "¿Cómo valoras tu adaptación y ritmo de trabajo actual?", tipo: "escala_1_5", obligatoria: true },
+        { id: "p2_recursos", enunciado: "¿Cómo valoras las herramientas e información disponibles para realizar tu trabajo?", tipo: "escala_1_5", obligatoria: true },
+        { id: "p3_descanso", enunciado: "¿La distribución de descansos y turnos te permite una recuperación adecuada?", tipo: "escala_1_5", obligatoria: true },
+        { id: "p4_comentario", enunciado: "Comentarios o sugerencias libres de mejora (Opcional):", tipo: "text_obert", obligatoria: false }
+      ]
+    };
+  } else if (isEng) {
+    survey = {
+      titulo: \`Pulse Survey: \${prevContext.colectiu} (\${prevContext.centre_tipus})\`,
+      introduccion_transparencia: "Confidential workplace feedback survey (k-anonymity guaranteed). Estimated time: 60 seconds.",
+      colectivo: prevContext.colectiu,
+      centre_tipus: prevContext.centre_tipus,
+      canal_sugerido: prevContext.perfil.canal_preferit,
+      idioma: "English",
+      estimacion_segundos: 60,
+      preguntas: [
+        { id: "p1_adaptation", enunciado: "How do you rate your current adaptation and work pace?", tipo: "escala_1_5", obligatoria: true },
+        { id: "p2_resources", enunciado: "How do you rate the tools and information available for your job?", tipo: "escala_1_5", obligatoria: true },
+        { id: "p3_rest", enunciado: "Does the schedule and break allocation allow you adequate recovery?", tipo: "escala_1_5", obligatoria: true },
+        { id: "p4_comments", enunciado: "Open comments or suggestions for improvement (Optional):", tipo: "text_obert", obligatoria: false }
+      ]
+    };
+  } else {
+    survey = {
+      titulo: \`Pols d'Opinió: \${prevContext.colectiu} (\${prevContext.centre_tipus})\`,
+      introduccion_transparencia: "Consulta confidencial de clima laboral (k-anonimat garantit). Temps estimat: 60 segons.",
+      colectivo: prevContext.colectiu,
+      centre_tipus: prevContext.centre_tipus,
+      canal_sugerido: prevContext.perfil.canal_preferit,
+      idioma: "Català",
+      estimacion_segundos: 60,
+      preguntas: [
+        { id: "p1_adaptacio", enunciado: "¿Com valores la teva adaptació i ritme de treball actual?", tipo: "escala_1_5", obligatoria: true },
+        { id: "p2_recursos", enunciado: "¿Com valores les eines i informació disponibles per fer la feina?", tipo: "escala_1_5", obligatoria: true },
+        { id: "p3_descans", enunciado: "¿La distribució de torns i descansos et permet una recuperació adequada?", tipo: "escala_1_5", obligatoria: true },
+        { id: "p4_comentari", enunciado: "Comentaris o suggeriments lliures per millorar (Opcional):", tipo: "text_obert", obligatoria: false }
+      ]
+    };
+  }
 }
 
 const LEADING_PATTERNS = [
@@ -126,6 +173,8 @@ survey.preguntas = survey.preguntas.map((p, idx) => {
   };
 });
 
+const prevContext = $('Code - Adaptar Colectivo y Prompt').item?.json;
+
 return [
   {
     json: {
@@ -137,18 +186,18 @@ return [
       survey: {
         titulo: survey.titulo,
         introduccion_transparencia: survey.introduccion_transparencia,
-        colectivo: survey.colectivo || survey.colectiu || "Planta",
-        centre_tipus: survey.centre_tipus || "Fàbrica",
+        colectivo: survey.colectivo || survey.colectiu || prevContext?.colectiu || "Planta",
+        centre_tipus: survey.centre_tipus || prevContext?.centre_tipus || "Fàbrica",
         canal_sugerido: survey.canal_sugerido || "Mòbil-QR",
-        idioma: survey.idioma || "Català",
-        estimacion_segundos: survey.estimacion_segundos || 75,
+        idioma: prevContext?.idioma || survey.idioma || "Castellano",
+        estimacion_segundos: survey.estimacion_segundos || 60,
         preguntas: survey.preguntas
       },
       control_calidad: {
         anti_sesgo_warnings: biasWarnings,
         cumple_restricciones_rrhh: true,
         k_anonimato_compromiso: "Threshold k>=5 garantizado por diseño en backend",
-        version: "2.0.0-uab-llm",
+        version: "2.1.0-uab-llm",
         generado_el: new Date().toISOString()
       }
     }
@@ -225,8 +274,9 @@ const wf01Updated = {
         },
         sendBody: true,
         specifyBody: "json",
-        jsonBody: "={{ JSON.stringify({ model: 'ornith', messages: [{ role: 'system', content: $json.system_prompt }, { role: 'user', content: $json.user_prompt }], temperature: 0.1, max_tokens: 800 }) }}",
-        options: { timeout: 25000 }
+        // ornith és un model de raonament: amb el raonament actiu gasta tots els tokens i retorna content=null
+        jsonBody: "={{ JSON.stringify({ model: 'ornith', messages: [{ role: 'system', content: $json.system_prompt }, { role: 'user', content: $json.user_prompt }], temperature: 0.4, max_tokens: 3000, chat_template_kwargs: { enable_thinking: false } }) }}",
+        options: { timeout: 60000 }
       },
       onError: "continueRegularOutput"
     },
@@ -241,7 +291,7 @@ const wf01Updated = {
         language: "javaScript",
         jsCode: `
 const item = $input.first().json;
-return [{ json: { survey: { titulo: "Pols d'Opinió: Adaptació a Planta (Damm)", introduccion_transparencia: "Consulta confidencial de clima laboral (k>=5).", preguntas: [{ id: "p1", enunciado: "Tinc la informació sobre els meus torns amb prou antelació.", tipo: "escala_1_5" }] } } }];
+return [{ json: { survey: { titulo: "Pulso de Opinión: Adaptación en Planta", introduccion_transparencia: "Consulta confidencial de clima laboral (k>=5).", preguntas: [{ id: "p1", enunciado: "¿Dispongo de la información sobre mis turnos con suficiente antelación?", tipo: "escala_1_5" }] } } }];
 `.trim()
       }
     },
