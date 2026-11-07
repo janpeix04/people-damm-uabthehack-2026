@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowDown, ArrowUp, Pencil, RefreshCw, Sparkles, Trash2 } from 'lucide-react'
-import { CHANNELS, KEYWORDS, MIN_SAMPLE, QUESTION_BANK, SURVEY_ZONES, TEMPLATES } from '../../data/mock'
+import { CHANNELS, MIN_SAMPLE, SURVEY_ZONES, TEMPLATES } from '../../data/mock'
 import type { ChannelKey, Question, Survey, ZoneKey } from '../../data/types'
+import { COLECTIUS, generateSurvey, publishSurvey, toN8nQuestion, toQuestion, zonesToColectiu, type Colectiu, type N8nSurvey } from '../../api/n8n'
 import { useApp } from '../../store/AppContext'
 import { cn, PathIcon, PrivacyNote } from '../../components/ui'
 import { SurveyRunner } from '../../components/SurveyRunner'
@@ -12,16 +13,11 @@ const TYPE_LABEL: Record<Question['type'], string> = { faces: 'Cares', list: 'Op
 const today = () => new Date().toISOString().slice(0, 10)
 const plusDays = (d: number) => new Date(Date.now() + d * 864e5).toISOString().slice(0, 10)
 
-/** Simulació de la IA: tria preguntes del banc segons les paraules clau de l’objectiu. */
-function generate(goal: string): Question[] {
-  const g = goal.toLowerCase()
-  const groups = Object.keys(KEYWORDS).filter(k => KEYWORDS[k].some(w => g.includes(w)))
-  const keys = [...(groups.length ? groups : ['general']), 'general', 'obert']
-  const seen = new Set<string>()
-  const out: Question[] = []
-  keys.forEach(k => QUESTION_BANK[k].forEach(q => { if (!seen.has(q.text) && out.length < 8) { seen.add(q.text); out.push({ ...q, id: `q${out.length + 1}-${Date.now().toString(36)}` }) } }))
-  return out
-}
+const DURATIONS: Record<string, number> = { '30 s': 30, '1 min': 60, '2 min': 120 }
+const LANGS: Record<string, string> = { 'Català i castellà (automàtic)': 'Català', 'Català': 'Català', 'Castellà': 'Castellano', 'Anglès': 'English' }
+const TONES = ['Proper, de tu a tu', 'Formal']
+const RESTRICTIONS = 'No señalar a personas individuales ni evaluar desempeño personal'
+const errMsg = (e: unknown) => (e instanceof Error ? e.message : 'Error desconegut')
 
 export default function Crear() {
   const [params] = useSearchParams()
@@ -32,7 +28,14 @@ export default function Crear() {
   const [title, setTitle] = useState(tpl ? TEMPLATES[+tpl]?.name ?? '' : 'Torns, descans i conciliació')
   const [goal, setGoal] = useState(tpl ? TEMPLATES[+tpl]?.goal ?? '' : TEMPLATES[1].goal)
   const [dur, setDur] = useState('1 min')
+  const [lang, setLang] = useState(Object.keys(LANGS)[0])
+  const [tone, setTone] = useState(TONES[0])
+  const [colectiu, setColectiu] = useState<Colectiu>(() => zonesToColectiu(['envasat', 'logistica']))
   const [loading, setLoading] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [genError, setGenError] = useState<string | null>(null)
+  const [publishing, setPublishing] = useState(false)
+  const [draft, setDraft] = useState<{ id: string; survey: N8nSurvey; warnings: string[] } | null>(null)
   const [pool, setPool] = useState<Question[]>([])
   const [sel, setSel] = useState<string[]>([])
   const [editing, setEditing] = useState<string | null>(null)
@@ -48,35 +51,70 @@ export default function Crear() {
   const valid = chosen.length >= 3 && chosen.length <= 6
   const people = SURVEY_ZONES.filter(z => zones.includes(z.key)).reduce((a, z) => a + z.headcount, 0)
 
-  const runAI = () => {
-    setLoading(true)
-    setTimeout(() => {
-      const qs = generate(goal)
-      setPool(qs); setSel(qs.slice(0, 4).map(q => q.id)); setLoading(false); setStep(1)
-    }, 1200)
+  /** WF-01: la IA d'n8n genera la proposta de microconsulta. */
+  const callWF01 = () => generateSurvey({
+    objetivo: goal.trim(), colectiu, durada_max: DURATIONS[dur] ?? 60, idioma: LANGS[lang] ?? 'Català',
+    restriccions: `${RESTRICTIONS}. To: ${tone}.`,
+  })
+  const runAI = async () => {
+    setLoading(true); setGenError(null)
+    try {
+      const r = await callWF01()
+      const qs = r.survey.preguntas.map(toQuestion)
+      setDraft({ id: r.survey_id, survey: r.survey, warnings: r.control_calidad?.anti_sesgo_warnings ?? [] })
+      if (!title.trim()) setTitle(r.survey.titulo)
+      setPool(qs); setSel(qs.slice(0, 6).map(q => q.id)); setStep(1)
+    } catch (e) {
+      setGenError(errMsg(e))
+    } finally {
+      setLoading(false)
+    }
   }
   const toggle = <T,>(arr: T[], v: T, set: (x: T[]) => void) => set(arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v])
   const move = (id: string, d: number) => { const i = sel.indexOf(id), j = i + d; if (j < 0 || j >= sel.length) return; const s = [...sel]; [s[i], s[j]] = [s[j], s[i]]; setSel(s) }
   const regen = (q: Question) => setPool(p => p.map(x => x.id === q.id && x.alts?.length ? { ...x, text: x.alts[0], alts: [...x.alts.slice(1), x.text] } : x))
   const remove = (id: string) => { setPool(p => p.filter(x => x.id !== id)); setSel(s => s.filter(x => x !== id)) }
-  const more = () => {
-    const used = new Set(pool.map(q => q.text))
-    const extra = Object.values(QUESTION_BANK).flat().filter(q => !used.has(q.text)).slice(0, 2)
-    if (!extra.length) { toast('La IA ja no té més propostes per a aquest objectiu'); return }
-    setPool(p => [...p, ...extra.map((q, i) => ({ ...q, id: `qx${i}-${Date.now().toString(36)}` }))])
+  const more = async () => {
+    setLoadingMore(true)
+    try {
+      const r = await callWF01()
+      const used = new Set(pool.map(q => q.text.trim().toLowerCase()))
+      const extra = r.survey.preguntas.map(toQuestion).filter(q => !used.has(q.text.trim().toLowerCase()))
+      if (!extra.length) { toast('La IA ja no té més propostes per a aquest objectiu'); return }
+      setPool(p => [...p, ...extra])
+    } catch (e) {
+      toast(`No s’han pogut proposar més preguntes: ${errMsg(e)}`)
+    } finally {
+      setLoadingMore(false)
+    }
   }
   const canNext = step === 0 ? pool.length > 0 : step === 1 ? valid : step === 2 ? zones.length > 0 && channels.length > 0 : false
 
-  const publish = () => {
-    if (!approved || !valid) return
-    const id = (title || 'enquesta').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 32) + '-' + Date.now().toString(36).slice(-4)
-    const s: Survey = {
-      id, title: title || 'Nova enquesta', goal, status: opens <= today() ? 'open' : 'scheduled', zones, questions: chosen, channels,
-      opensAt: opens, closesAt: closes, responses: 0, target: people, createdAt: today(), fromAction: params.get('accio') ?? undefined,
+  /** WF-02: publicació amb la signatura humana de RRHH. Només es desa si n8n la publica. */
+  const publish = async () => {
+    if (!approved || !valid || !draft || publishing) return
+    setPublishing(true)
+    try {
+      const r = await publishSurvey({
+        approved_by_human: approved,
+        approved_by: 'RRHH',
+        survey_id: draft.id,
+        survey: { ...draft.survey, titulo: title || draft.survey.titulo, colectivo: colectiu, idioma: LANGS[lang] ?? draft.survey.idioma, preguntas: chosen.map(toN8nQuestion) },
+      })
+      const id = (title || 'enquesta').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 32) + '-' + Date.now().toString(36).slice(-4)
+      const s: Survey = {
+        id, title: title || draft.survey.titulo || 'Nova enquesta', goal, status: opens <= today() ? 'open' : 'scheduled', zones, questions: chosen, channels,
+        opensAt: opens, closesAt: closes, responses: 0, target: people, createdAt: today(), fromAction: params.get('accio') ?? undefined,
+        n8nId: r.survey_id ?? draft.id, intro: draft.survey.introduccion_transparencia, formUrl: r.publicacion?.form_url, qrUrl: r.publicacion?.qr_code_url,
+      }
+      addSurvey(s)
+      toast(s.status === 'open' ? 'Enquesta publicada i oberta' : 'Enquesta programada')
+      nav(`/rrhh/enquestes/${id}?nova=1`)
+    } catch (e) {
+      toast(`No s’ha pogut publicar: ${errMsg(e)}`)
+    } finally {
+      setPublishing(false)
     }
-    addSurvey(s)
-    toast(s.status === 'open' ? 'Enquesta publicada i oberta' : 'Enquesta programada')
-    nav(`/rrhh/enquestes/${id}?nova=1`)
   }
 
   return (
@@ -87,7 +125,7 @@ export default function Crear() {
             <Link to="/rrhh/enquestes" className="text-[13px] font-bold text-red-dk">← Enquestes</Link>
             <h1 className="serif text-[34px] sm:text-[36px] leading-[1.05] mt-1.5">Nova enquesta</h1>
           </div>
-          <span className="text-[13px] text-ink-muted">Esborrany local · no s’envia res fins que la publiquis</span>
+          <span className="text-[13px] text-ink-muted">La IA d’n8n proposa · no es publica res fins que l’aprovis</span>
         </div>
         <ol className="grid gap-2 grid-cols-2 md:grid-cols-4">
           {STEPS.map((l, i) => {
@@ -118,9 +156,15 @@ export default function Crear() {
               <div><label htmlFor="goal" className="text-[13px] font-bold">Explica-ho amb les teves paraules</label><textarea id="goal" rows={4} className="input mt-1.5 !text-base !leading-relaxed !rounded-[16px] resize-y" value={goal} onChange={e => setGoal(e.target.value)} /></div>
               <div className="grid gap-3.5 grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
                 <div><div className="eyebrow mb-2">Durada màxima</div><div className="flex gap-1.5">{['30 s', '1 min', '2 min'].map(d => <button key={d} aria-pressed={dur === d} onClick={() => setDur(d)} className={cn('h-9 px-3.5 rounded-full border-[1.5px] text-[13px] font-bold', dur === d ? 'border-red bg-red-soft text-red-dk' : 'border-line bg-white')}>{d}</button>)}</div></div>
-                <div><label htmlFor="lang" className="eyebrow block mb-2">Idioma</label><select id="lang" className="input !h-[38px] !py-0"><option>Català i castellà (automàtic)</option><option>Català</option><option>Castellà</option><option>Anglès</option></select></div>
-                <div><label htmlFor="tone" className="eyebrow block mb-2">To</label><select id="tone" className="input !h-[38px] !py-0"><option>Proper, de tu a tu</option><option>Formal</option></select></div>
+                <div><label htmlFor="col" className="eyebrow block mb-2">Col·lectiu</label><select id="col" className="input !h-[38px] !py-0" value={colectiu} onChange={e => setColectiu(e.target.value as Colectiu)}>{COLECTIUS.map(c => <option key={c}>{c}</option>)}</select></div>
+                <div><label htmlFor="lang" className="eyebrow block mb-2">Idioma</label><select id="lang" className="input !h-[38px] !py-0" value={lang} onChange={e => setLang(e.target.value)}>{Object.keys(LANGS).map(l => <option key={l}>{l}</option>)}</select></div>
+                <div><label htmlFor="tone" className="eyebrow block mb-2">To</label><select id="tone" className="input !h-[38px] !py-0" value={tone} onChange={e => setTone(e.target.value)}>{TONES.map(t => <option key={t}>{t}</option>)}</select></div>
               </div>
+              {genError && (
+                <div role="alert" className="text-[13px] font-semibold rounded-[12px] px-3 py-2 bg-warn-bg text-warn-ink">
+                  No s’han pogut generar les preguntes: {genError}. Comprova que n8n i el workflow WF-01 estan actius i torna-ho a provar.
+                </div>
+              )}
               <div className="flex justify-end">
                 <button onClick={runAI} disabled={loading || goal.trim().length < 10} className="btn-red !h-[50px] !px-5 !text-[15px]"><Sparkles size={18} aria-hidden />{loading ? 'La IA està preparant les preguntes…' : pool.length ? 'Tornar a generar' : 'Generar preguntes amb IA'}</button>
               </div>
@@ -131,7 +175,7 @@ export default function Crear() {
             <>
               <div className="flex flex-wrap justify-between items-end gap-2.5">
                 <div><h2 className="serif text-2xl">La IA proposa {pool.length} preguntes</h2><p className="text-[13px] text-ink-muted">Tria’n entre 3 i 6. Pots editar-les, regenerar-les o esborrar-les.</p></div>
-                <button onClick={more} className="btn-line !h-[38px] !text-[13px]">+ Proposar-ne més</button>
+                <button onClick={more} disabled={loadingMore} className="btn-line !h-[38px] !text-[13px]">{loadingMore ? 'La IA està pensant…' : '+ Proposar-ne més'}</button>
               </div>
               <div className="grid gap-2.5 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
                 {pool.map(q => {
@@ -145,7 +189,7 @@ export default function Crear() {
                       <div className="flex gap-1 items-center border-t border-[#F1EAE0] pt-2">
                         <button aria-pressed={on} onClick={() => toggle(sel, q.id, setSel)} className={cn('flex-1 h-9 rounded-[10px] text-[13px] font-bold', on ? 'bg-red text-white' : 'bg-cream')}>{on ? '✓ A l’enquesta' : 'Afegir'}</button>
                         <button onClick={() => setEditing(q.id)} aria-label="Editar" className="w-9 h-9 grid place-items-center rounded-[10px] text-ink-muted hover:bg-cream"><Pencil size={16} /></button>
-                        <button onClick={() => regen(q)} aria-label="Regenerar" className="w-9 h-9 grid place-items-center rounded-[10px] text-ink-muted hover:bg-cream"><RefreshCw size={16} /></button>
+                        <button onClick={() => regen(q)} disabled={!q.alts?.length} aria-label="Regenerar" className="disabled:opacity-40 w-9 h-9 grid place-items-center rounded-[10px] text-ink-muted hover:bg-cream"><RefreshCw size={16} /></button>
                         <button onClick={() => remove(q.id)} aria-label="Esborrar" className="w-9 h-9 grid place-items-center rounded-[10px] text-ink-muted hover:bg-cream"><Trash2 size={16} /></button>
                       </div>
                     </article>
@@ -205,13 +249,15 @@ export default function Crear() {
               </div>
               <div className="flex-[1_1_280px] min-w-0 flex flex-col gap-3">
                 <h2 className="serif text-2xl">Revisió final</h2>
+                {draft?.survey.introduccion_transparencia && <p className="text-sm text-ink-muted">{draft.survey.introduccion_transparencia}</p>}
+                {draft?.warnings.map(w => <div key={w} className="text-[12.5px] font-semibold rounded-[12px] px-3 py-2 bg-warn-bg text-warn-ink">Control anti-biaix: {w}</div>)}
                 {['Llenguatge clar i proper', 'Cap pregunta permet identificar ningú', `Mínim de ${MIN_SAMPLE} respostes per zona activat`, 'Text obert amb moderació i anonimització'].map(c => (
                   <div key={c} className="flex gap-2.5 items-center text-sm"><span className="w-[22px] h-[22px] rounded-full bg-ok text-white grid place-items-center text-xs shrink-0">✓</span>{c}</div>
                 ))}
                 <button aria-pressed={approved} onClick={() => setApproved(a => !a)} className="toggle flex gap-2.5 items-center p-3 text-sm font-semibold">
                   <span className={cn('w-[22px] h-[22px] rounded-md grid place-items-center text-white shrink-0', approved ? 'bg-red' : 'bg-line')}>{approved ? '✓' : ''}</span>He revisat les preguntes i aprovo la publicació
                 </button>
-                <button onClick={publish} disabled={!approved || !valid} className="btn-red !h-[52px] !text-base">{opens <= today() ? 'Publicar enquesta' : 'Programar enquesta'}</button>
+                <button onClick={publish} disabled={!approved || !valid || !draft || publishing} className="btn-red !h-[52px] !text-base">{publishing ? 'Publicant…' : opens <= today() ? 'Publicar enquesta' : 'Programar enquesta'}</button>
                 <p className="text-xs text-ink-muted">La IA no publica res sola: cal la teva aprovació.</p>
               </div>
             </div>

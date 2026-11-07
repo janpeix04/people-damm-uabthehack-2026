@@ -53,6 +53,11 @@ export interface Survey {
   target: number
   createdAt: string
   fromAction?: string
+  /** Dades de la publicació via n8n (WF-01 / WF-02) */
+  n8nId?: string
+  intro?: string
+  formUrl?: string
+  qrUrl?: string
 }
 
 export interface Idea {

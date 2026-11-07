@@ -76,9 +76,10 @@ let survey = item.survey;
 // Si proviene de la respuesta OpenAI/ornith
 if (!survey && item.choices && Array.isArray(item.choices)) {
   try {
-    const rawText = item.choices[0]?.message?.content || "{}";
-    const cleaned = rawText.replace(/\`\`\`json/gi, "").replace(/\`\`\`/g, "").trim();
-    survey = JSON.parse(cleaned);
+    const rawText = String(item.choices[0]?.message?.content || "{}");
+    const start = rawText.indexOf("{");
+    const end = rawText.lastIndexOf("}");
+    survey = JSON.parse(start >= 0 && end > start ? rawText.slice(start, end + 1) : "{}");
   } catch (e) {
     survey = null;
   }
@@ -225,8 +226,9 @@ const wf01Updated = {
         },
         sendBody: true,
         specifyBody: "json",
-        jsonBody: "={{ JSON.stringify({ model: 'ornith', messages: [{ role: 'system', content: $json.system_prompt }, { role: 'user', content: $json.user_prompt }], temperature: 0.1, max_tokens: 800 }) }}",
-        options: { timeout: 25000 }
+        // ornith és un model de raonament: amb el raonament actiu gasta tots els tokens i retorna content=null
+        jsonBody: "={{ JSON.stringify({ model: 'ornith', messages: [{ role: 'system', content: $json.system_prompt }, { role: 'user', content: $json.user_prompt }], temperature: 0.1, max_tokens: 3000, chat_template_kwargs: { enable_thinking: false } }) }}",
+        options: { timeout: 60000 }
       },
       onError: "continueRegularOutput"
     },
