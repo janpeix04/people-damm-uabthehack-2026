@@ -54,17 +54,19 @@ export function Meter({ value, goal, className, thin }: { value: number; goal?: 
   )
 }
 
+/** Resum de la Festa de la setmana (participació única a La Plaça, es reinicia cada dilluns). */
 export function FestaCard({ compact }: { compact?: boolean }) {
-  const { festa } = useApp()
+  const { plazaWeek: w } = useApp()
   return (
-    <section className={cn('card flex flex-col gap-2', compact ? 'p-4' : 'p-5')} aria-label="Objectiu col·lectiu">
+    <section className={cn('card flex flex-col gap-2', compact ? 'p-4' : 'p-5')} aria-label="Festa de la setmana a La Plaça">
       <div className="flex justify-between items-baseline gap-2">
-        <h2 className={cn('serif', compact ? 'text-[19px]' : 'text-[21px]')}>Festa de la plaça</h2>
-        <strong className="text-sm tabular-nums">{Math.round(festa.pct)}%</strong>
+        <h2 className={cn('serif', compact ? 'text-[19px]' : 'text-[21px]')}>Festa de la setmana</h2>
+        <strong className="text-sm tabular-nums">{Math.floor(w.pct)}%</strong>
       </div>
-      <Meter value={festa.pct} goal={festa.goal} />
+      <Meter value={w.pct} goal={w.goal} />
       <p className="text-[12.5px] text-ink-muted">
-        {festa.missing > 0 ? <>Objectiu col·lectiu del 60% · falten <strong className="text-ink">{festa.missing}</strong> respostes per al concert</> : 'Concert desbloquejat!'}
+        <strong className="text-ink">{w.participants}</strong> persones han opinat a La Plaça aquesta setmana
+        {w.next ? <> · {w.next.missing === 1 ? 'falta 1' : `falten ${w.next.missing}`} per a {w.next.label.toLowerCase()}</> : ' · totes les fites aconseguides!'}
       </p>
     </section>
   )

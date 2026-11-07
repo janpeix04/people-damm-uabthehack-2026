@@ -44,6 +44,7 @@ export const Scene3D = forwardRef<SceneHandle | null, Props>(function Scene3D({ 
           avatar: avatar ? avatarColors(avatar) : undefined,
           onAction: a => optsRef.current.onAction?.(a),
           onZone: z => optsRef.current.onZone?.(z),
+          onReact: (i, on) => optsRef.current.onReact?.(i, on),
         })
         setState('ready')
       }, 30)
@@ -54,6 +55,8 @@ export const Scene3D = forwardRef<SceneHandle | null, Props>(function Scene3D({ 
   }, [kind])
 
   useEffect(() => { if (avatar && handle.current) handle.current.setAvatar(avatarColors(avatar)) }, [avatar])
+  // la Festa de la setmana es reflecteix a l'escena en directe (garlandes, bancs, concert, focs)
+  useEffect(() => { if (handle.current && opts.festa != null) handle.current.setFesta(opts.festa) }, [opts.festa, state])
 
   return (
     // La posició la decideix qui fa servir el component (normalment `absolute inset-0`):

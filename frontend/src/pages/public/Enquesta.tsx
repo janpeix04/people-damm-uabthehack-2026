@@ -101,9 +101,9 @@ export default function Enquesta() {
               <Link to="/app/recompenses" className="h-12 rounded-[14px] bg-white text-ink font-extrabold grid place-items-center mt-auto">Bescanviar punts</Link>
             </section>
             <section className="card p-5 flex flex-col gap-2">
-              <div className="flex justify-between items-baseline"><strong className="serif text-xl">Festa de la plaça</strong><strong className="tabular-nums">{Math.round(festa.pct)}%</strong></div>
+              <div className="flex justify-between items-baseline"><strong className="serif text-xl">Participació de la planta</strong><strong className="tabular-nums">{Math.round(festa.pct)}%</strong></div>
               <Meter value={festa.pct} goal={festa.goal} />
-              <span className="text-[13px] text-ink-muted">{festa.missing > 0 ? `Has apropat el concert. Falten ${festa.missing} respostes.` : 'Entre tots heu desbloquejat el concert!'}</span>
+              <span className="text-[13px] text-ink-muted">{festa.missing > 0 ? `Objectiu 60% perquè els resultats siguin representatius · falten ${festa.missing} respostes.` : 'Objectiu de participació assolit. Gràcies!'}</span>
               <p className="text-sm leading-relaxed mt-auto pt-3 border-t border-cream-dk"><strong>I ara què?</strong> Quan hi hagi prou respostes, RRHH en veurà el resum agregat protegit per k-anonimat. Les millores es comunicaran a La Plaça.</p>
             </section>
           </div>

@@ -210,3 +210,28 @@ export const SKINS = ['#FFE6D3', '#F6D7C3', '#EFC3A1', '#D9A074', '#B57A52', '#5
 export const HAIRS = ['#2E1F17', '#5A3A22', '#A8642F', '#D9B15A', '#1D1D24', '#8B8B92']
 export const SHIRTS = ['#C8102E', '#1E2A44', '#F4EFE6', '#7A0C1E', '#3A3532', '#B08A45']
 export const HAIR_STYLES = ['Curt', 'Melena', 'Arrissat', 'Monyo']
+
+// ---------- La Plaça: participació setmanal i pregunta del dia ----------
+// La Festa de la Plaça és setmanal (es reinicia cada dilluns) i compta PERSONES, no clics:
+// cada persona compta un cop per setmana si respon la pregunta del dia, fa "+1 Jo també" o deixa una idea.
+// Les enquestes formals no la omplen (tenen el seu propi flux i les missions de Damm World).
+export const PLAZA_MILESTONES = [
+  { at: 25, label: 'Garlandes', mark: '✓' },
+  { at: 40, label: 'Bancs nous', mark: '✓' },
+  { at: 60, label: 'Concert', mark: '♪' },
+  { at: 75, label: 'Focs', mark: '★' },
+]
+/** Persones úniques que han participat a la Plaça aquesta setmana (dada sintètica de la demo, sense comptar-te a tu). */
+export const PLAZA_WEEK_BASE = 436
+/** Participació de la setmana passada, per comparar. */
+export const PLAZA_LAST_WEEK = 61
+
+export const DAILY_QUESTIONS: import('./types').DailyQuestion[] = [
+  { id: 'torn', text: 'Com ha anat el torn avui?', options: [{ key: 'be', label: 'Bé', emoji: '😊', n: 118 }, { key: 'normal', label: 'Normal', emoji: '😐', n: 64 }, { key: 'dur', label: 'Dur', emoji: '😟', n: 30 }] },
+  { id: 'pausa', text: 'Què prefereixes: una pausa llarga o dues de curtes?', options: [{ key: 'llarga', label: 'Una de llarga', emoji: '☕', n: 97 }, { key: 'curtes', label: 'Dues de curtes', emoji: '⏱️', n: 121 }] },
+  { id: 'info', text: 'T’han arribat a temps els canvis de torn aquesta setmana?', options: [{ key: 'si', label: 'Sí', emoji: '👍', n: 102 }, { key: 'mitges', label: 'A mitges', emoji: '🤏', n: 71 }, { key: 'no', label: 'No', emoji: '👎', n: 38 }] },
+  { id: 'equip', text: 'Com et sents amb el teu equip aquesta setmana?', options: [{ key: 'be', label: 'Bé', emoji: '😊', n: 141 }, { key: 'normal', label: 'Normal', emoji: '😐', n: 52 }, { key: 'malament', label: 'Malament', emoji: '😟', n: 17 }] },
+  { id: 'sala', text: 'Què milloraries primer de la sala de descans?', options: [{ key: 'seients', label: 'Seients', emoji: '🛋️', n: 58 }, { key: 'cafe', label: 'Cafè i aigua', emoji: '☕', n: 77 }, { key: 'silenci', label: 'Silenci', emoji: '🤫', n: 41 }, { key: 'taquilles', label: 'Taquilles', emoji: '🔐', n: 33 }] },
+  { id: 'descans', text: 'Has pogut desconnectar entre torns?', options: [{ key: 'si', label: 'Sí', emoji: '😌', n: 88 }, { key: 'poc', label: 'Poc', emoji: '😐', n: 79 }, { key: 'no', label: 'No', emoji: '😩', n: 46 }] },
+  { id: 'escoltat', text: 'Aquesta setmana t’has sentit escoltat/da?', options: [{ key: 'si', label: 'Sí', emoji: '👂', n: 109 }, { key: 'mitges', label: 'A mitges', emoji: '🤏', n: 66 }, { key: 'no', label: 'No', emoji: '🙉', n: 31 }] },
+]

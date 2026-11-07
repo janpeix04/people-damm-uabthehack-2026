@@ -68,6 +68,7 @@ export interface Survey {
   qrUrl?: string
   /** Enquesta servida per PostgreSQL a l'app del treballador (WF-05) */
   source?: 'db'
+  locale?: 'ca' | 'es' | 'en'
   /** Token d'un sol ús per enviar la resposta */
   accessToken?: string
 }
@@ -111,4 +112,11 @@ export interface Reward {
   tint: string
   ink: string
   icon: string
+}
+
+/** Pregunta del dia de La Plaça: es respon amb un sol toc. Els resultats només es mostren agregats (mínim 10). */
+export interface DailyQuestion {
+  id: string
+  text: string
+  options: { key: string; label: string; emoji: string; n: number }[]
 }

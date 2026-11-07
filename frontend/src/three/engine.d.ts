@@ -24,10 +24,19 @@ export interface MountOptions {
   initialZone?: string
   onAction?: (action: 'survey' | 'idea' | 'stage') => void
   onZone?: (zone: string) => void
+  /** Plaça: % de participació setmanal (activa garlandes, bancs, concert i focs). Per defecte, 100. */
+  festa?: number
+  /** Plaça: índexs de les bafarades on aquesta persona ja ha fet +1 aquesta setmana. */
+  reacted?: number[]
+  /** Plaça: s'ha fet (o desfet) +1 en una bafarada. */
+  onReact?: (index: number, on: boolean) => void
+  /** Plaça: vista de només lectura (RRHH), sense botons de +1. */
+  readOnly?: boolean
 }
 
 export interface SceneHandle {
   burst(): void
+  setFesta(pct: number): void
   setAvatar(a: AvatarColors): void
   select(zone: string): void
   dispose(): void

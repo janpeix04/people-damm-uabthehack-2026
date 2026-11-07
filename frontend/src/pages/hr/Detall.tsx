@@ -1,7 +1,7 @@
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { Copy, ExternalLink, Printer } from 'lucide-react'
-import { CHANNELS, MIN_SAMPLE, SURVEY_ZONES, zoneByKey } from '../../data/mock'
+import { CHANNELS, SURVEY_ZONES, zoneByKey } from '../../data/mock'
 import type { ChannelKey } from '../../data/types'
 import { useApp } from '../../store/AppContext'
 import { Meter, PathIcon, StatusChip } from '../../components/ui'
@@ -25,8 +25,10 @@ function message(c: ChannelKey, title: string, url: string, secs: number) {
 export default function Detall() {
   const { id } = useParams()
   const [q] = useSearchParams()
-  const { surveys, toast } = useApp()
+  const { hrSurveys: surveys, hrLoading, hrError, toast } = useApp()
   const s = surveys.find(x => x.id === id)
+  if (hrLoading) return <p role="status">Carregant enquesta?</p>
+  if (hrError) return <p role="alert">{hrError}</p>
   if (!s) return <div className="card p-8">No trobem aquesta enquesta. <Link to="/rrhh/enquestes" className="font-bold text-red-dk">Tornar a la llista</Link></div>
   const url = surveyUrl(s.id)
   const secs = s.questions.reduce((a, x) => a + x.secs, 0)
@@ -49,7 +51,7 @@ export default function Detall() {
         </div>
       </header>
 
-      {q.get('nova') && <div className="rounded-[16px] bg-ok-bg text-ok-ink px-4 py-3 font-bold">✓ {s.status === 'open' ? 'Publicada i oberta.' : `Programada: s’obrirà el ${new Date(s.opensAt).toLocaleDateString('ca-ES', { day: 'numeric', month: 'long' })}.`} Ara toca fer-la arribar a tothom.</div>}
+      {q.get('nova') && <div className="rounded-[16px] bg-ok-bg text-ok-ink px-4 py-3 font-bold">✓ {s.status === 'draft' ? 'Esborrany desat. Pots editar-lo i aprovar-lo des de la llista.' : s.status === 'open' ? 'Publicada i oberta.' : `Programada: s’obrirà el ${new Date(s.opensAt).toLocaleDateString('ca-ES', { day: 'numeric', month: 'long' })}.`}</div>}
 
       <div className="flex flex-wrap gap-5 items-start">
         <section className="card p-5 flex-[1_1_320px] min-w-0 flex flex-col gap-4">
@@ -71,7 +73,7 @@ export default function Detall() {
             <Meter value={pct} goal={60} />
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {s.zones.map(k => { const z = zoneByKey(k); return <span key={k} className={z.responses < MIN_SAMPLE ? 'chip bg-fog-bg text-fog' : 'chip bg-cream text-ink-soft'}>{z.name}{z.responses < MIN_SAMPLE ? ' · ocult' : ` · ${z.participation}%`}</span> })}
+            {s.zones.map(k => { const z = zoneByKey(k); return <span key={k} className="chip bg-cream text-ink-soft">{z.name}</span> })}
           </div>
         </section>
 
