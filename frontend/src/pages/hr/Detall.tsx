@@ -67,7 +67,7 @@ export default function Detall() {
               </div>
             </div>
           </div>
-          <p className="text-xs text-ink-muted">Tots els canals porten aquí. Sense iniciar sessió ni instal·lar res.</p>
+          <p className="text-xs text-ink-muted">Tots els canals porten aquí. Accés amb el compte de treballador, sense instal·lar res.</p>
           <div>
             <div className="flex justify-between items-baseline mb-1.5"><span className="eyebrow">Participació</span><strong className="tabular-nums">{pct}% · {s.responses} de {s.target}</strong></div>
             <Meter value={pct} goal={60} />

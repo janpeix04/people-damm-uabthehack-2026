@@ -6,7 +6,7 @@ const item = $input.first().json;
 const body = item.body || item;
 
 const objetivo = String(body.objetivo || "Conocer la adaptación del equipo y descansos").trim();
-const colectiuRaw = String(body.colectiu || "Planta").trim();
+const colectiuRaw = String(body.colectiu || "Fàbrica").trim();
 const centreTipus = String(body.centre_tipus || "Fàbrica").trim();
 const duradaMax = Number(body.durada_max || 90);
 const restriccions = String(body.restriccions || "No señalar a personas individuales ni evaluar desempeño personal").trim();
@@ -15,15 +15,14 @@ const tonoPorDefecto = "Cercano, entendible, empático, con lenguaje neutro e in
 const tono = String(body.tono || tonoPorDefecto).trim();
 
 const collectiveRules = {
-  Planta: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Mòbil-QR", to: "Cercano, entendible, empático, con lenguaje neutro e inclusivo, directo y sin argot complejo.", temps_recomanat_segons: 75 },
+  Fàbrica: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Mòbil-QR", to: "Cercano, entendible, empático, con lenguaje neutro e inclusivo, directo y sin argot complejo.", temps_recomanat_segons: 75 },
   Logística: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Mòbil-QR", to: "Cercano, ágil, entendible, con lenguaje neutro e inclusivo, centrado en soporte mutuo.", temps_recomanat_segons: 75 },
   Comercial: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Mòbil-Link", to: "Cercano, motivador, entendible, con lenguaje neutro e inclusivo.", temps_recomanat_segons: 90 },
   Oficina: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Teams / Correu", to: "Colaborativo, cercano, entendible, con lenguaje neutro e inclusivo.", temps_recomanat_segons: 100 },
-  Manager: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Teams / Correu", to: "Estratégico pero muy cercano, facilitador, entendible, con lenguaje neutro e inclusivo.", temps_recomanat_segons: 110 }
 };
 
-const validColectius = ["Planta", "Logística", "Comercial", "Oficina", "Manager"];
-const primaryKey = validColectius.find(c => c.toLowerCase() === colectiuRaw.toLowerCase()) || "Planta";
+const validColectius = ["Fàbrica", "Logística", "Comercial", "Oficina"];
+const primaryKey = validColectius.find(c => c.toLowerCase() === colectiuRaw.toLowerCase()) || "Fàbrica";
 const perfil = collectiveRules[primaryKey];
 const hasApiKey = Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim().length > 10);
 
@@ -119,7 +118,7 @@ let titulo = "";
 let intro = "";
 let preguntes = [];
 
-if (objetivo.toLowerCase().includes("torn") || objetivo.toLowerCase().includes("turno") || colectiu === "Planta") {
+if (objetivo.toLowerCase().includes("torn") || objetivo.toLowerCase().includes("turno") || colectiu === "Fàbrica") {
   titulo = isCat 
     ? "Pols d'Opinió: Adaptació i Benestar en l'Equip"
     : isEng
@@ -250,8 +249,8 @@ const isEng = lang.includes("eng") || lang.includes("ang");
 if (!survey || !survey.titulo || !Array.isArray(survey.preguntas) || survey.preguntas.length < 3) {
   survey = {
     titulo: isEsp
-      ? \`Pulso de Opinión: \${prevContext.colectiu || "Planta"} (\${prevContext.centre_tipus || "Fábrica"})\`
-      : \`Pols d'Opinió: \${prevContext.colectiu || "Planta"} (\${prevContext.centre_tipus || "Fàbrica"})\`,
+      ? \`Pulso de Opinión: \${prevContext.colectiu || "Fàbrica"} (\${prevContext.centre_tipus || "Fábrica"})\`
+      : \`Pols d'Opinió: \${prevContext.colectiu || "Fàbrica"} (\${prevContext.centre_tipus || "Fàbrica"})\`,
     introduccion_transparencia: isEsp
       ? "Consulta confidencial de clima laboral (k-anonimato garantizado). Tu voz nos ayuda a mejorar. Tiempo estimado: 65 segundos."
       : "Consulta confidencial de clima laboral (k-anonimat garantit). La teva veu ens ajuda a millorar. Temps estimat: 65 segons.",

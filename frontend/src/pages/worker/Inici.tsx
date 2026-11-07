@@ -16,7 +16,7 @@ export default function WorkerInici() {
       {/* Hero */}
       <section className="grid gap-5 md:gap-10 lg:grid-cols-[1.1fr_1fr] items-center">
         <div className="flex flex-col gap-4 md:gap-5">
-          <span className="chip bg-red-soft text-red-dk self-start"><Lock size={12} aria-hidden />Anònim · sense iniciar sessió</span>
+          <span className="chip bg-red-soft text-red-dk self-start"><Lock size={12} aria-hidden />Respostes anònimes · accés privat</span>
           <h1 className="serif text-[40px] sm:text-[52px] lg:text-[64px] leading-[1.02]">La teva opinió <span className="text-red">mou la fàbrica</span></h1>
           <p className="text-base md:text-lg leading-relaxed text-ink-muted max-w-xl">
             Respon enquestes curtes, comparteix idees a La Plaça i bescanvia els punts per recompenses.

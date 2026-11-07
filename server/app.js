@@ -11,7 +11,7 @@ async function wallet(db,token){
 async function join(db,digest){await db.query("insert into app_private.plaza_weekly_participants(week_start,wallet_digest) values(date_trunc('week',now() at time zone 'Europe/Madrid')::date,$1) on conflict do nothing",[digest]);}
 
 export async function plazaState(db,token){
-  const digest=await wallet(db,token);
+  const digest=token?await wallet(db,token):null;
   const pref=(await db.query('select skin,hair,shirt,hair_style style,show_logo logo from app_private.worker_preferences where wallet_digest=$1',[digest])).rows[0]||avatarDefault;
   const w=(await db.query(`select
     (select count(*)::int from synthetic_people) headcount,
@@ -87,7 +87,8 @@ async function validateAnswers(db,b){
   if(qs.some(q=>q.required&&!seen.has(q.id)))throw new InputError('Falten preguntes obligatòries.');
 }
 
-export async function hrPlazaAction(db,b){
+export async function hrPlazaAction(db,b,user){
+  if(b.action==='state')return plazaState(db,null);
   if(b.action==='list')return ideas(db,true);
   if(b.action==='moderate'){
     if(!['published','rejected','archived'].includes(b.status))throw new InputError('Estat no vàlid.');
@@ -100,7 +101,7 @@ export async function hrPlazaAction(db,b){
     const q=(await db.query("insert into plaza_daily_questions(question_date,prompt) values((now() at time zone 'Europe/Madrid')::date,$1) returning id",[b.text.trim()])).rows[0];
     for(const [i,label]of b.options.entries())await db.query('insert into plaza_daily_options(question_id,option_key,label,position) values($1,$2,$3,$4)',[q.id,String(i),label.trim(),i+1]);
     // Local HR demo identity, same scope as the existing HR API (no SSO).
-    await db.query("update plaza_daily_questions set status='published',approved_by=(select user_id from user_profiles where app_role='hr_admin' order by user_id limit 1),approved_at=now() where id=$1",[q.id]);
+    await db.query("update plaza_daily_questions set status='published',approved_by=coalesce($2::uuid,(select user_id from user_profiles where app_role='hr_admin' order by user_id limit 1)),approved_at=now() where id=$1",[q.id,user?.id||null]);
     return {ok:true};
   }
   throw new InputError('Acció no trobada.',404);

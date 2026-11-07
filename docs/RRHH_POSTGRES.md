@@ -20,6 +20,6 @@ Crear o editar és una transacció única. Editar conserva la campanya i substit
 
 ## Abast local i pendents
 
-L'API està preparada per a la demo local, sense SSO ni verificació de rol RRHH. L'aprovador queda identificat com «RRHH local». Abans d'exposar el frontend a la xarxa cal afegir autenticació, autorització i un usuari SQL amb permisos limitats. La comprovació d'origen bloqueja peticions del navegador des d'altres orígens, però no substitueix l'autenticació.
+L'API requereix ara sessió i comprova el rol RRHH al servidor. L'aprovador de les operacions de la web és l'usuari autenticat. Vegeu [AUTH.md](AUTH.md). Abans d'exposar-la a la xarxa cal configurar HTTPS/cookies Secure i protegir els ports de gestió; l'autenticació implementada és local i no és SSO.
 
 La generació amb IA continua usant WF-01; publicar a PostgreSQL no depèn de Typeform ni envia missatges externs. Ara el moneder, l'enviament i els bescanvis del treballador usen `/api/app/*` amb les funcions SQL existents, sense requerir WF-05. n8n queda per als processos d'IA, notificacions i altres automatitzacions.

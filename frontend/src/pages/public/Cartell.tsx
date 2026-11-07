@@ -32,7 +32,7 @@ export default function Cartell() {
             <div className="p-3 bg-white ring-2 ring-ink"><QRCodeSVG value={url} size={190} fgColor="#1F1A18" level="M" className="w-[140px] h-[140px] sm:w-[190px] sm:h-[190px]" /></div>
           </div>
           <ol className="flex flex-col gap-4 flex-1 min-w-[200px]">
-            {[['Escaneja', 'Obre la càmera del mòbil i apunta al codi.'], ['Respon', `${s.questions.length} preguntes, sense iniciar sessió.`], ['Guanya punts', `+${POINTS_PER_SURVEY} punts per bescanviar a la cafeteria.`]].map(([t, d], i) => (
+            {[['Escaneja', 'Obre la càmera del mòbil i apunta al codi.'], ['Respon', `${s.questions.length} preguntes anònimes. Accedeix amb el teu compte.`], ['Guanya punts', `+${POINTS_PER_SURVEY} punts per bescanviar a la cafeteria.`]].map(([t, d], i) => (
               <li key={t} className="flex gap-3 items-start"><span className="w-8 h-8 rounded-full bg-ink text-white font-extrabold grid place-items-center shrink-0">{i + 1}</span><span><strong className="block text-[18px]">{t}</strong><span className="text-[15px] leading-snug text-ink-muted">{d}</span></span></li>
             ))}
           </ol>

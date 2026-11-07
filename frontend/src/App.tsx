@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppProvider } from './store/AppContext'
+import { AuthProvider, RequireAuth, useAuth } from './store/AuthContext'
+import Login from './pages/public/Login'
 import HRLayout from './components/HRLayout'
 import WorkerLayout from './components/WorkerLayout'
 import Landing from './pages/public/Landing'
@@ -33,15 +35,20 @@ const Loading = () => (
 )
 
 export default function App() {
+  return <AuthProvider><AuthenticatedApp /></AuthProvider>
+}
+function AuthenticatedApp() {
+  const {user}=useAuth()
   return (
-    <AppProvider>
+    <AppProvider key={user?.id || 'anonymous'}>
       <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Suspense fallback={<Loading />}>
           <Routes>
             <Route path="/" element={<Landing />} />
-            <Route path="/e/:id" element={<Enquesta />} />
-            <Route path="/cartell/:id" element={<Cartell />} />
-            <Route path="/rrhh" element={<HRLayout />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/e/:id" element={<RequireAuth><Enquesta /></RequireAuth>} />
+            <Route path="/cartell/:id" element={<RequireAuth hr><Cartell /></RequireAuth>} />
+            <Route path="/rrhh" element={<RequireAuth hr><HRLayout /></RequireAuth>}>
               <Route index element={<HRInici />} />
               <Route path="enquestes" element={<Enquestes />} />
               <Route path="enquestes/:id" element={<Detall />} />
@@ -51,7 +58,7 @@ export default function App() {
               <Route path="world" element={<HRWorld />} />
               <Route path="placa" element={<HRPlaca />} />
             </Route>
-            <Route path="/app" element={<WorkerLayout />}>
+            <Route path="/app" element={<RequireAuth><WorkerLayout /></RequireAuth>}>
               <Route index element={<WorkerInici />} />
               <Route path="enquestes" element={<WorkerEnquestes />} />
               <Route path="placa" element={<WorkerPlaca />} />

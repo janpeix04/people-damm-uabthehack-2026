@@ -13,6 +13,9 @@ export const zonePins = () => ZONES.map(z => ({
   bg: MOODS[z.mood].bg,
   ink: MOODS[z.mood].ink,
   path: MOODS[z.mood].path,
+  mood: z.mood,
+  participation: z.participation,
+  alerts: z.alerts.length,
 }))
 
 interface Props extends Omit<MountOptions, 'avatar'> {

@@ -74,7 +74,7 @@ export default function TeamsDeliveryPreview({ selected, title, questions, close
                 <div className="rounded-[12px] bg-cream px-3 py-2.5"><BellRing size={15} className="text-red mb-1" aria-hidden /><strong className="block">{formatDate(closesAt)}</strong><span className="text-ink-muted">Data límit</span></div>
               </div>
               <div className="h-11 rounded-[12px] bg-red text-white text-sm font-extrabold grid place-items-center">Respondre l’enquesta</div>
-              <p className="text-[11.5px] leading-relaxed text-ink-muted">No cal iniciar sessió. Consulta com protegim l’anonimat abans de respondre.</p>
+              <p className="text-[11.5px] leading-relaxed text-ink-muted">Accedeix amb el teu compte. El contingut de les respostes continua sent anònim.</p>
             </div>
           </article>
         </div>

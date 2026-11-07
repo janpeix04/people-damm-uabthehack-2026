@@ -5,9 +5,9 @@ export class InputError extends Error {
 }
 
 const zones = {
-  malta: ['malta'], coccio: ['coccio'], fermentacio: ['fermentacio'], envasat: ['envasat'],
-  manteniment: ['manteniment'], logistica: ['logistica', 'planificacio_logistica'],
-  oficines: ['oficines', 'rrhh', 'data_ia_it'], comercial: ['comercial', 'grans_comptes'],
+  malta: ['fabrica'], coccio: ['fabrica'], fermentacio: ['fabrica'], envasat: ['fabrica'],
+  manteniment: ['fabrica'], logistica: ['logistica'],
+  oficines: ['oficina'], comercial: ['comercial'],
 };
 const channels = ['qr', 'app', 'teams', 'email', 'placa', 'world'];
 const date = v => v instanceof Date ? v.toISOString() : v;

@@ -6,10 +6,10 @@
 import { SURVEY_ZONES } from '../data/mock'
 import type { Question, ZoneKey } from '../data/types'
 
-const BASE = (import.meta.env.VITE_N8N_WEBHOOK_BASE ?? '/webhook').replace(/\/$/, '')
+const BASE = '/api/hr/automation'
 const TIMEOUT_MS = 60_000
 
-export const DEPARTAMENTS = ['Planta', 'Logística', 'Comercial', 'Oficina', 'Manager'] as const
+export const DEPARTAMENTS = ['Fàbrica', 'Logística', 'Comercial', 'Oficina'] as const
 export type Departament = (typeof DEPARTAMENTS)[number]
 export const COLECTIUS = DEPARTAMENTS
 export type Colectiu = Departament
@@ -103,7 +103,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   try {
     res = await fetch(`${BASE}/${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-App-Request': '1' },
       body: JSON.stringify(body),
       signal: ctrl.signal,
     })
@@ -112,6 +112,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   } finally {
     clearTimeout(timer)
   }
+  if (res.status === 401) window.dispatchEvent(new Event('auth-expired'))
   const data = await res.json().catch(() => null)
   if (!res.ok) {
     const msg = (data && (data.message || data.error)) || (res.status === 404 ? 'El workflow d’n8n no està actiu' : `n8n ha respost ${res.status}`)
@@ -162,8 +163,8 @@ export function toN8nQuestion(q: Question, i: number): N8nQuestion {
 }
 
 const ZONE_COLECTIU: Record<ZoneKey, Colectiu> = {
-  malta: 'Planta', coccio: 'Planta', fermentacio: 'Planta', envasat: 'Planta', manteniment: 'Planta',
-  logistica: 'Logística', oficines: 'Oficina', comercial: 'Comercial', jardi: 'Planta',
+  malta: 'Fàbrica', coccio: 'Fàbrica', fermentacio: 'Fàbrica', envasat: 'Fàbrica', manteniment: 'Fàbrica',
+  logistica: 'Logística', oficines: 'Oficina', comercial: 'Comercial', jardi: 'Fàbrica',
 }
 
 /** Col·lectiu amb més plantilla entre les zones triades (Planta si no n'hi ha cap). */
@@ -173,5 +174,5 @@ export function zonesToColectiu(zones: ZoneKey[]): Colectiu {
     const c = ZONE_COLECTIU[z.key]
     total[c] = (total[c] ?? 0) + z.headcount
   })
-  return (Object.entries(total).sort((a, b) => b[1] - a[1])[0]?.[0] as Colectiu) ?? 'Planta'
+  return (Object.entries(total).sort((a, b) => b[1] - a[1])[0]?.[0] as Colectiu) ?? 'Fàbrica'
 }

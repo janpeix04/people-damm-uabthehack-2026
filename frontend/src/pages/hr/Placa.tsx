@@ -6,6 +6,7 @@ import { Scene3D } from '../../components/Scene3D'
 import { DailyQuestion, FestaWeekPanel, TopicsModal } from '../../components/Panels'
 import { Modal } from '../../components/ui'
 import { useApp } from '../../store/AppContext'
+import UserSite from '../../components/UserSite'
 
 /** La Plaça vista per RRHH: l'escena a pantalla completa amb els controls flotant a sobre. */
 export default function HRPlaca() {
@@ -38,6 +39,7 @@ export default function HRPlaca() {
 
       <div className="absolute left-3 right-3 top-3 sm:left-4 sm:right-4 sm:top-4 flex gap-2 items-start pointer-events-none">
         <div className="flex-1 max-w-[380px] flex flex-col gap-2">
+          <div className="pointer-events-auto rounded-[14px] border border-line bg-paper/95 px-3 py-2 shadow-lift"><UserSite /><p className="text-[10px] text-ink-muted mt-1">Vista conjunta de tots els centres.</p></div>
           <FestaWeekPanel hr className="pointer-events-auto" />
           <div className="hidden lg:block pointer-events-auto bg-paper/95 border border-line rounded-[18px] shadow-lift px-4 py-3.5"><DailyQuestion hr /></div>
         </div>

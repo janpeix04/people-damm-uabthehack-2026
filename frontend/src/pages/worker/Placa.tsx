@@ -5,6 +5,7 @@ import { Scene3D } from '../../components/Scene3D'
 import { AvatarModal, DailyQuestion, FestaWeekPanel, IdeaModal, TopicsModal } from '../../components/Panels'
 import { Modal } from '../../components/ui'
 import { useApp } from '../../store/AppContext'
+import UserSite from '../../components/UserSite'
 import type { SceneHandle } from '../../three/engine.js'
 
 /**
@@ -23,13 +24,14 @@ export default function WorkerPlaca() {
   const answered = !!plazaWeek.myAnswer
 
   return (
-    <div className="relative h-[calc(100dvh-65px-76px-env(safe-area-inset-bottom,0px))] md:h-[calc(100dvh-73px)]">
+    <div className="relative h-full">
       <Scene3D ref={scene} kind="plaza" avatar={avatar} className="absolute inset-0" ariaLabel="La Plaça en 3D: font, terrassa, escenari i persones conversant"
         festa={plazaWeek.pct} reacted={plazaWeek.reacted} onReact={reactTopic}
         surveyTag={next ? `Enquesta nova · ${next.questions.reduce((a, q) => a + q.secs, 0)} s` : undefined}
         onAction={a => (a === 'survey' ? goSurvey() : a === 'idea' ? setModal('idea') : onStage())} />
 
       <div className="absolute left-3 top-3 w-[min(380px,calc(100%-80px))] flex flex-col gap-2 pointer-events-none">
+        <div className="pointer-events-auto rounded-[14px] border border-line bg-paper/95 px-3 py-2 shadow-lift"><UserSite /><p className="text-[10px] text-ink-muted mt-1">La Plaça reuneix tots els centres.</p></div>
         <FestaWeekPanel className="pointer-events-auto" />
         <div className="hidden lg:block pointer-events-auto bg-paper/95 border border-line rounded-[18px] shadow-lift px-4 py-3.5"><DailyQuestion /></div>
       </div>

@@ -69,6 +69,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_HOST: postgres
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
       POSTGRES_DB: ${POSTGRES_DB:-damm_pulse}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -108,6 +109,9 @@ services:
       - ./supabase/migrations/20261108090000_worker_app_wallet_rewards.sql:/docker-entrypoint-initdb.d/04-worker-app.sql:ro
       - ./supabase/migrations/20261108100000_plaza_preferences_reward_operations.sql:/docker-entrypoint-initdb.d/05-plaza-preferences-rewards.sql:ro
       - ./supabase/migrations/20261108110000_plaza_topic_reactions.sql:/docker-entrypoint-initdb.d/06-plaza-reactions.sql:ro
+      - ./supabase/migrations/20261108120000_local_auth.sql:/docker-entrypoint-initdb.d/07-local-auth.sql:ro
+      - ./supabase/migrations/20261108130000_user_sites.sql:/docker-entrypoint-initdb.d/08-user-sites.sql:ro
+      - ./supabase/migrations/20261108140000_four_departments.sql:/docker-entrypoint-initdb.d/09-four-departments.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-damm_pulse}"]
       interval: 10s

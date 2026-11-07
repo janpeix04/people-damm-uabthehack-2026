@@ -11,7 +11,7 @@ L'app utilitza `/api/app/*` via nginx i el servei intern `hr-api`. Les operacion
 - Participació setmanal: SQL compta una sola vegada per moneder i setmana, amb setmana i data en Europe/Madrid. Reaccions i preferències dels sis temes fixos queden en una taula privada; les etiquetes dels temes de demostració encara no són anàlisi IA.
 - Moneder, enquestes pendents, enviament, punts i bescanvis: `/api/app/wallet`, `/submit` i `/redeem` criden les funcions SQL existents. El servidor valida obligatorietat, pertinença, escala i opcions abans d'enviar. S'ha retirat el desament local alternatiu d'enviaments i bescanvis.
 
-La Plaça es refresca cada 30 segons i després de cada mutació. Les accions mostren l'èxit després del commit. Per a un moneder nou, la demo selecciona una persona sintètica disponible; no és SSO ni una identitat real. Es manté la limitació d'autenticació del servei local RRHH: no exposar a altres equips sense afegir autorització.
+La Plaça es refresca cada 30 segons i després de cada mutació. Les accions mostren l'èxit després del commit. L'accés requereix la sessió i els permisos descrits a [AUTH.md](AUTH.md). El moneder es resol al servidor a partir del compte; el navegador no pot seleccionar-ne un altre. Les persones continuen sent sintètiques i l'autenticació local no és SSO.
 
 ## Arrencada i proves
 

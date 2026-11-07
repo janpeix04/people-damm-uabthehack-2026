@@ -2,6 +2,8 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { ClipboardCheck, ClipboardList, Gift, Home, MessageCircle } from 'lucide-react'
 import { cn, Logo } from './ui'
 import { useApp } from '../store/AppContext'
+import { SessionButton } from '../store/AuthContext'
+import UserSite from './UserSite'
 
 const TABS: { to: string; label: string; Icon: typeof Home }[] = [
   { to: '/app', label: 'Inici', Icon: Home },
@@ -22,8 +24,8 @@ export default function WorkerLayout() {
   const answerNext = () => (pending.length ? nav(`/e/${pending[0].id}`) : toast('No tens cap enquesta pendent. Gràcies!'))
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-cream">
-      <header className="sticky top-0 z-40 bg-paper/90 backdrop-blur border-b border-line">
+    <div className={cn('flex flex-col bg-cream', fullBleed ? 'h-[100dvh]' : 'min-h-[100dvh]')}>
+      <header className="sticky top-0 z-40 shrink-0 bg-paper/90 backdrop-blur border-b border-line">
         <div className="max-w-6xl mx-auto h-16 md:h-[72px] px-4 md:px-6 flex items-center gap-6">
           <Link to="/app" className="flex items-center gap-2.5 shrink-0" aria-label="People Damm, inici">
             <Logo />
@@ -36,6 +38,7 @@ export default function WorkerLayout() {
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-2">
+            <SessionButton />
             <Link to="/app/recompenses" className="h-10 px-3 rounded-full bg-ink text-white text-sm font-extrabold flex items-center gap-1.5 tabular-nums" aria-label={`${points} punts`}>
               <Gift size={16} color="#FFD27A" aria-hidden />{points}
             </Link>
@@ -46,8 +49,9 @@ export default function WorkerLayout() {
           </div>
         </div>
       </header>
+      <div className="shrink-0 border-b border-line bg-paper px-4 md:px-6 py-2"><div className="max-w-6xl mx-auto"><UserSite /></div></div>
 
-      <main className={cn('flex-1 min-h-0', !fullBleed && 'pb-[96px] md:pb-0')}>
+      <main className={cn('flex-1 min-h-0', fullBleed ? 'pb-[calc(76px+env(safe-area-inset-bottom,0px))] md:pb-0' : 'pb-[96px] md:pb-0')}>
         <div key={location.pathname} className="page-enter h-full"><Outlet /></div>
       </main>
 

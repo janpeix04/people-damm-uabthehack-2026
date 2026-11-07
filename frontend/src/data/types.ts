@@ -22,6 +22,8 @@ export interface Zone {
   alerts: string[]
   trend: number[]
   survey: boolean // false per a espais que no són col·lectius (jardí)
+  /** Proposta d'acció (esborrany de l'IA): no es publica ni s'aplica sense l'aprovació de RRHH. */
+  suggestion?: { focus: string; why: string; action: string }
 }
 
 export type QType = 'faces' | 'list' | 'scale' | 'yesno' | 'text'

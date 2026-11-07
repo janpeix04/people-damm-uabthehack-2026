@@ -18,11 +18,7 @@ begin
     raise exception 'Expected 14 Damm sites, found %', (select count(*) from public.sites);
   end if;
 
-  -- Check RRHH and all 4 collectives exist in departments and synthetic_people
-  if not exists (select 1 from public.departments where code = 'rrhh') then
-    raise exception 'RRHH department is missing';
-  end if;
-
+  -- Works both before and after the four-department consolidation.
   if (select count(distinct collective) from public.departments) <> 4 then
     raise exception 'Expected 4 collectives in departments';
   end if;

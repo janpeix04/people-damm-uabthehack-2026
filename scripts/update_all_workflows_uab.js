@@ -20,7 +20,7 @@ const item = $input.first().json;
 const body = item.body || item;
 
 const objetivo = String(body.objetivo || "Conocer la adaptación del equipo y descansos").trim();
-const colectiuRaw = String(body.colectiu || "Planta").trim();
+const colectiuRaw = String(body.colectiu || "Fàbrica").trim();
 const centreTipus = String(body.centre_tipus || "Fàbrica").trim();
 const duradaMax = Number(body.durada_max || 90);
 const restriccions = String(body.restriccions || "No señalar a personas individuales ni evaluar desempeño personal").trim();
@@ -29,14 +29,13 @@ const tonoPorDefecto = "Cercano, entendible, empático, con lenguaje neutro e in
 const tono = String(body.tono || tonoPorDefecto).trim();
 
 const collectiveRules = {
-  Planta: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Mòbil-QR", to: "Cercano, entendible, empático, con lenguaje neutro e inclusivo, directo y sin argot complejo.", temps_recomanat_segons: 75 },
+  Fàbrica: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Mòbil-QR", to: "Cercano, entendible, empático, con lenguaje neutro e inclusivo, directo y sin argot complejo.", temps_recomanat_segons: 75 },
   Logística: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Mòbil-QR", to: "Cercano, ágil, entendible, con lenguaje neutro e inclusivo, centrado en soporte mutuo.", temps_recomanat_segons: 75 },
   Comercial: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Mòbil-Link", to: "Cercano, motivador, entendible, con lenguaje neutro e inclusivo.", temps_recomanat_segons: 90 },
   Oficina: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Teams / Correu", to: "Colaborativo, cercano, entendible, con lenguaje neutro e inclusivo.", temps_recomanat_segons: 100 },
-  Manager: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Teams / Correu", to: "Estratégico pero muy cercano, facilitador, entendible, con lenguaje neutro e inclusivo.", temps_recomanat_segons: 110 }
 };
 
-const primaryKey = Object.keys(collectiveRules).find(k => colectiuRaw.toLowerCase().includes(k.toLowerCase())) || "Planta";
+const primaryKey = Object.keys(collectiveRules).find(k => colectiuRaw.toLowerCase().includes(k.toLowerCase())) || "Fàbrica";
 const perfil = collectiveRules[primaryKey];
 
 const systemPrompt = \`You are the expert People Analytics and Employee Experience AI assistant for Damm brewery.
@@ -159,9 +158,9 @@ const isCat = !isEsp && !isEng;
 if (!survey || !survey.titulo || !Array.isArray(survey.preguntas) || survey.preguntas.length < 3) {
   if (isEsp) {
     survey = {
-      titulo: \`Pulso de Opinión: \${prevContext.colectiu || "Planta"} (\${prevContext.centre_tipus || "Fábrica"})\`,
+      titulo: \`Pulso de Opinión: \${prevContext.colectiu || "Fàbrica"} (\${prevContext.centre_tipus || "Fábrica"})\`,
       introduccion_transparencia: "Hola. Esta consulta es 100% anónima y confidencial (k-anonimato garantizado). Tu voz nos ayuda a construir un entorno más cercano, cómodo e integrador para todo el equipo. Tiempo estimado: 60 segundos.",
-      colectivo: prevContext.colectiu || "Planta",
+      colectivo: prevContext.colectiu || "Fàbrica",
       centre_tipus: prevContext.centre_tipus || "Fábrica",
       canal_sugerido: prevContext.perfil?.canal_preferit || "Mòbil-QR",
       idioma: "Castellano",
@@ -178,7 +177,7 @@ if (!survey || !survey.titulo || !Array.isArray(survey.preguntas) || survey.preg
     survey = {
       titulo: \`Pulse Survey: \${prevContext.colectiu || "Plant"} (\${prevContext.centre_tipus || "Brewery"})\`,
       introduccion_transparencia: "Welcome. This survey is 100% confidential and anonymous (k-anonymity guaranteed). Your perspective helps us build a supportive and inclusive workspace for everyone. Estimated time: 60 seconds.",
-      colectivo: prevContext.colectiu || "Planta",
+      colectivo: prevContext.colectiu || "Fàbrica",
       centre_tipus: prevContext.centre_tipus || "Brewery",
       canal_sugerido: prevContext.perfil?.canal_preferit || "Mòbil-QR",
       idioma: "English",
@@ -193,9 +192,9 @@ if (!survey || !survey.titulo || !Array.isArray(survey.preguntas) || survey.preg
     };
   } else {
     survey = {
-      titulo: \`Pols d'Opinió: \${prevContext.colectiu || "Planta"} (\${prevContext.centre_tipus || "Fàbrica"})\`,
+      titulo: \`Pols d'Opinió: \${prevContext.colectiu || "Fàbrica"} (\${prevContext.centre_tipus || "Fàbrica"})\`,
       introduccion_transparencia: "Hola. Aquesta consulta és 100% confidencial i anònima (k-anonimat garantit). La teva opinió ens ajuda a construir un entorn proper, còmode i integrador per a tot l'equip. Temps estimat: 60 segons.",
-      colectivo: prevContext.colectiu || "Planta",
+      colectivo: prevContext.colectiu || "Fàbrica",
       centre_tipus: prevContext.centre_tipus || "Fàbrica",
       canal_sugerido: prevContext.perfil?.canal_preferit || "Mòbil-QR",
       idioma: "Català",
@@ -300,7 +299,7 @@ return [
       survey: {
         titulo: survey.titulo,
         introduccion_transparencia: survey.introduccion_transparencia,
-        colectivo: survey.colectivo || survey.colectiu || prevContext?.colectiu || "Planta",
+        colectivo: survey.colectivo || survey.colectiu || prevContext?.colectiu || "Fàbrica",
         centre_tipus: survey.centre_tipus || prevContext?.centre_tipus || "Fàbrica",
         canal_sugerido: survey.canal_sugerido || "Mòbil-QR",
         idioma: prevContext?.idioma || survey.idioma || "Castellano",
@@ -533,7 +532,7 @@ const wf04Nodes = wf04Get.nodes.map(node => {
     clima_medio_anterior: 3.7,
     variacion_delta: 0.1,
     desglose_canales: { "Mòbil-QR": 30, "Teams / Correu": 20 },
-    desglose_colectivos: { Planta: 35, Logística: 15 }
+    desglose_colectivos: { Fàbrica: 35, Logística: 15 }
   };
 
   let insights = item.insights_ia;
@@ -556,7 +555,7 @@ const wf04Nodes = wf04Get.nodes.map(node => {
     insights = statsNode.insights_ia || {
       resumen_ejecutivo: "Análisis completado satisfactoriamente bajo agregación k>=5.",
       recomendaciones_accionables: [
-        { prioridad: "Alta", accion: "Reforzar comunicación sobre turnos y descansos", colectivo: "Planta", plazo: "15 días" },
+        { prioridad: "Alta", accion: "Reforzar comunicación sobre turnos y descansos", colectivo: "Fàbrica", plazo: "15 días" },
         { prioridad: "Media", accion: "Mantenimiento preventivo de herramientas de trabajo", colectivo: "Logística", plazo: "3 semanas" }
       ],
       propuesta_cierre_ciclo: {

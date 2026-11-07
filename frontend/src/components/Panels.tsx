@@ -117,7 +117,7 @@ export function ZonePanel({ zone, hr, className }: { zone: ZoneKey; hr?: boolean
   const w = MOODS[z.mood]
   const hidden = z.score == null
   return (
-    <section aria-live="polite" className={cn('bg-paper/95 backdrop-blur border border-line rounded-[22px] shadow-lift p-4 sm:p-5 flex flex-col gap-2.5', className)}>
+    <section aria-live="polite" className={cn('bg-paper/95 backdrop-blur border border-line rounded-[22px] shadow-lift p-4 sm:p-5 flex flex-col gap-2.5 max-h-[62dvh] overflow-y-auto', className)}>
       <div className="flex gap-3 items-center">
         <MoodBadge w={z.mood} size={52} icon={28} />
         <div className="min-w-0 flex-1"><div className="text-xs font-semibold text-ink-muted">{z.area}{z.headcount ? ` · ${z.headcount} persones` : ''}</div><h2 className="serif text-[24px] leading-tight">{z.name}</h2></div>
@@ -135,8 +135,32 @@ export function ZonePanel({ zone, hr, className }: { zone: ZoneKey; hr?: boolean
       {hidden && z.key === 'manteniment' && <><Meter value={70} thin /><span className="text-[13px] font-semibold">{z.responses} de 10 respostes · falten {10 - z.responses} perquè es pugui mostrar l’emoció de l’equip</span></>}
       {z.key === 'jardi' && <span className="text-[13px] font-semibold">Depèn de la participació de tota la planta (Festa de la plaça).</span>}
       {hr && z.alerts.length > 0 && <div className="flex flex-col gap-1.5">{z.alerts.map(a => <div key={a} className="text-[13px] leading-snug bg-warn-bg text-[#5A3A10] rounded-[12px] px-3 py-2">⚠ {a}</div>)}</div>}
-      {hr && z.survey && <div className="flex gap-2 flex-wrap"><Link to="/rrhh/crear" className="btn-ink !h-9 !text-[13px]">Microenquesta per a {z.name}</Link></div>}
+      {hr && z.suggestion && <ActionDraft key={z.key} zone={z.key} name={z.name} s={z.suggestion} />}
+      {hr && z.survey && !z.suggestion && <div className="flex gap-2 flex-wrap"><Link to="/rrhh/crear" className="btn-ink !h-9 !text-[13px]">Microenquesta per a {z.name}</Link></div>}
     </section>
+  )
+}
+
+/** Proposta d'acció per a una zona: és un esborrany i no fa res fins que RRHH l'aprova. */
+function ActionDraft({ zone, name, s }: { zone: ZoneKey; name: string; s: { focus: string; why: string; action: string } }) {
+  const [state, setState] = useState<'draft' | 'ok' | 'no'>('draft')
+  if (state === 'no') return <button onClick={() => setState('draft')} className="self-start text-xs font-semibold text-ink-muted underline">Proposta descartada · desfer</button>
+  return (
+    <div className="rounded-[14px] border border-dashed border-[#C9BBA8] bg-[#FBF7F0] px-3 py-2.5 flex flex-col gap-1.5">
+      <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-ink-muted">
+        <span>Proposta d’acció</span>
+        <span className={cn('rounded-full px-2 py-0.5 normal-case tracking-normal', state === 'ok' ? 'bg-ok-bg text-ok' : 'bg-[#EFE6D8] text-[#6B5A44]')}>{state === 'ok' ? 'Aprovada per RRHH' : 'Esborrany de l’IA · cal aprovació'}</span>
+      </div>
+      <p className="text-[13px] leading-snug"><strong>Què preocupa més:</strong> {s.focus}. <span className="text-ink-soft">{s.why}</span></p>
+      <p className="text-[13px] leading-snug"><strong>Què proposem:</strong> {s.action}</p>
+      {state === 'draft'
+        ? <div className="flex gap-2 flex-wrap pt-0.5">
+            <button onClick={() => setState('ok')} className="btn-ink !h-9 !text-[13px]">Aprovar</button>
+            <Link to={`/rrhh/crear?zona=${zone}`} className="btn-line !h-9 !text-[13px]">Editar com a microenquesta</Link>
+            <button onClick={() => setState('no')} className="btn-line !h-9 !text-[13px]">Descartar</button>
+          </div>
+        : <Link to={`/rrhh/crear?zona=${zone}`} className="btn-ink !h-9 !text-[13px] self-start">Preparar la microenquesta per a {name}</Link>}
+    </div>
   )
 }
 
@@ -160,7 +184,7 @@ export function IdeaModal({ open, onClose }: { open: boolean; onClose: () => voi
     <Modal open={open} onClose={close} title={step === 'done' ? 'Idea rebuda' : typeof step === 'number' ? 'Desant…' : 'Bústia d’idees'}>
       {step === 'form' && (
         <>
-          <p className="text-sm text-ink-muted">Sense iniciar sessió. Ningú sabrà que l’has escrit tu.</p>
+          <p className="text-sm text-ink-muted">La idea es desa sense vincular-la al teu compte.</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">{IDEA_CATEGORIES.map((c, i) => <button key={c} aria-pressed={cat === i} onClick={() => setCat(i)} className="toggle p-3 text-[13px] font-bold text-center">{c}</button>)}</div>
           <label htmlFor="idea" className="text-[13px] font-bold">La teva idea o opinió</label>
           <textarea id="idea" rows={4} className="input !text-[15px] !rounded-[16px]" value={text} onChange={e => setText(e.target.value)} placeholder="Per exemple: estaria bé tenir el calendari de torns visible al menjador." />

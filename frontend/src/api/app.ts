@@ -74,8 +74,8 @@ async function post<T>(path: string, body: Record<string, unknown>): Promise<T> 
   try {
     res = await fetch(`${BASE}${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ wallet: walletToken(), ...body }),
+      headers: { 'Content-Type': 'application/json', 'X-App-Request': '1' },
+      body: JSON.stringify(body),
       signal: ctrl.signal,
     })
   } catch {
@@ -83,6 +83,7 @@ async function post<T>(path: string, body: Record<string, unknown>): Promise<T> 
   } finally {
     clearTimeout(timer)
   }
+  if (res.status === 401) window.dispatchEvent(new Event('auth-expired'))
   const data = await res.json().catch(() => null)
   if (!res.ok || !data) throw new AppApiError(data?.error && Object.prototype.hasOwnProperty.call(ERROR_MESSAGES, data.error) ? data.error as AppErrorCode : res.status === 404 ? 'network_error' : 'server_error')
   return data as T

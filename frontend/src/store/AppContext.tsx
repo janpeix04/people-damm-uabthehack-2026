@@ -4,6 +4,8 @@ import type { ActionStatus, Avatar, DailyQuestion, Idea, Initiative, Reward, Sur
 import { AppApiError, openWallet, redeemReward, submitSurvey as submitSurveyApi, type WalletState } from '../api/app'
 import { plazaCall, type PlazaState } from '../api/plaza'
 import { listHrSurveys, saveHrSurvey, updateHrStatus } from '../api/hr'
+import { useAuth } from './AuthContext'
+import { hrPlazaCall } from '../api/plaza'
 
 export const POINTS_PER_SURVEY = 50
 
@@ -141,6 +143,7 @@ interface Ctx extends Persisted {
 const AppCtx = createContext<Ctx | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const {user}=useAuth()
   const [st, setSt] = useState<Persisted>(load)
   const [toasts, setToasts] = useState<{ id: number; msg: string }[]>([])
   const [remote, setRemote] = useState<Remote | null>(null)
@@ -149,23 +152,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [plazaError, setPlazaError] = useState<string | null>(null)
   const [plazaLoading, setPlazaLoading] = useState(true)
   const refreshPlaza = useCallback(async () => {
-    try { setPlazaRemote(await plazaCall('state')); setPlazaError(null) }
+    if(!user){setPlazaLoading(false);return}
+    try { setPlazaRemote(user.role==='worker'?await plazaCall('state'):await hrPlazaCall<PlazaState>({action:'state'})); setPlazaError(null) }
     catch (e) { setPlazaError(e instanceof Error ? e.message : 'Error de connexio') }
     finally { setPlazaLoading(false) }
-  }, [])
+  }, [user])
   useEffect(() => { void refreshPlaza(); const timer = setInterval(() => void refreshPlaza(), 30000); return () => clearInterval(timer) }, [refreshPlaza])
   const [hrSurveys, setHrSurveys] = useState<Survey[]>([])
   const [hrLoading, setHrLoading] = useState(true)
   const [hrError, setHrError] = useState<string | null>(null)
   const refreshHr = useCallback(async () => {
+    if(!user||user.role==='worker'){setHrLoading(false);return}
     setHrLoading(true)
     try { setHrSurveys(await listHrSurveys()); setHrError(null) }
     catch (e) { setHrError(e instanceof Error ? e.message : 'Error carregant enquestes') }
     finally { setHrLoading(false) }
-  }, [])
+  }, [user])
   useEffect(() => { void refreshHr() }, [refreshHr])
 
   const refreshWallet = useCallback(async () => {
+    if(user?.role!=='worker'){setBackend('local');return}
     try {
       const w = await openWallet()
       setRemote(w)
@@ -174,7 +180,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // Sense backend (p. ex. només `npm run dev`): l'app continua en mode demo local.
       if (!(e instanceof AppApiError) || e.code === 'network_error' || e.code === 'server_error') setBackend(b => (b === 'db' ? b : 'local'))
     }
-  }, [])
+  }, [user])
 
   useEffect(() => { refreshWallet() }, [refreshWallet])
 

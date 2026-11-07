@@ -97,7 +97,7 @@ export default function Teams() {
           </div>
           <div className="rounded-[14px] bg-cream px-4 py-3 text-[13px]">
             <strong className="block">{synced ? '727 identitats demo sincronitzades' : '727 identitats sintètiques disponibles'}</strong>
-            <span className="text-ink-muted">Fàbriques, logística, comercial i oficines</span>
+            <span className="text-ink-muted">Fàbrica, Logística, Comercial i Oficina</span>
           </div>
           <div className="flex gap-2 items-start text-[12.5px] leading-relaxed text-ink-muted">
             <ShieldCheck size={17} className="text-red shrink-0 mt-px" aria-hidden />

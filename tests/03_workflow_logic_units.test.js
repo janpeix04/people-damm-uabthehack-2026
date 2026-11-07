@@ -5,11 +5,10 @@ import assert from 'node:assert/strict';
 // 1. LÓGICA DE WF-01: Perfilado por Colectivo, Tono Inclusivo y Análisis
 // =================================================================
 const COLLECTIVE_RULES = {
-  Planta: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Mòbil-QR", to: "Cercano, entendible, empático, con lenguaje neutro e inclusivo, directo y sin argot complejo.", temps_recomanat_segons: 75 },
+  Fàbrica: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Mòbil-QR", to: "Cercano, entendible, empático, con lenguaje neutro e inclusivo, directo y sin argot complejo.", temps_recomanat_segons: 75 },
   Logística: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Mòbil-QR", to: "Cercano, ágil, entendible, con lenguaje neutro e inclusivo, centrado en soporte mutuo.", temps_recomanat_segons: 75 },
   Comercial: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Mòbil-Link", to: "Cercano, motivador, entendible, con lenguaje neutro e inclusivo.", temps_recomanat_segons: 90 },
   Oficina: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Teams / Correu", to: "Colaborativo, cercano, entendible, con lenguaje neutro e inclusivo.", temps_recomanat_segons: 100 },
-  Manager: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Teams / Correu", to: "Estratégico pero muy cercano, facilitador, entendible, con lenguaje neutro e inclusivo.", temps_recomanat_segons: 110 }
 };
 
 const LEADING_PATTERNS = [
@@ -65,7 +64,7 @@ function analyzeSurveyQuality(survey, objetivo, idioma) {
 }
 
 test('WF-01 Lógica: Perfilado operativo para Fábrica y Planta respeta mínimo de 3 preguntas sin máximo y tono cercano/inclusivo', () => {
-  const perfilPlanta = COLLECTIVE_RULES.Planta;
+  const perfilPlanta = COLLECTIVE_RULES.Fàbrica;
   assert.equal(perfilPlanta.min_preguntes, 3, 'Debe haber un mínimo de 3 preguntas');
   assert.equal(perfilPlanta.max_preguntes, undefined, 'No debe existir límite máximo');
   assert.match(perfilPlanta.to, /cercano/i, 'El tono por defecto debe ser cercano');

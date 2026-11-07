@@ -732,6 +732,45 @@ function buildPlaza(){
   planter(11.2, -4.9, 3.2, 0, true); planter(7.7, -9.9, 3, Math.PI / 2, false);
   planter(15.4, 7.6, 3, Math.PI / 2, true); planter(-16, 3.2, 2.6, Math.PI / 2, false);
 
+  // caixes de cervesa de plàstic vermell, amb el nom als costats i ampolles a la de dalt
+  var CRATE_M = std('#6E0309', .8), CRATE_IN = std('#3A0105', .9), CR_GLASS = std('#1E0A02', .35, .1), SLOT_M = std('#3A0408', .8);
+  var CR = { w: .58, h: .3, d: .4 };
+  var NECK_G = new THREE.CylinderGeometry(.02, .044, .1, 8), TOP_G = new THREE.CylinderGeometry(.019, .021, .08, 8), CAP_G = new THREE.CylinderGeometry(.024, .024, .016, 8);
+  function crate(p, y, ry, full){
+    var c = new THREE.Group(); c.position.y = y; c.rotation.y = ry; p.add(c);
+    var t = .028, W = CR.w, H = CR.h, D = CR.d;
+    bx(W, .03, D, CRATE_IN, 0, .015, 0, c);
+    [-1, 1].forEach(function(s){
+      bx(W, H, t, CRATE_M, 0, H / 2, s * (D - t) / 2, c);
+      bx(t, H, D - t * 2, CRATE_M, s * (W - t) / 2, H / 2, 0, c);
+      // nom als costats llargs i nansa als curts
+      var lg = mesh(BRAND_G, BRAND_W, 0, H * .45, s * (D / 2 + .002), c, false, false); if (s < 0) lg.rotation.y = Math.PI;
+      bx(.006, .05, .16, SLOT_M, s * (W / 2 + .001), H - .065, 0, c, false, false);
+      // nervis horitzontals que marquen la vora
+      bx(W + .012, .03, t + .012, CRATE_M, 0, H - .015, s * (D - t) / 2, c, false);
+      bx(t + .012, .03, D, CRATE_M, s * (W - t) / 2, H - .015, 0, c, false);
+    });
+    if (full) for (var i = 0; i < 4; i++) for (var j = 0; j < 3; j++) {
+      var bxp = -W / 2 + .08 + i * (W - .16) / 3, bzp = -D / 2 + .08 + j * (D - .16) / 2;
+      mesh(NECK_G, CR_GLASS, bxp, H - .03, bzp, c, false);
+      mesh(TOP_G, CR_GLASS, bxp, H + .06, bzp, c, false);
+      mesh(CAP_G, BOTTLE.capM, bxp, H + .105, bzp, c, false);
+    }
+    return c;
+  }
+  // pila de `n` caixes una mica desquadrades; només la de dalt porta ampolles a la vista
+  function crateStack(x, z, ry, n, full){
+    var g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry || 0; S.add(g);
+    for (var k = 0; k < n; k++) crate(g, k * (CR.h + .005), rr(-.12, .12), full !== false && k === n - 1);
+    return g;
+  }
+  // al costat de l'escenari, de la barra, de les terrasses i a les cantonades
+  crateStack(-4.9, -11.4, .2, 3); crateStack(-4.3, -10.8, -.3, 1, false); crateStack(5, -11.5, -.15, 2);
+  crateStack(-15.1, -1.7, .5, 2); crateStack(-14.5, -1.1, .9, 1);
+  crateStack(12.4, -12.1, .1, 3, false); crateStack(13, -11.5, .6, 1);
+  crateStack(12.6, 10.8, -.4, 2); crateStack(13.3, 11.2, .3, 1, false);
+  crateStack(-12.3, 10.7, .25, 1); crateStack(8.5, 9.4, -.6, 1);
+
   // parada de l'enquesta
   var kiosk = new THREE.Group(); kiosk.position.set(-13, 0, -4.5); kiosk.rotation.y = .55; S.add(kiosk); kiosk.userData.action = 'survey';
   // barra de fusta vermella amb pèrgola, canyís i llums, com les terrasses Damm
@@ -935,7 +974,8 @@ function buildPlaza(){
   // Zona caminable i obstacles (cercles [x, z, radi]): font, taules, barra, bústia, racó de butaques i fanals.
   var WALK = [-14.5, 14.5, -9.2, 13.8];
   var OBST = [[0, -2, 3.9], [-8.7, -.4, 1.6], [8.6, .2, 1.6], [10, -10.6, 1.6], [13.9, -7.6, 1.6], [-13, -4.5, 2.7], [15, -2.5, 1], [-11.2, -9.9, 2], [11.2, -4.9, 1.8],
-    [-7, -8, .4], [7, -8, .4], [-3.1, 1.3, 1], [3.1, 1.3, 1], [-7.5, 8.5, .4], [7.5, 8.5, .4], [-14, 9, 1.3]];
+    [-7, -8, .4], [7, -8, .4], [-3.1, 1.3, 1], [3.1, 1.3, 1], [-7.5, 8.5, .4], [7.5, 8.5, .4], [-14, 9, 1.3],
+    [-4.7, -11.1, .8], [5, -11.5, .5], [-14.8, -1.4, .8], [12.7, -11.8, .7], [12.9, 11, .7], [-12.3, 10.7, .45], [8.5, 9.4, .45]];
   function outOfObstacles(x, z){
     for (var i = 0; i < OBST.length; i++) { var c = OBST[i], ex = x - c[0], ez = z - c[1], d = Math.sqrt(ex * ex + ez * ez); if (d < c[2]) { if (d < 1e-3) { ex = 1; ez = 0; d = 1; } x = c[0] + ex / d * c[2]; z = c[1] + ez / d * c[2]; } }
     return [Math.min(Math.max(x, WALK[0]), WALK[1]), Math.min(Math.max(z, WALK[2]), WALK[3])];
@@ -1098,55 +1138,71 @@ function buildWorld(){
     });
   }
 
-  // ---------- emocions dels equips ----------
-  // Cada zona mostra l'emoció predominant de l'equip (dada agregada, mai individual).
-  var FACEC = {};
-  function faceTex(mood){
-    if (FACEC[mood]) return FACEC[mood];
-    var P = { happy: ['#FFD45C', '#E0A21A'], uneasy: ['#FFE7A8', '#D9A441'], stressed: ['#FF9A86', '#D2483A'], nodata: ['#E3E7EC', '#9AA3AE'] }[mood];
-    return (FACEC[mood] = makeTex(256, 256, function(g){
-      g.clearRect(0, 0, 256, 256);
-      var gr = g.createRadialGradient(100, 90, 20, 128, 128, 118); gr.addColorStop(0, '#FFFFFF'); gr.addColorStop(.25, P[0]); gr.addColorStop(1, P[1]);
-      g.fillStyle = '#FFFFFF'; g.beginPath(); g.arc(128, 128, 124, 0, Math.PI * 2); g.fill();
-      g.fillStyle = gr; g.beginPath(); g.arc(128, 128, 112, 0, Math.PI * 2); g.fill();
-      g.fillStyle = '#2B201C'; g.strokeStyle = '#2B201C'; g.lineWidth = 13; g.lineCap = 'round';
-      if (mood === 'nodata') { g.font = '800 150px Figtree, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#5E6672'; g.fillText('?', 128, 138); return; }
-      [92, 164].forEach(function(x){ g.beginPath(); g.ellipse(x, 104, 11, mood === 'stressed' ? 12 : 16, 0, 0, Math.PI * 2); g.fill(); });
-      if (mood === 'stressed') { g.beginPath(); g.moveTo(70, 76); g.lineTo(108, 86); g.moveTo(186, 76); g.lineTo(148, 86); g.stroke(); }
-      g.beginPath();
-      if (mood === 'happy') { g.arc(128, 140, 46, .15 * Math.PI, .85 * Math.PI); }
-      else if (mood === 'uneasy') { g.moveTo(90, 168); g.quadraticCurveTo(128, 158, 166, 170); }
-      else { g.arc(128, 196, 42, 1.2 * Math.PI, 1.8 * Math.PI); }
-      g.stroke();
-      if (mood === 'happy') { g.fillStyle = 'rgba(255,120,120,.45)'; [70, 186].forEach(function(x){ g.beginPath(); g.ellipse(x, 146, 17, 11, 0, 0, Math.PI * 2); g.fill(); }); }
-    }));
+  // ---------- fars d'estat dels equips ----------
+  // Cada zona porta al terrat un far del color de l'emoció predominant (dada agregada, mai individual)
+  // i un got que s'omple de cervesa segons la participació. Si hi ha alertes, hi parpelleja un avís.
+  var BEACON_C = { happy: '#06701E', uneasy: '#C77A00', stressed: '#B00C08', nodata: '#59626C', lock: '#59626C' };
+  var WARN_TEX = makeTex(128, 128, function(g){
+    g.clearRect(0, 0, 128, 128);
+    g.fillStyle = '#FFFFFF'; g.beginPath(); g.moveTo(64, 6); g.lineTo(124, 116); g.lineTo(4, 116); g.closePath(); g.fill();
+    g.fillStyle = '#F2B01E'; g.beginPath(); g.moveTo(64, 20); g.lineTo(112, 108); g.lineTo(16, 108); g.closePath(); g.fill();
+    g.fillStyle = '#2B201C'; g.font = '900 64px Figtree, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('!', 64, 76);
+  });
+  var B_MAST = new THREE.CylinderGeometry(.16, .22, 4.2, 10), B_BASE = new THREE.CylinderGeometry(.9, 1.1, .5, 18);
+  var B_LAMP = new THREE.SphereGeometry(1.05, 24, 16), B_CAGE = new THREE.TorusGeometry(1.12, .08, 6, 24), B_CAP = new THREE.ConeGeometry(.75, .55, 18);
+  var B_GLASS = new THREE.CylinderGeometry(.95, .78, 6, 24, 1, true), B_BEER = new THREE.CylinderGeometry(.86, .7, 1, 24), B_FOAM = new THREE.CylinderGeometry(.9, .9, .4, 24);
+  var B_TICK = new THREE.TorusGeometry(.97, .06, 6, 28);
+  var METAL = std('#3A3D42', .45, .6), GLASS_M = new THREE.MeshStandardMaterial({ color: '#E8F2F6', transparent: true, opacity: .16, roughness: .08, depthWrite: false, side: THREE.DoubleSide });
+  var BEER_W = std('#8E3E02', .3, 0, { emissive: '#2A1000', emissiveIntensity: .5 }), FOAM_W = std('#FFF8EA', .9), TICK_M = std('#C8102E', .5);
+  var beacons = {};
+  function beacon(key, x, y, z){
+    var g = new THREE.Group(); g.position.set(x, y, z); g.scale.setScalar(1.7); g.userData.keep = true; S.add(g);
+    // pal amb el llum
+    mesh(B_BASE, METAL, 0, .25, 0, g);
+    mesh(B_MAST, METAL, 0, 2.5, 0, g);
+    var lampM = new THREE.MeshBasicMaterial({ color: '#FFFFFF', toneMapped: false });
+    var lamp = mesh(B_LAMP, lampM, 0, 5.4, 0, g, false);
+    [0, Math.PI / 2].forEach(function(r){ mesh(B_CAGE, METAL, 0, 5.4, 0, g, false).rotation.y = r; });
+    mesh(B_CAP, METAL, 0, 6.65, 0, g, false);
+    var glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.soft, color: '#FFFFFF', transparent: true, opacity: .7, depthWrite: false, fog: false }));
+    glow.position.y = 5.4; glow.scale.set(7, 7, 1); g.add(glow);
+    // got de participació: s'omple de cervesa; la marca vermella és l'objectiu del 60 %
+    var cup = new THREE.Group(); cup.position.set(2.6, .25, 0); g.add(cup);
+    mesh(B_BASE, METAL, 0, 0, 0, cup).scale.set(1, .4, 1);
+    var beer = mesh(B_BEER, BEER_W, 0, .5, 0, cup, false);
+    var foam = mesh(B_FOAM, FOAM_W, 0, 1, 0, cup, false);
+    mesh(B_GLASS, GLASS_M, 0, 3.1, 0, cup, false, false);
+    mesh(B_TICK, TICK_M, 0, .1 + 6 * .6, 0, cup, false).rotation.x = Math.PI / 2;
+    var warn = new THREE.Sprite(new THREE.SpriteMaterial({ map: WARN_TEX, transparent: true, depthWrite: false, fog: false }));
+    warn.position.set(-1.9, 6.6, 0); warn.scale.set(2.6, 2.6, 1); warn.visible = false; g.add(warn);
+    var B = beacons[key] = { g: g, lamp: lamp, glow: glow, beer: beer, foam: foam, warn: warn, mood: 'nodata', fill: 0, target: 0, ph: x * .37 };
+    set(B, 'nodata', 0, false);
+    return B;
   }
-  var HEART = makeTex(64, 64, function(g){ g.clearRect(0, 0, 64, 64); g.fillStyle = '#FF5A6E'; g.beginPath(); g.moveTo(32, 56); g.bezierCurveTo(4, 36, 6, 8, 32, 20); g.bezierCurveTo(58, 8, 60, 36, 32, 56); g.fill(); });
-  var DROP = makeTex(64, 64, function(g){ g.clearRect(0, 0, 64, 64); g.fillStyle = '#7FB6E8'; g.beginPath(); g.moveTo(32, 6); g.bezierCurveTo(46, 28, 52, 38, 32, 58); g.bezierCurveTo(12, 38, 18, 28, 32, 6); g.fill(); g.fillStyle = 'rgba(255,255,255,.7)'; g.beginPath(); g.ellipse(26, 40, 4, 7, -.3, 0, Math.PI * 2); g.fill(); });
-  function moodFace(x, y, z, mood, s){
-    var g = new THREE.Group(); g.position.set(x, y, z); S.add(g);
-    var glowCol = { happy: '#FFE08A', uneasy: '#FFE9B8', stressed: '#FF8E7E', nodata: '#FFFFFF' }[mood];
-    var glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.soft, color: glowCol, transparent: true, opacity: mood === 'nodata' ? .5 : .75, depthWrite: false, fog: false })); glow.scale.set(15 * s, 15 * s, 1); g.add(glow);
-    var face = new THREE.Sprite(new THREE.SpriteMaterial({ map: faceTex(mood), transparent: true, depthWrite: false, fog: false })); face.scale.set(8.5 * s, 8.5 * s, 1); g.add(face);
-    // partícules: cors que pugen (content) o gotes de suor que cauen (estressat)
-    var parts = [];
-    if (mood === 'happy' || mood === 'stressed') for (var i = 0; i < 5; i++) {
-      var p = new THREE.Sprite(new THREE.SpriteMaterial({ map: mood === 'happy' ? HEART : DROP, transparent: true, depthWrite: false, fog: false })); p.scale.set(1.6 * s, 1.6 * s, 1); g.add(p);
-      parts.push({ p: p, ph: i / 5, a: i * 1.3 });
-    }
-    anims.push(function(dt, t){
-      g.position.y = y + Math.sin(t * (mood === 'stressed' ? 1.6 : .9) + x) * .35;
-      if (mood === 'stressed' && !RM) face.material.rotation = Math.sin(t * 9) * .05;
-      if (mood === 'happy' && !RM) face.material.rotation = Math.sin(t * 1.2 + x) * .08;
-      glow.material.opacity = (mood === 'nodata' ? .45 : .62) + Math.sin(t * 2 + x) * .12;
-      parts.forEach(function(q){
-        var L = RM ? q.ph : (t * .35 + q.ph) % 1, r = 4.6 * s;
-        if (mood === 'happy') q.p.position.set(Math.cos(q.a) * r * .8, 2.2 * s + L * 5.5 * s, Math.sin(q.a) * .4);
-        else q.p.position.set((q.a % 2 ? 1 : -1) * (3.1 + (q.a % 1)) * s, 1.6 * s - L * 5 * s, .3);
-        q.p.material.opacity = Math.sin(L * Math.PI);
-      });
+  function set(B, mood, part, alert){
+    var c = BEACON_C[mood] || BEACON_C.nodata;
+    B.mood = mood; B.lamp.material.color.set(c); B.glow.material.color.set(c);
+    B.target = Math.max(0, Math.min(1, part / 100)); B.warn.visible = !!alert;
+  }
+  function paintFill(B){
+    var h = Math.max(.02, B.fill * 5.9);
+    B.beer.scale.y = h; B.beer.position.y = .1 + h / 2;
+    B.foam.position.y = .1 + h + .12; B.foam.visible = B.fill > .01;
+  }
+  function setZones(list){
+    (list || []).forEach(function(z){ var B = beacons[z.key]; if (B) set(B, z.mood, z.participation || 0, z.alerts > 0); });
+  }
+  anims.push(function(dt, t){
+    Object.keys(beacons).forEach(function(k){
+      var B = beacons[k], fast = B.mood === 'stressed';
+      // el got s'omple a poc a poc quan arriben dades noves
+      if (Math.abs(B.fill - B.target) > .002) { B.fill += (B.target - B.fill) * Math.min(1, dt * 2.2); paintFill(B); }
+      var p = RM ? .5 : .5 + .5 * Math.sin(t * (fast ? 4.2 : 1.6) + B.ph);
+      B.glow.material.opacity = B.mood === 'nodata' ? .2 : .35 + p * .4;
+      var gs = (B.mood === 'nodata' ? 4 : 6) + p * (fast ? 2.6 : 1.4); B.glow.scale.set(gs, gs, 1);
+      if (B.warn.visible) { var w = RM ? 1 : .55 + .45 * Math.abs(Math.sin(t * 2.6)); B.warn.material.opacity = w; B.warn.position.y = 6.6 + (RM ? 0 : Math.sin(t * 2.6) * .15); }
     });
-  }
+  });
 
   // =========== RECEPCIÓ DE MALTA ===========
   var A = zone('malta');
@@ -1342,11 +1398,11 @@ function buildWorld(){
   [[44.5, '#C8102E'], [47.8, '#F4F5F7'], [51.1, '#C8102E']].forEach(function(v){ var vv = van(v[1]); vv.position.set(v[0], 0, 39); vv.rotation.y = Math.PI; I.add(vv); });
   tree(S, 26, 34, .85); tree(S, 30, 38, .75); tree(S, 56, 20, .8);
 
-  // =========== emocions per equip (coincideixen amb ZONES a data/mock.ts) ===========
-  // La cara flota just sobre l'edifici i l'etiqueta de la zona queda a sobre de la cara (vegeu `anchors`).
-  var FACE_AT = { malta: [-52, 16.5, -27, 'uneasy'], fermentacio: [-16, 27.5, -31.8, 'happy'], coccio: [11, 26, -28, 'uneasy'], logistica: [44, 32.5, -25, 'stressed'], envasat: [32, 20, 15.5, 'stressed'], oficines: [-48, 22, 21, 'happy'], comercial: [49.5, 10, 31, 'happy'], manteniment: [-8, 13.5, 37.5, 'nodata'] };
-  var FACE_UP = 3, LABEL_UP = 8.5;
-  Object.keys(FACE_AT).forEach(function(k){ var f = FACE_AT[k]; moodFace(f[0], f[1] + FACE_UP, f[2], f[3], .85); });
+  // =========== fars d'estat per equip (les claus coincideixen amb ZONES a data/mock.ts) ===========
+  // [x, alçada del terrat, z]. L'etiqueta de la zona queda per sobre del far (vegeu `anchors`).
+  var ROOF_AT = { malta: [-45.5, 20.2, -32], fermentacio: [-10, 22.2, -31.8], coccio: [15, 14.4, -28], logistica: [41, 21.4, -25], envasat: [27, 9, 15.5], oficines: [-49, 15, 21], comercial: [48, 6, 31], manteniment: [-11, 6.4, 37.5] };
+  var LABEL_UP = 14;
+  Object.keys(ROOF_AT).forEach(function(k){ var f = ROOF_AT[k]; beacon(k, f[0], f[1], f[2]); });
 
   // =========== moviment ===========
   mover(semi(), [[-56, -1.4], [56, -1.4], [56, -4.6], [-56, -4.6]], 7, 0);
@@ -1391,9 +1447,9 @@ function buildWorld(){
   var ZC = { malta: [-51.5, -31, 9], fermentacio: [-20, -31.5, 21], coccio: [11, -27, 14], logistica: [44, -23, 16], envasat: [32, 16, 12.5], oficines: [-42, 21, 17], comercial: [49, 33, 9], manteniment: [-8, 37.5, 7], jardi: [-6, 18, 12] };
   function select(z){ var c = ZC[z]; selRing.position.set(c[0], .3, c[1]); selRing.scale.set(c[2], c[2], 1); }
 
-  return { scene: S, anims: anims, pickables: pickables, select: select,
+  return { scene: S, anims: anims, pickables: pickables, select: select, setZones: setZones,
     view: { pos: V(96, 90, 122), target: V(0, 4, -4), min: 35, max: 240, polar: 1.28 },
-    anchors: Object.keys(FACE_AT).reduce(function(o, k){ var f = FACE_AT[k]; o[k] = V(f[0], f[1] + LABEL_UP, f[2]); return o; }, { jardi: V(-6, 9.5, 18) }) };
+    anchors: Object.keys(ROOF_AT).reduce(function(o, k){ var f = ROOF_AT[k]; o[k] = V(f[0], f[1] + (k === 'manteniment' ? 11 : LABEL_UP), f[2]); return o; }, { jardi: V(0, 5, 15) }) };
 }
 
 
@@ -1552,6 +1608,7 @@ export function mountScene(container, kind, opts) {
       var el = addLabel(a, '<button type="button" class="pin" data-z="' + z.key + '" aria-pressed="false" aria-label="' + z.name + ': ' + z.moodLabel + '"><span class="w" style="background:' + z.bg + '"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="' + z.ink + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + z.path + '"/></svg></span>' + z.name + '<em>' + z.score + '</em></button>');
       el.querySelector('button').addEventListener('click', function () { select(z.key); });
     });
+    if (W.setZones) W.setZones(opts.zones);
     if (opts.initialZone) select(opts.initialZone);
   }
 

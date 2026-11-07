@@ -27,13 +27,13 @@ const errMsg = (e: unknown) => (e instanceof Error ? e.message : 'Error desconeg
 
 /** Obté les zones corresponents als departaments triats a la Fase 1 */
 export function getZonesForDepartments(deps: string[]): ZoneKey[] {
-  if (deps.length === 0 || (deps.includes('Planta') && deps.length === DEPARTAMENTS.length)) {
+  if (deps.length === 0 || (deps.includes('Fàbrica') && deps.length === DEPARTAMENTS.length)) {
     return SURVEY_ZONES.map(z => z.key)
   }
   const set = new Set<ZoneKey>()
   deps.forEach(d => {
     switch (d) {
-      case 'Planta':
+      case 'Fàbrica':
         ;(['envasat', 'coccio', 'malta', 'fermentacio', 'manteniment'] as ZoneKey[]).forEach(k => set.add(k))
         break
       case 'Logística':
@@ -43,7 +43,6 @@ export function getZonesForDepartments(deps: string[]): ZoneKey[] {
         set.add('comercial')
         break
       case 'Oficina':
-      case 'Manager':
         set.add('oficines')
         break
     }
@@ -54,17 +53,17 @@ export function getZonesForDepartments(deps: string[]): ZoneKey[] {
 /** Obté els canals recomanats segons els departaments triats a la Fase 1 */
 export function getChannelsForDepartments(deps: string[]): ChannelKey[] {
   const set = new Set<ChannelKey>()
-  const hasPlantaOrLogistica = deps.includes('Planta') || deps.includes('Logística')
-  const hasOficinaOrManager = deps.includes('Oficina') || deps.includes('Manager')
+  const hasFabricaOrLogistica = deps.includes('Fàbrica') || deps.includes('Logística')
+  const hasOficina = deps.includes('Oficina')
   const hasComercial = deps.includes('Comercial')
 
-  if (hasPlantaOrLogistica) {
+  if (hasFabricaOrLogistica) {
     set.add('qr')
     set.add('app')
     set.add('placa')
     set.add('world')
   }
-  if (hasOficinaOrManager) {
+  if (hasOficina) {
     set.add('teams')
     set.add('email')
     set.add('app')
@@ -88,7 +87,7 @@ function generateAlternativeQuestion(existingCount: number, lang: LangKey, goal:
   const isTurn = goalLower.includes('torn') || goalLower.includes('turno') || goalLower.includes('shift')
   const isLog = deps.includes('Logística') || goalLower.includes('logíst') || goalLower.includes('logistic')
   const isCom = deps.includes('Comercial') || goalLower.includes('comercial') || goalLower.includes('vent')
-  const isOfi = deps.includes('Oficina') || deps.includes('Manager') || goalLower.includes('oficin')
+  const isOfi = deps.includes('Oficina') || goalLower.includes('oficin')
 
   if (lang === 'CASTELLANO') {
     if (isTurn) {
@@ -211,7 +210,7 @@ export default function Crear() {
   const [goal, setGoal] = useState('')
   const [durationMinutes, setDurationMinutes] = useState<number | ''>(2)
   const [lang, setLang] = useState<LangKey>('CASTELLANO')
-  const [departments, setDepartments] = useState<string[]>(['Planta', 'Logística'])
+  const [departments, setDepartments] = useState<string[]>(['Fàbrica', 'Logística'])
 
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -221,8 +220,8 @@ export default function Crear() {
   const [pool, setPool] = useState<Question[]>([])
   const [sel, setSel] = useState<string[]>([])
   const [editing, setEditing] = useState<string | null>(null)
-  const [zones, setZones] = useState<ZoneKey[]>(() => getZonesForDepartments(['Planta', 'Logística']))
-  const [channels, setChannels] = useState<ChannelKey[]>(() => getChannelsForDepartments(['Planta', 'Logística']))
+  const [zones, setZones] = useState<ZoneKey[]>(() => getZonesForDepartments(['Fàbrica', 'Logística']))
+  const [channels, setChannels] = useState<ChannelKey[]>(() => getChannelsForDepartments(['Fàbrica', 'Logística']))
   const [opens, setOpens] = useState(today())
   const [closes, setCloses] = useState(plusDays(14))
   const [approved, setApproved] = useState(false)
@@ -239,7 +238,7 @@ export default function Crear() {
   }, [editId, loadedId, hrSurveys])
 
   const currentLangObj = LANG_OPTIONS.find(l => l.key === lang) ?? LANG_OPTIONS[0]
-  const collectiveStr = departments.length > 0 ? departments.join(', ') : 'Planta'
+  const collectiveStr = departments.length > 0 ? departments.join(', ') : 'Fàbrica'
   const durationSecs = (Number(durationMinutes) || 1) * 60
 
   const byId = useMemo(() => Object.fromEntries(pool.map(q => [q.id, q])), [pool])

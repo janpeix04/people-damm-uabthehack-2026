@@ -96,6 +96,7 @@ export interface SyntheticEmployee {
   teamsUserId: string
   department: DepartmentKey
   orgDepartment: string
+  workArea: string
   site: string
   siteLocation: string
   siteType: string
@@ -592,7 +593,8 @@ function generateEmployees(): SyntheticEmployee[] {
         email: `${slug(firstName)}.${slug(lastName)}.${index}@demo.damm.invalid`,
         teamsUserId: `teams-demo-${String(index).padStart(4, '0')}`,
         department,
-        orgDepartment: roleDef.orgDept,
+        orgDepartment: ({fabriques:'Fàbrica',logistica:'Logística',comercial:'Comercial',oficines:'Oficina'})[department],
+        workArea: roleDef.orgDept,
         site: siteDef.name,
         siteLocation: siteDef.location,
         siteType: siteDef.typeCa,

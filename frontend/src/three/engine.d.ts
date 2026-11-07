@@ -14,6 +14,12 @@ export interface ZonePin {
   bg: string
   ink: string
   path: string
+  /** Color del far del terrat: content, inquiet, estressat o sense dades. */
+  mood?: 'happy' | 'uneasy' | 'stressed' | 'nodata' | 'lock'
+  /** % de participació: omple el got del costat del far. */
+  participation?: number
+  /** Nombre d'alertes: si n'hi ha, hi parpelleja un avís. */
+  alerts?: number
 }
 
 export interface MountOptions {

@@ -8,7 +8,7 @@ import { createSurvey, listSurveys, changeStatus } from '../server/surveys.js';
 let db;
 before(async () => {
   db = new PGlite({ extensions: { pgcrypto } });
-  for (const f of ['supabase/migrations/20261107162128_init_people_listening_platform.sql','supabase/seed.sql','supabase/migrations/20261108090000_worker_app_wallet_rewards.sql']) await db.exec(fs.readFileSync(f,'utf8'));
+  for (const f of ['supabase/migrations/20261107162128_init_people_listening_platform.sql','supabase/seed.sql','supabase/migrations/20261108090000_worker_app_wallet_rewards.sql','supabase/migrations/20261108100000_plaza_preferences_reward_operations.sql','supabase/migrations/20261108110000_plaza_topic_reactions.sql','supabase/migrations/20261108120000_local_auth.sql','supabase/migrations/20261108130000_user_sites.sql','supabase/migrations/20261108140000_four_departments.sql']) await db.exec(fs.readFileSync(f,'utf8'));
 });
 after(async () => { await db.close(); });
 const survey = (status='open') => ({title:'Prova RRHH',goal:'Millorar els torns',status,locale:'es',zones:['envasat','logistica'],channels:['app','qr'],opensAt:new Date(Date.now()-3600000).toISOString(),closesAt:new Date(Date.now()+86400000).toISOString(),questions:[{type:'faces',text:'Benestar?',secs:10},{type:'yesno',text:'Suport?',secs:10},{type:'text',text:'Propostes?',secs:20}]});

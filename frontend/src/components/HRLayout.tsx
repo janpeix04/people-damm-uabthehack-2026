@@ -3,6 +3,8 @@ import { NavLink, Outlet, Link, useLocation } from 'react-router-dom'
 import { BarChart3, ClipboardList, Factory, Home, Menu, MessageCircle, MessagesSquare, PanelLeftClose, PanelLeftOpen, Sparkles, X } from 'lucide-react'
 import { Brand, Logo, cn } from './ui'
 import { useApp } from '../store/AppContext'
+import { SessionButton } from '../store/AuthContext'
+import UserSite from './UserSite'
 
 const NAV = [
   { to: '/rrhh', label: 'Inici', icon: Home, end: true },
@@ -61,6 +63,7 @@ export default function HRLayout() {
       </aside>
 
       <div className="flex-1 min-w-0 flex flex-col">
+        <div className="bg-paper border-b border-line px-4 py-2 flex justify-between gap-3"><UserSite /><SessionButton /></div>
         <header className="lg:hidden sticky top-0 z-30 bg-paper/95 backdrop-blur border-b border-line flex items-center justify-between px-4 h-16">
           <Brand />
           <button className="w-11 h-11 grid place-items-center rounded-[12px] bg-cream" onClick={() => setOpen(true)} aria-label="Obrir el menú"><Menu size={22} /></button>

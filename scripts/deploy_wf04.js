@@ -14,9 +14,9 @@ const filtroCanal = body.canal || null;
 // Incorpora los sesgos deliberados de los Escenarios A, B y C
 function generateReferenceDataset() {
   const dataset = [];
-  const colectivos = ["Planta", "Logística", "Comercial", "Oficina", "Manager"];
-  const centros = { Planta: "Fàbrica", Logística: "Magatzem", Comercial: "Oficina", Oficina: "Oficina", Manager: "Fàbrica" };
-  const canales = { Planta: ["Mòbil-QR"], Logística: ["Mòbil-QR"], Comercial: ["Mòbil-Link", "Correu"], Oficina: ["Teams", "Correu"], Manager: ["Correu", "Teams"] };
+  const colectivos = ["Fàbrica", "Logística", "Comercial", "Oficina"];
+  const centros = { Fàbrica: "Fàbrica", Logística: "Magatzem", Comercial: "Oficina", Oficina: "Oficina" };
+  const canales = { Fàbrica: ["Mòbil-QR"], Logística: ["Mòbil-QR"], Comercial: ["Mòbil-Link", "Correu"], Oficina: ["Teams", "Correu"] };
 
   // 1. Período T1 (Septiembre 2026) - Base equilibrada
   for (let i = 0; i < 280; i++) {
@@ -36,12 +36,12 @@ function generateReferenceDataset() {
   // 2. Período T2 (Octubre 2026) - Con cambio de turnos (Escenario A), sesgo cobertura (Escenario B) y señal débil PDA (Escenario C)
   for (let i = 0; i < 320; i++) {
     // Sesgo intencionado de cobertura: Logística participa menos en T2 si no se activa cartel QR
-    const col = (i < 130) ? "Planta" : (i < 155) ? "Logística" : (i < 225) ? "Oficina" : (i < 280) ? "Comercial" : "Manager";
+    const col = (i < 130) ? "Fàbrica" : (i < 155) ? "Logística" : (i < 225) ? "Oficina" : (i < 280) ? "Comercial" : "Oficina";
     
     // Caída en turnos para Planta en T2
     let score = 4.0;
     let tema = "General";
-    if (col === "Planta") {
+    if (col === "Fàbrica") {
       score = 3.1; // Caída por los nuevos turnos
       tema = (i % 2 === 0) ? "Torns" : "Benestar";
     } else if (col === "Logística") {
@@ -58,7 +58,7 @@ function generateReferenceDataset() {
       data: "2026-10-18",
       col_lectiu: col,
       centre_tipus: centros[col],
-      canal: (col === "Planta" || col === "Logística") ? "Mòbil-QR" : "Teams",
+      canal: (col === "Fàbrica" || col === "Logística") ? "Mòbil-QR" : "Teams",
       puntuacion_general: score + (Math.sin(i) * 0.4),
       tema
     });
@@ -210,7 +210,7 @@ const recomendaciones = [
   {
     id_accion: "acc_01_torns",
     titulo: "Mesa de Ajuste de Planificación de Turnos en Fábrica",
-    colectivo_objetivo: "Planta",
+    colectivo_objetivo: "Fàbrica",
     area_responsable: "Operaciones de Planta & People Damm",
     descripcion: "Establecer un compromiso de publicación de turnos rotativos con mínimo 2 semanas de antelación y reforzar el relevo entre mandos intermedios.",
     impacto_esperado: "+0.6 pts en dimensión de Condiciones y Organización",
@@ -289,7 +289,7 @@ const codeConsolidateAnalytics = `try {
     clima_medio_anterior: 3.7,
     variacion_delta: 0.1,
     desglose_canales: { "Mòbil-QR": 30, "Teams / Correu": 20 },
-    desglose_colectivos: { Planta: 35, Logística: 15 }
+    desglose_colectivos: { Fàbrica: 35, Logística: 15 }
   };
 
   let insights = item.insights_ia;
@@ -312,7 +312,7 @@ const codeConsolidateAnalytics = `try {
     insights = statsNode.insights_ia || {
       resumen_ejecutivo: "Análisis completado satisfactoriamente bajo agregación k>=5.",
       recomendaciones_accionables: [
-        { prioridad: "Alta", accion: "Reforzar comunicación sobre turnos y descansos", colectivo: "Planta", plazo: "15 días" },
+        { prioridad: "Alta", accion: "Reforzar comunicación sobre turnos y descansos", colectivo: "Fàbrica", plazo: "15 días" },
         { prioridad: "Media", accion: "Mantenimiento preventivo de herramientas de trabajo", colectivo: "Logística", plazo: "3 semanas" }
       ],
       propuesta_cierre_ciclo: {

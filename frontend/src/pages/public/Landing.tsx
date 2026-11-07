@@ -41,7 +41,7 @@ function AnimatedPeopleLogo() {
   )
 }
 
-/** Selector de rol de la demo (no hi ha autenticació real). */
+/** Accés als espais de People Damm. */
 export default function Landing() {
   return (
     <main className="people-access min-h-[100dvh] overflow-x-hidden bg-cream text-ink">

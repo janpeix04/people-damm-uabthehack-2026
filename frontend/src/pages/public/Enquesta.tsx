@@ -8,7 +8,7 @@ import { SurveyRunner } from '../../components/SurveyRunner'
 import { Logo, Meter } from '../../components/ui'
 
 /**
- * Destí únic de tots els canals (QR, Teams, correu, app…). No cal iniciar sessió.
+ * Destí únic dels canals. L'accés requereix sessió; el contingut continua sent anònim.
  * Des d’aquí només es pot anar a l’espai públic: Damm World queda dins de l’app.
  */
 export default function Enquesta() {
