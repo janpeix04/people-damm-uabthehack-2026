@@ -190,6 +190,13 @@ npm run test:e2e       # Invocación real a los webhooks activos de n8n
 
 ---
 
+- Phoebe Iglesias
+- Carles Peiró
+- Jan Peix
+- Joan Marc Samó
+
+---
+
 ## ✅ Checklist de Entrega (UAB THE HACK! 2026)
 
 - [x] El flujo cubre desde la necesidad de RRHH hasta la recomendación de acción y nueva consulta.
