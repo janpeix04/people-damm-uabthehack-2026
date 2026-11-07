@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom'
-import { BarChart3, ClipboardList, Factory, Home, Menu, MessageCircle, Sparkles, X } from 'lucide-react'
+import { BarChart3, ClipboardList, Factory, Home, Menu, MessageCircle, PanelLeftClose, PanelLeftOpen, Sparkles, X } from 'lucide-react'
 import { Brand, Logo, cn } from './ui'
 import { useApp } from '../store/AppContext'
 
@@ -15,16 +15,19 @@ const NAV = [
 
 export default function HRLayout() {
   const [open, setOpen] = useState(false)
+  // barra lateral plegable a l'ordinador (es recorda entre visites)
+  const [mini, setMini] = useState(() => { try { return localStorage.getItem('damm-hr-sidebar') === 'mini' } catch { return false } })
+  useEffect(() => { try { localStorage.setItem('damm-hr-sidebar', mini ? 'mini' : 'full') } catch { /* sense emmagatzematge */ } }, [mini])
   const { surveys } = useApp()
   const loc = useLocation()
   const active = surveys.filter(s => s.status === 'open').length
 
-  const nav = (
+  const nav = (compact = false) => (
     <nav aria-label="Portal RRHH" className="flex flex-col gap-0.5">
       {NAV.map(n => (
-        <NavLink key={n.to} to={n.to} end={n.end} onClick={() => setOpen(false)}
-          className={({ isActive }) => cn('flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[14.5px] font-semibold transition', isActive ? 'bg-red text-white' : 'text-ink-soft hover:bg-cream')}>
-          {({ isActive }) => (<>
+        <NavLink key={n.to} to={n.to} end={n.end} onClick={() => setOpen(false)} title={compact ? n.label : undefined} aria-label={compact ? n.label : undefined}
+          className={({ isActive }) => cn('flex items-center gap-3 rounded-[12px] text-[14.5px] font-semibold transition', compact ? 'justify-center h-11 w-11 mx-auto' : 'px-3 py-2.5', isActive ? 'bg-red text-white' : 'text-ink-soft hover:bg-cream')}>
+          {({ isActive }) => compact ? <n.icon size={20} strokeWidth={2} aria-hidden /> : (<>
             <n.icon size={19} strokeWidth={2} aria-hidden />
             <span className="flex-1">{n.label}</span>
             {n.to === '/rrhh/enquestes' && active > 0 && <span className={cn('text-[11px] font-bold', isActive ? 'text-white' : 'text-red-dk')}>{active} actives</span>}
@@ -35,9 +38,11 @@ export default function HRLayout() {
     </nav>
   )
 
-  const footer = (
+  const footer = (compact = false) => (
     <div className="mt-auto flex flex-col gap-3">
-      <Link to="/app" className="flex items-center justify-between px-3.5 py-3 rounded-[14px] bg-cream text-[13.5px] font-bold">Veure com a treballador <span aria-hidden>→</span></Link>
+      {compact
+        ? <Link to="/app" title="Veure com a treballador" aria-label="Veure com a treballador" className="h-11 w-11 mx-auto grid place-items-center rounded-[12px] bg-cream font-bold">→</Link>
+        : <Link to="/app" className="flex items-center justify-between px-3.5 py-3 rounded-[14px] bg-cream text-[13.5px] font-bold">Veure com a treballador <span aria-hidden>→</span></Link>}
     </div>
   )
 
@@ -45,10 +50,13 @@ export default function HRLayout() {
 
   return (
     <div className="min-h-full flex">
-      <aside className="hidden lg:flex w-[264px] shrink-0 flex-col gap-6 bg-paper border-r border-line px-4 py-5 sticky top-0 h-screen overflow-y-auto scroll-thin">
-        <div className="px-1.5 flex justify-center"><div className="w-[110px]"><Logo size="full" /></div></div>
-        {nav}
-        {footer}
+      <aside className={cn('hidden lg:flex shrink-0 flex-col gap-6 bg-paper border-r border-line py-5 sticky top-0 h-screen overflow-y-auto scroll-thin transition-[width] duration-200', mini ? 'w-[88px] px-2' : 'w-[264px] px-4')}>
+        {mini ? <div className="flex justify-center"><Logo size="sm" /></div> : <div className="px-1.5 flex justify-center"><div className="w-[110px]"><Logo size="full" /></div></div>}
+        {nav(mini)}
+        {footer(mini)}
+        {mini
+          ? <button onClick={() => setMini(false)} className="w-11 h-11 mx-auto -mt-3 grid place-items-center rounded-[12px] text-ink-soft hover:bg-cream" aria-label="Desplegar el menú" title="Desplegar el menú"><PanelLeftOpen size={20} /></button>
+          : <button onClick={() => setMini(true)} className="-mt-3 flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[13.5px] font-semibold text-ink-muted hover:bg-cream" aria-label="Amagar el menú"><PanelLeftClose size={19} aria-hidden />Amagar el menú</button>}
       </aside>
 
       <div className="flex-1 min-w-0 flex flex-col">
@@ -60,8 +68,8 @@ export default function HRLayout() {
           <div className="lg:hidden fixed inset-0 z-50 bg-ink/40" onClick={() => setOpen(false)}>
             <div className="absolute right-0 top-0 h-full w-[290px] max-w-[85vw] bg-paper p-4 flex flex-col gap-5 overflow-y-auto" onClick={e => e.stopPropagation()}>
               <div className="flex justify-between items-center"><span className="serif text-xl">Menú</span><button className="w-10 h-10 grid place-items-center rounded-[12px] bg-cream" onClick={() => setOpen(false)} aria-label="Tancar el menú"><X size={20} /></button></div>
-              {nav}
-              {footer}
+              {nav()}
+              {footer()}
             </div>
           </div>
         )}

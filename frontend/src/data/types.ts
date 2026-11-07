@@ -2,7 +2,8 @@
   | 'malta' | 'coccio' | 'fermentacio' | 'envasat' | 'logistica'
   | 'oficines' | 'comercial' | 'manteniment' | 'jardi'
 
-export type Weather = 'sun' | 'part' | 'rain' | 'fog' | 'lock'
+/** Emoció predominant d'un equip (sempre agregada, mai individual). */
+export type Mood = 'happy' | 'uneasy' | 'stressed' | 'nodata' | 'lock'
 
 export interface Zone {
   key: ZoneKey
@@ -13,8 +14,8 @@ export interface Zone {
   score: number | null
   delta: number
   participation: number
-  weather: Weather
-  weatherLabel: string
+  mood: Mood
+  moodLabel: string
   story: string
   topics: { label: string; tone: 'pos' | 'neg' | 'neu' }[]
   doing: string
