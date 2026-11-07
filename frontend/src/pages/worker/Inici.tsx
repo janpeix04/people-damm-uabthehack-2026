@@ -8,7 +8,7 @@ import { SurveyCard } from './Enquestes'
 
 /** Inici de l’app del treballador. */
 export default function WorkerInici() {
-  const { pending, points } = useApp()
+  const { pending, points, backend } = useApp()
   const next = pending[0]
 
   return (
@@ -43,6 +43,8 @@ export default function WorkerInici() {
             </div>
             <span className="h-[52px] rounded-[16px] bg-white text-red text-base font-extrabold grid place-items-center">Començar</span>
           </Link>
+        ) : backend === 'loading' ? (
+          <div className="card p-6 md:p-8 min-h-[180px] grid place-items-center serif text-2xl text-ink-muted">Carregant…</div>
         ) : (
           <div className="card p-6 md:p-8 flex gap-4 items-center">
             <span className="w-14 h-14 rounded-[18px] bg-ok-bg grid place-items-center shrink-0"><Check size={28} className="text-ok" aria-hidden /></span>

@@ -33,6 +33,13 @@ export interface Question {
   secs: number
   options?: string[]
   alts?: string[]
+  /** Escala amb límits propis (per defecte 0–10) */
+  min?: number
+  max?: number
+  help?: string
+  required?: boolean
+  /** Tipus original a PostgreSQL quan la pregunta ve de la base de dades */
+  dbType?: 'scale' | 'single_choice' | 'multi_choice' | 'boolean' | 'open_text'
 }
 
 export type SurveyStatus = 'draft' | 'scheduled' | 'open' | 'closed'
@@ -58,6 +65,10 @@ export interface Survey {
   intro?: string
   formUrl?: string
   qrUrl?: string
+  /** Enquesta servida per PostgreSQL a l'app del treballador (WF-05) */
+  source?: 'db'
+  /** Token d'un sol ús per enviar la resposta */
+  accessToken?: string
 }
 
 export interface Idea {

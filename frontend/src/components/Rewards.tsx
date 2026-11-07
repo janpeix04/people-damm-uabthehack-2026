@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Gift, Info } from 'lucide-react'
-import { REWARDS } from '../data/mock'
+import { AppApiError, ERROR_MESSAGES } from '../api/app'
 import { POINTS_PER_SURVEY, useApp } from '../store/AppContext'
 import { cn, Modal, PathIcon } from './ui'
 
 export function PointsCard({ className }: { className?: string }) {
-  const { points, redeemed } = useApp()
-  const cheapest = Math.min(...REWARDS.map(r => r.cost))
+  const { points, redeemed, rewards } = useApp()
+  const cheapest = rewards.length ? Math.min(...rewards.map(r => r.cost)) : 0
   return (
     <section className={cn('rounded-[24px] bg-ink text-white p-5 sm:p-6 flex flex-col gap-4', className)} aria-label="Saldo de punts">
       <div className="flex justify-between items-start gap-3">
@@ -36,9 +36,20 @@ export function RewardsNote() {
 
 /** Catàleg de recompenses amb bescanvi i llista de codis. */
 export function RewardsCatalog({ limit, className }: { limit?: number; className?: string }) {
-  const { points, redeem, redeemed } = useApp()
+  const { points, redeemReward, redeemed, rewards, toast } = useApp()
   const [code, setCode] = useState<{ name: string; code: string } | null>(null)
-  const list = limit ? REWARDS.slice(0, limit) : REWARDS
+  const [busy, setBusy] = useState<string | null>(null)
+  const list = limit ? rewards.slice(0, limit) : rewards
+  const redeem = async (r: (typeof rewards)[number]) => {
+    setBusy(r.id)
+    try {
+      setCode({ name: r.name, code: await redeemReward(r) })
+    } catch (e) {
+      toast(ERROR_MESSAGES[e instanceof AppApiError ? e.code : 'server_error'])
+    } finally {
+      setBusy(null)
+    }
+  }
   return (
     <>
       <div className={cn('grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4', className)}>
@@ -52,11 +63,11 @@ export function RewardsCatalog({ limit, className }: { limit?: number; className
                 <p className="text-xs sm:text-[13px] leading-snug text-ink-muted flex-1">{r.description}</p>
                 <div className="text-[13px] font-extrabold text-red-dk">{r.cost} punts</div>
                 <button
-                  disabled={!ok}
-                  onClick={() => { const c = redeem(r.id, r.name, r.cost); if (c) setCode({ name: r.name, code: c }) }}
+                  disabled={!ok || busy !== null}
+                  onClick={() => redeem(r)}
                   className={ok ? 'btn-red !h-10 !text-[13px]' : 'btn !h-10 !text-[13px] bg-cream-dk text-ink-muted !opacity-100'}
                 >
-                  {ok ? 'Bescanviar' : `Et falten ${r.cost - points}`}
+                  {busy === r.id ? 'Bescanviant…' : ok ? 'Bescanviar' : `Et falten ${r.cost - points}`}
                 </button>
               </div>
             </article>

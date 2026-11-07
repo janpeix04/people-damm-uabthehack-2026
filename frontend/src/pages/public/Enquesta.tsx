@@ -1,7 +1,9 @@
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Check, Clock, Gift, ListChecks, Lock, Sparkles } from 'lucide-react'
 import { POINTS_PER_SURVEY, useApp } from '../../store/AppContext'
+import { AppApiError, ERROR_MESSAGES } from '../../api/app'
+import type { Survey } from '../../data/types'
 import { SurveyRunner } from '../../components/SurveyRunner'
 import { Logo, Meter } from '../../components/ui'
 
@@ -12,9 +14,26 @@ import { Logo, Meter } from '../../components/ui'
 export default function Enquesta() {
   const { id } = useParams()
   const nav = useNavigate()
-  const { surveys, submitResponse, festa, answered, points, pending } = useApp()
-  const s = surveys.find(x => x.id === id)
+  const { findSurvey, isAnswered, submitSurvey, refreshWallet, backend, festa, points, pending, toast } = useApp()
   const [done, setDone] = useState<{ earned: number } | null>(null)
+  // En enviar-la, l'enquesta surt de les pendents: en guardem una còpia per a la pantalla de gràcies.
+  const [kept, setKept] = useState<Survey | undefined>()
+  const [sending, setSending] = useState(false)
+  const startedAt = useRef(Date.now())
+  const s = findSurvey(id ?? '') ?? (kept?.id === id ? kept : undefined)
+
+  if (!s && backend === 'loading') return (
+    <Shell><div className="flex-1 grid place-items-center py-20 serif text-2xl">Carregant…</div></Shell>
+  )
+
+  if (!s && id && isAnswered(id)) return (
+    <Shell>
+      <Message title="Ja l’has contestada" text="Només es pot respondre una vegada cada enquesta. La teva resposta és anònima i ja compta. Gràcies!">
+        <Link to="/app/enquestes" className="btn-red">Veure altres enquestes</Link>
+        <Link to="/app" className="btn-line">Anar a l’inici</Link>
+      </Message>
+    </Shell>
+  )
 
   if (!s) return (
     <Shell>
@@ -39,7 +58,24 @@ export default function Enquesta() {
   )
 
   const secs = Math.max(30, s.questions.reduce((a, q) => a + q.secs, 0))
-  const already = answered.includes(s.id)
+  // Només en mode demo local es pot repetir; amb base de dades el servidor ho impedeix.
+  const already = s.source !== 'db' && isAnswered(s.id)
+
+  const send = async (answers: Record<string, unknown>) => {
+    if (sending) return
+    setSending(true)
+    try {
+      const earned = await submitSurvey(s, answers, (Date.now() - startedAt.current) / 1000)
+      setKept(s)
+      setDone({ earned })
+    } catch (e) {
+      const code = e instanceof AppApiError ? e.code : 'server_error'
+      toast(ERROR_MESSAGES[code])
+      if (code === 'already_answered' || code === 'invalid_token') refreshWallet()
+    } finally {
+      setSending(false)
+    }
+  }
 
   if (done) {
     const next = pending.find(p => p.id !== s.id)
@@ -48,8 +84,8 @@ export default function Enquesta() {
         <div className="max-w-3xl mx-auto w-full px-4 md:px-6 py-8 md:py-14 flex flex-col gap-5 md:gap-6">
           <div className="flex flex-col items-center text-center gap-4">
             <div className="w-20 h-20 rounded-[26px] bg-red grid place-items-center shadow-red"><Check size={40} color="#fff" strokeWidth={2.6} aria-hidden /></div>
-            <h1 className="serif text-[40px] md:text-[52px] leading-none">Gràcies!</h1>
-            <p className="text-base md:text-lg leading-relaxed text-ink-muted max-w-md">La teva resposta s’ha sumat de forma anònima als resultats.</p>
+            <h1 className="serif text-[34px] md:text-[44px] leading-tight">Moltes gràcies per la teva col·laboració!</h1>
+            <p className="text-base md:text-lg leading-relaxed text-ink-muted max-w-md">La teva resposta s’ha sumat de forma 100% anònima. La teva veu ens ajuda a construir un entorn de treball més proper, transparent i inclusiu per a tot l'equip.</p>
           </div>
 
           <div className="grid gap-3 md:grid-cols-2 md:gap-4">
@@ -68,12 +104,12 @@ export default function Enquesta() {
               <div className="flex justify-between items-baseline"><strong className="serif text-xl">Festa de la plaça</strong><strong className="tabular-nums">{Math.round(festa.pct)}%</strong></div>
               <Meter value={festa.pct} goal={festa.goal} />
               <span className="text-[13px] text-ink-muted">{festa.missing > 0 ? `Has apropat el concert. Falten ${festa.missing} respostes.` : 'Entre tots heu desbloquejat el concert!'}</span>
-              <p className="text-sm leading-relaxed mt-auto pt-3 border-t border-cream-dk"><strong>I ara què?</strong> Quan hi hagi prou respostes, RRHH en veurà el resum. Les millores es comunicaran a La Plaça.</p>
+              <p className="text-sm leading-relaxed mt-auto pt-3 border-t border-cream-dk"><strong>I ara què?</strong> Quan hi hagi prou respostes, RRHH en veurà el resum agregat protegit per k-anonimat. Les millores es comunicaran a La Plaça.</p>
             </section>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 sm:justify-center">
-            {next && <Link to={`/e/${next.id}`} onClick={() => setDone(null)} className="btn-red !h-14 !px-6 !text-base">Respondre la següent</Link>}
+            {next && <Link to={`/e/${next.id}`} onClick={() => { setDone(null); setKept(undefined); startedAt.current = Date.now() }} className="btn-red !h-14 !px-6 !text-base">Respondre la següent</Link>}
             <Link to="/app/placa" className={next ? 'btn-line !h-14 !px-6 !text-base' : 'btn-red !h-14 !px-6 !text-base'}>Anar a La Plaça</Link>
             <Link to="/app" className="btn-ghost !h-14">Tornar a l’inici</Link>
           </div>
@@ -109,42 +145,46 @@ export default function Enquesta() {
         </aside>
 
         <section className="flex flex-col bg-paper min-h-[100dvh] md:min-h-0 md:h-[min(760px,calc(100dvh-160px))] md:rounded-[28px] md:border md:border-line md:shadow-lift overflow-hidden">
-          {already && <div className="bg-warn-bg text-warn-ink text-[13px] font-semibold px-5 py-2.5">Ja l’has resposta des d’aquest dispositiu. Pots tornar-la a provar (demo).</div>}
+          {already && <div className="bg-warn-bg text-warn-ink text-[13px] font-semibold px-5 py-2.5">Ja has participat en aquesta consulta des d'aquest dispositiu. Pots tornar-la a provar en mode demo.</div>}
           <div className="md:hidden px-5 pt-4 flex items-center justify-between gap-3 text-[13px] font-semibold text-ink-muted">
             <span className="truncate">{s.title}</span><span className="chip bg-ink text-white shrink-0">+{POINTS_PER_SURVEY} punts</span>
           </div>
-          <div className="flex-1 min-h-0">
+          <div className="relative flex-1 min-h-0">
             <SurveyRunner
               questions={s.questions}
               onExit={() => nav('/app')}
-              onDone={() => { submitResponse(s.id); setDone({ earned: already ? 0 : POINTS_PER_SURVEY }) }}
+              onDone={send}
             />
+            {sending && <div className="absolute inset-0 bg-paper/80 grid place-items-center serif text-2xl" aria-live="polite">Enviant…</div>}
           </div>
         </section>
-  if (done) return shell(
-    <div className="flex-1 flex flex-col gap-4 px-6 pt-10 pb-7 bg-gradient-to-b from-red-soft to-paper to-45%">
-      <div className="w-20 h-20 rounded-[26px] bg-red grid place-items-center shadow-red"><Check size={40} color="#fff" strokeWidth={2.6} /></div>
-      <h1 className="serif text-[32px] sm:text-[34px] leading-tight">Moltes gràcies per la teva col·laboració!</h1>
-      <p className="text-base leading-relaxed text-ink-muted">La teva resposta s’ha sumat de forma 100% anònima. La teva veu ens ajuda a construir un entorn de treball més proper, transparent i inclusiu per a tot l'equip.</p>
-      <section className="card p-4 flex flex-col gap-2">
-        <div className="flex justify-between items-baseline"><strong className="serif text-xl">Festa de la plaça</strong><strong className="tabular-nums">{Math.round(festa.pct)}%</strong></div>
-        <Meter value={festa.pct} goal={festa.goal} />
-        <span className="text-[13px] text-ink-muted">{festa.missing > 0 ? `Has apropat el concert. Falten ${festa.missing} respostes.` : 'Entre tots heu desbloquejat el concert!'}</span>
-      </section>
-      <section className="rounded-[20px] bg-cream p-4 text-sm leading-relaxed"><strong>I ara què?</strong> Quan hi hagi prou respostes, RRHH en veurà el resum agregat protegit per k-anonimat. Les millores sortiran a “Ens heu dit / Hem fet”.</section>
-      <div className="mt-auto flex flex-col gap-2">
-        <Link to="/app/placa" className="btn-red !h-14 !text-base">Anar a La Plaça</Link>
-        <Link to="/app" className="btn-ghost">Tornar a l’inici</Link>
       </div>
-    </div>,
+    </Shell>
   )
+}
 
-  return shell(
-    <>
-      {answered.includes(s.id) && <div className="bg-warn-bg text-warn-ink text-[13px] font-semibold px-5 py-2.5">Ja has participat en aquesta consulta des d'aquest dispositiu. Pots tornar-la a provar en mode demo.</div>}
-      <div className="px-5 pt-4 flex items-center justify-between text-[13px] font-semibold text-ink-muted"><span className="truncate">{s.title}</span><span>Damm Pulse</span></div>
-      <div className="flex-1 min-h-0">
-        <SurveyRunner questions={s.questions} onExit={() => nav('/app')} onDone={() => { submitResponse(s.id); setDone(true) }} />
+/** Capçalera mínima: durant l’enquesta no hi ha distraccions. */
+function Shell({ children, fullOnMobile }: { children: ReactNode; fullOnMobile?: boolean }) {
+  return (
+    <div className="min-h-full flex flex-col bg-cream" style={{ minHeight: '100dvh' }}>
+      <header className={fullOnMobile ? 'hidden md:block border-b border-line bg-paper' : 'border-b border-line bg-paper'}>
+        <div className="max-w-6xl mx-auto h-16 px-4 md:px-6 flex items-center justify-between gap-4">
+          <Link to="/app" className="flex items-center gap-2.5" aria-label="People Damm, inici"><Logo size="sm" /></Link>
+          <Link to="/app" className="btn-ghost"><ArrowLeft size={16} aria-hidden />Inici</Link>
+        </div>
+      </header>
+      {children}
+    </div>
+  )
+}
+
+function Message({ title, text, children }: { title: string; text: string; children: ReactNode }) {
+  return (
+    <div className="max-w-xl mx-auto w-full px-4 md:px-6 py-10 md:py-16">
+      <div className="card p-6 md:p-8 flex flex-col gap-4">
+        <h1 className="serif text-3xl md:text-4xl leading-tight">{title}</h1>
+        <p className="text-ink-muted">{text}</p>
+        <div className="flex flex-col sm:flex-row gap-2">{children}</div>
       </div>
     </div>
   )
