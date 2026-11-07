@@ -74,7 +74,7 @@ export function ZonePanel({ zone, hr, className }: { zone: ZoneKey; hr?: boolean
       {hidden && z.key === 'manteniment' && <><Meter value={70} thin /><span className="text-[13px] font-semibold">{z.responses} de 10 respostes · falten {10 - z.responses} perquè s’aixequi la boira</span></>}
       {z.key === 'jardi' && <span className="text-[13px] font-semibold">Depèn de la participació de tota la planta (Festa de la plaça).</span>}
       {hr && z.alerts.length > 0 && <div className="flex flex-col gap-1.5">{z.alerts.map(a => <div key={a} className="text-[13px] leading-snug bg-warn-bg text-[#5A3A10] rounded-[12px] px-3 py-2">⚠ {a}</div>)}</div>}
-      {hr && z.survey && <div className="flex gap-2 flex-wrap"><Link to="/rrhh/crear" className="btn-ink !h-9 !text-[13px]">Microenquesta per a {z.name}</Link><Link to="/rrhh/accions" className="btn-line !h-9 !text-[13px]">Accions</Link></div>}
+      {hr && z.survey && <div className="flex gap-2 flex-wrap"><Link to="/rrhh/crear" className="btn-ink !h-9 !text-[13px]">Microenquesta per a {z.name}</Link></div>}
     </section>
   )
 }

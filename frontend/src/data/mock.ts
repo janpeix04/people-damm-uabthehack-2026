@@ -146,9 +146,9 @@ export const INITIATIVES: Initiative[] = [
 ]
 
 export const AI_RECS = [
-  { id: 'r1', title: 'Pauses escalonades a Envasat', why: 'Descans és la dimensió que més cau (−0,7) i concentra 241 mencions.', cta: 'Revisar acció', to: '/rrhh/accions' },
+  { id: 'r1', title: 'Pauses escalonades a Envasat', why: 'Descans és la dimensió que més cau (−0,7) i concentra 241 mencions.', cta: 'Veure anàlisi', to: '/rrhh/analisi' },
   { id: 'r2', title: 'Microenquesta per al torn de nit', why: '3 preguntes en 30 s, difosa per QR al menjador entre les 2 h i les 4 h.', cta: 'Crear amb IA', to: '/rrhh/crear?plantilla=1' },
-  { id: 'r3', title: 'Sincro Logística–Envasat', why: 'Tema emergent a l’alça durant 3 mesos.', cta: 'Revisar acció', to: '/rrhh/accions' },
+  { id: 'r3', title: 'Sincro Logística–Envasat', why: 'Tema emergent a l’alça durant 3 mesos.', cta: 'Veure anàlisi', to: '/rrhh/analisi' },
 ]
 
 export const PLAZA_TOPICS = [
@@ -204,13 +204,6 @@ export const HEAT: Partial<Record<ZoneKey, number[]>> = {
   oficines: [7.9, 7.4, 7.1, 7.2, 8.2, 8.4],
   comercial: [7.0, 6.6, 6.8, 7.3, 6.4, 7.9],
 }
-
-export const BIAS = [
-  { group: 'Torn matí', sample: 41, population: 34 },
-  { group: 'Torn tarda', sample: 33, population: 32 },
-  { group: 'Torn nit', sample: 14, population: 26 },
-  { group: 'Jornada partida', sample: 12, population: 8 },
-]
 
 export const SKINS = ['#FFE6D3', '#F6D7C3', '#EFC3A1', '#D9A074', '#B57A52', '#5E3B26']
 export const HAIRS = ['#2E1F17', '#5A3A22', '#A8642F', '#D9B15A', '#1D1D24', '#8B8B92']
