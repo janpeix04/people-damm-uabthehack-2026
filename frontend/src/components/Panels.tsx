@@ -6,6 +6,51 @@ import type { Avatar, ZoneKey } from '../data/types'
 import { useApp } from '../store/AppContext'
 import { cn, fmt, Meter, Modal, PrivacyNote, toneBg, WeatherBadge } from './ui'
 
+/** Fites col·lectives de la Festa de la plaça. */
+export function FestaMilestones() {
+  const { festa } = useApp()
+  const miles = [{ at: 25, label: 'Guirnaldes', mark: '✓' }, { at: 40, label: 'Bancs nous', mark: '✓' }, { at: 60, label: 'Concert', mark: '♪' }, { at: 75, label: 'Focs', mark: '★' }]
+  const next = miles.find(m => festa.pct < m.at)
+  return (
+    <div className="grid grid-cols-4 gap-1.5 mt-3">
+      {miles.map(m => {
+        const done = festa.pct >= m.at, isNext = m === next
+        return (
+          <div key={m.label} className={cn('flex flex-col items-center gap-1 text-center text-[11px] font-semibold', done || isNext ? 'text-ink' : 'text-ink-muted')}>
+            <span className={cn('w-[30px] h-[30px] rounded-full grid place-items-center', done ? 'bg-ok text-white' : isNext ? 'bg-gold text-white ring-4 ring-gold/20' : 'bg-[#EFE9E1] text-[#8A7F78]')}>{done ? '✓' : m.mark}</span>
+            {m.label}<br />{m.at}%
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+/** Missions col·lectives de Damm World (sense punts individuals). */
+export function MissionsPanel({ onSurvey, className }: { onSurvey: () => void; className?: string }) {
+  const { festa } = useApp()
+  const env = zoneByKey('envasat'), log = zoneByKey('logistica'), man = zoneByKey('manteniment')
+  const items = [
+    { w: 'rain' as const, title: 'Que surti el sol a Envasat i Logística', pct: ((env.participation + log.participation) / 2 / 60) * 100, left: `Envasat ${env.participation}% · Logística ${log.participation}%`, right: 'Objectiu 60%' },
+    { w: 'fog' as const, title: 'Aixeca la boira de Manteniment', pct: man.responses * 10, left: `${man.responses} de 10 respostes`, right: `Falten ${10 - man.responses}` },
+    { w: 'lock' as const, title: 'Obre el Jardí de la cervesa', pct: (festa.pct / 60) * 100, left: `Planta al ${Math.round(festa.pct)}%`, right: 'Objectiu 60%' },
+  ]
+  return (
+    <aside aria-label="Missions de l’equip" className={cn('bg-paper/95 backdrop-blur border border-line rounded-[22px] shadow-lift p-4 flex flex-col gap-3', className)}>
+      <h2 className="serif text-[24px]">Missions de l’equip</h2>
+      {items.map(m => (
+        <div key={m.title} className="rounded-[14px] bg-cream p-3 flex flex-col gap-2">
+          <div className="flex gap-2.5 items-center text-sm font-bold leading-snug"><WeatherBadge w={m.w} size={34} icon={19} />{m.title}</div>
+          <div className="h-2.5 rounded-full bg-[#E9E0D3] overflow-hidden"><div className="h-full rounded-full bg-red" style={{ width: `${Math.min(100, m.pct)}%` }} /></div>
+          <div className="flex justify-between text-xs text-ink-muted"><span>{m.left}</span><b className="text-ink">{m.right}</b></div>
+        </div>
+      ))}
+      <button onClick={onSurvey} className="btn-red !h-[50px]">Ajuda l’equip · enquesta de 45 s</button>
+      <p className="text-[11.5px] leading-snug text-ink-muted">Missions col·lectives. No hi ha punts per resposta ni rànquings de persones.</p>
+    </aside>
+  )
+}
+
 /** Fitxa d’una zona de Damm World. `hr` afegeix alertes i enllaços de gestió. */
 export function ZonePanel({ zone, hr, className }: { zone: ZoneKey; hr?: boolean; className?: string }) {
   const z = zoneByKey(zone)
@@ -18,10 +63,10 @@ export function ZonePanel({ zone, hr, className }: { zone: ZoneKey; hr?: boolean
         <div className="min-w-0 flex-1"><div className="text-xs font-semibold text-ink-muted">{z.area}{z.headcount ? ` · ${z.headcount} persones` : ''}</div><h2 className="serif text-[24px] leading-tight">{z.name}</h2></div>
         <div className="text-right"><div className="serif text-[30px] leading-none">{z.score != null ? fmt(z.score) : z.key === 'jardi' ? '60%' : '?'}</div><span className="text-xs font-bold" style={{ color: w.ink }}>{z.weatherLabel}</span></div>
       </div>
-      <p className="text-sm leading-relaxed">{z.story}</p>
+      <p className="text-[13px] sm:text-sm leading-relaxed">{z.story}</p>
       {!hidden && (
         <>
-          <div className="flex flex-wrap gap-1.5">{z.topics.map(t => <span key={t.label} className="chip" style={{ background: toneBg(t.tone) }}>{t.label}</span>)}</div>
+          <div className="hidden sm:flex flex-wrap gap-1.5">{z.topics.map(t => <span key={t.label} className="chip" style={{ background: toneBg(t.tone) }}>{t.label}</span>)}</div>
           <div className="flex gap-2 items-start text-[13px] leading-snug bg-ok-bg rounded-[12px] px-3 py-2.5"><Check size={16} className="text-ok shrink-0 mt-px" aria-hidden /><span><strong>Què estem fent:</strong> {z.doing}</span></div>
           <div className="flex justify-between text-xs text-ink-muted"><span>Participació {z.participation}% · {z.responses} respostes</span><span>{z.delta < 0 ? '▼' : '▲'} {fmt(Math.abs(z.delta))} vs mes anterior</span></div>
         </>

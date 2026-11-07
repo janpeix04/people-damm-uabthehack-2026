@@ -429,7 +429,8 @@ function buildPlaza(){
   })();
 
   // arbres, bancs, fanals
-  [[-14, 12.5], [14, 12.5], [-6.5, 14], [6.5, 14]].forEach(function(p){ tree(S, p[0], p[1], .85); });
+  // arbres als costats perquè no tapin la vista de la càmera
+  [[-17, 13.5], [17, 13.5], [-15.5, -12.5]].forEach(function(p){ tree(S, p[0], p[1], .8); });
   bench(S, -10, 12.6, Math.PI); bench(S, 10, 12.6, Math.PI);
   [[-7, -8], [7, -8], [-7.5, 8.5], [7.5, 8.5]].forEach(function(p){ lamp(S, p[0], p[1]); });
 
@@ -567,7 +568,7 @@ function buildWorld(){
   var S = new THREE.Scene();
   skyDome(S, '#5FA6E0', '#EAF0EE');
   S.environment = envFrom('#9CC8E6', '#DCE6E2');
-  S.fog = new THREE.Fog('#DCE7EA', 190, 500);
+  S.fog = new THREE.Fog('#DCE7EA', 280, 650);
   sunLight(S, [70, 95, 50], 78, 2.05, window.innerWidth < 800 ? 2048 : 4096);
   var anims = [], people = [], pickables = [], zones = {};
   var IX = 58, IZ = 43, m4 = new THREE.Matrix4();
@@ -595,7 +596,7 @@ function buildWorld(){
     var g = new THREE.ExtrudeGeometry(s, { depth: depth, bevelEnabled: true, bevelThickness: depth * .5, bevelSize: R * .07, bevelSegments: 2 }); g.center(); return g;
   }
   var ribTex = makeTex(256, 64, function(g, w, h){ for (var x = 0; x < w; x += 16) { var gr = g.createLinearGradient(x, 0, x + 16, 0); gr.addColorStop(0, '#F3F5F7'); gr.addColorStop(.45, '#C2C8CF'); gr.addColorStop(.55, '#9AA2AC'); gr.addColorStop(1, '#E6E9EC'); g.fillStyle = gr; g.fillRect(x, 0, 16, h); } }, 1, 1);
-  var redPanel = makeTex(256, 256, function(g, w, h){ g.fillStyle = '#D9232B'; g.fillRect(0, 0, w, h); for (var y = 0; y < h; y += 32) for (var x = 0; x < w; x += 64) { var gr = g.createLinearGradient(x, y, x, y + 32); gr.addColorStop(0, '#E2353B'); gr.addColorStop(1, '#C91D25'); g.fillStyle = gr; g.fillRect(x + 1, y + 1, 62, 30); } speckle(g, w, h, 1500, ['#000', '#fff'], .05); }, 1, 1);
+  var redPanel = makeTex(256, 256, function(g, w, h){ g.fillStyle = '#B3121C'; g.fillRect(0, 0, w, h); for (var y = 0; y < h; y += 32) for (var x = 0; x < w; x += 64) { var gr = g.createLinearGradient(x, y, x, y + 32); gr.addColorStop(0, '#C8161F'); gr.addColorStop(1, '#A90F18'); g.fillStyle = gr; g.fillRect(x + 1, y + 1, 62, 30); } speckle(g, w, h, 1500, ['#000', '#fff'], .05); }, 1, 1);
 
   // ---------- aigua i illa ----------
   var wgeo = new THREE.PlaneGeometry(640, 640, 80, 80);
@@ -947,7 +948,7 @@ function buildWorld(){
 
   return { scene: S, anims: anims, pickables: pickables, select: select,
     view: { pos: V(96, 90, 122), target: V(0, 4, -4), min: 35, max: 240, polar: 1.28 },
-    anchors: { malta: V(-51.5, 24, -32), fermentacio: V(-28, 27.5, -31.8), coccio: V(11, 26, -28), logistica: V(44, 32.5, -25), envasat: V(32, 20, 15.5), oficines: V(-48, 22, 21), comercial: V(49.5, 10, 31), manteniment: V(-8, 13.5, 37.5), jardi: V(-6, 9.5, 18) } };
+    anchors: { malta: V(-52, 16.5, -27), fermentacio: V(-16, 27.5, -31.8), coccio: V(11, 26, -28), logistica: V(44, 32.5, -25), envasat: V(32, 20, 15.5), oficines: V(-48, 22, 21), comercial: V(49.5, 10, 31), manteniment: V(-8, 13.5, 37.5), jardi: V(-6, 9.5, 18) } };
 }
 
 
@@ -994,6 +995,8 @@ export function mountScene(container, kind, opts) {
   controls.enableDamping = true; controls.dampingFactor = .08; controls.enablePan = false; controls.rotateSpeed = .6;
   var v = W.view;
   camera.position.copy(v.pos); controls.target.copy(v.target);
+  // en pantalles estretes allunyem la càmera perquè hi càpiga l'escena sencera
+  if (container.clientWidth < 700) camera.position.sub(v.target).multiplyScalar(kind === 'world' ? 1.55 : 1.2).add(v.target);
   controls.minDistance = v.min; controls.maxDistance = v.max; controls.maxPolarAngle = v.polar; controls.update();
 
   var overlay = document.createElement('div'); overlay.className = 'scene-labels'; container.appendChild(overlay);
