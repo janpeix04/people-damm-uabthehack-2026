@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Sparkles, X } from 'lucide-react'
 import type { Question } from '../data/types'
-import { cn, Face, FACES, PrivacyNote } from './ui'
+import { cn, Face, FACES } from './ui'
 
 interface Props {
   questions: Question[]
@@ -51,27 +51,23 @@ export function SurveyRunner({ questions, onExit, onDone, preview }: Props) {
         </div>
       </header>
 
-      {/* Missatge proper, entenedor i inclusiu de la IA en realitzar l'enquesta */}
-      <div className="mx-4 sm:mx-5 mt-3 px-3.5 py-2.5 rounded-[14px] bg-[#FAF7F2] border border-[#E8DEC8] flex items-center gap-2.5 text-xs">
-        <Sparkles size={16} className="text-red shrink-0" aria-hidden />
-        <span className="text-ink leading-snug">
-          {step === 0 && (
-            <>
-              <strong>Hola! 👋</strong> Aquest espai és segur i 100% anònim. Respon amb tranquil·litat al teu ritme: cada veu compta per millorar el dia a dia de tot l'equip.
-            </>
-          )}
-          {step > 0 && q.type !== 'text' && (
-            <>
-              <strong>To proper i inclusiu:</strong> Totes les respostes són confidencials i s'utilitzen únicament per impulsar millores col·lectives.
-            </>
-          )}
-          {q.type === 'text' && (
-            <>
-              <strong>Espai obert d'escolta:</strong> Pots escriure lliurement. La IA anonimitza de forma automàtica qualsevol dada identificativa.
-            </>
-          )}
-        </span>
-      </div>
+      {/* Missatge de suport de la IA segons el tipus de pregunta */}
+      {step > 0 && (
+        <div className="mx-4 sm:mx-5 mt-3 px-3.5 py-2.5 rounded-[14px] bg-[#FAF7F2] border border-[#E8DEC8] flex items-center gap-2.5 text-xs">
+          <Sparkles size={16} className="text-red shrink-0" aria-hidden />
+          <span className="text-ink leading-snug">
+            {q.type !== 'text' ? (
+              <>
+                <strong>To proper i inclusiu:</strong> Totes les respostes són confidencials i s'utilitzen únicament per impulsar millores col·lectives.
+              </>
+            ) : (
+              <>
+                <strong>Espai obert d'escolta:</strong> Pots escriure lliurement. La IA anonimitza de forma automàtica qualsevol dada identificativa.
+              </>
+            )}
+          </span>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-5 flex flex-col gap-4">
         <div className="eyebrow !text-red">{q.dim}</div>
@@ -149,7 +145,7 @@ export function SurveyRunner({ questions, onExit, onDone, preview }: Props) {
       </div>
 
       <footer className="px-4 sm:px-5 pb-5 pt-2 flex flex-col gap-2.5">
-        <PrivacyNote>Anònima: protegida per k-anonimat (k≥5). No guardem nom, dispositiu ni ubicació.</PrivacyNote>
+        
         <div className="flex gap-2">
           {step > 0 && (
             <button className="btn-line !h-14 !text-base px-5 font-bold" onClick={() => setStep(s => s - 1)}>

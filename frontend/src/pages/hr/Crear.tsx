@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowDown, ArrowUp, Pencil, RefreshCw, Sparkles, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Clock, Info, Pencil, RefreshCw, Sparkles, Trash2 } from 'lucide-react'
 import { CHANNELS, MIN_SAMPLE, SURVEY_ZONES } from '../../data/mock'
 import type { ChannelKey, Question, Survey, ZoneKey } from '../../data/types'
 import { DEPARTAMENTS, generateSurvey, toQuestion, type N8nSurvey } from '../../api/n8n'
@@ -24,12 +24,70 @@ type LangKey = (typeof LANG_OPTIONS)[number]['key']
 const RESTRICTIONS = 'No señalar a personas individuales ni evaluar desempeño personal'
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : 'Error desconegut')
 
-/** Generador intel·ligent de suport segons l'idioma seleccionat si la IA necessita alternatives extres */
-function generateAlternativeQuestion(existingCount: number, lang: LangKey, goal: string): Question {
+/** Obté les zones corresponents als departaments triats a la Fase 1 */
+export function getZonesForDepartments(deps: string[]): ZoneKey[] {
+  if (deps.length === 0 || (deps.includes('Planta') && deps.length === DEPARTAMENTS.length)) {
+    return SURVEY_ZONES.map(z => z.key)
+  }
+  const set = new Set<ZoneKey>()
+  deps.forEach(d => {
+    switch (d) {
+      case 'Planta':
+        ;(['envasat', 'coccio', 'malta', 'fermentacio', 'manteniment'] as ZoneKey[]).forEach(k => set.add(k))
+        break
+      case 'Logística':
+        set.add('logistica')
+        break
+      case 'Comercial':
+        set.add('comercial')
+        break
+      case 'Oficina':
+      case 'Manager':
+        set.add('oficines')
+        break
+    }
+  })
+  return Array.from(set)
+}
+
+/** Obté els canals recomanats segons els departaments triats a la Fase 1 */
+export function getChannelsForDepartments(deps: string[]): ChannelKey[] {
+  const set = new Set<ChannelKey>()
+  const hasPlantaOrLogistica = deps.includes('Planta') || deps.includes('Logística')
+  const hasOficinaOrManager = deps.includes('Oficina') || deps.includes('Manager')
+  const hasComercial = deps.includes('Comercial')
+
+  if (hasPlantaOrLogistica) {
+    set.add('qr')
+    set.add('app')
+    set.add('placa')
+    set.add('world')
+  }
+  if (hasOficinaOrManager) {
+    set.add('teams')
+    set.add('email')
+    set.add('app')
+    set.add('placa')
+  }
+  if (hasComercial) {
+    set.add('app')
+    set.add('email')
+    set.add('teams')
+  }
+  if (set.size === 0) {
+    return ['qr', 'app', 'teams', 'placa', 'world']
+  }
+  return Array.from(set)
+}
+
+/** Generador intel·ligent de suport segons departaments, durada i idioma seleccionats */
+function generateAlternativeQuestion(existingCount: number, lang: LangKey, goal: string, deps: string[]): Question {
   const id = `q_extra_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`
   const goalLower = goal.toLowerCase()
   const isTurn = goalLower.includes('torn') || goalLower.includes('turno') || goalLower.includes('shift')
-  const isEquip = goalLower.includes('eina') || goalLower.includes('herramienta') || goalLower.includes('tool') || goalLower.includes('material')
+  const isLog = deps.includes('Logística') || goalLower.includes('logíst') || goalLower.includes('logistic')
+  const isCom = deps.includes('Comercial') || goalLower.includes('comercial') || goalLower.includes('vent')
+  const isOfi = deps.includes('Oficina') || deps.includes('Manager') || goalLower.includes('oficin')
 
   if (lang === 'CASTELLANO') {
     if (isTurn) {
@@ -41,11 +99,27 @@ function generateAlternativeQuestion(existingCount: number, lang: LangKey, goal:
       ]
       return qs[existingCount % qs.length]
     }
-    if (isEquip) {
+    if (isLog) {
       const qs: Question[] = [
-        { id, dim: 'Herramientas', type: 'faces', secs: 10, text: '¿Cómo valoras el estado y funcionamiento de los equipos y herramientas de trabajo?' },
-        { id, dim: 'Soporte', type: 'scale', secs: 12, text: 'Del 0 al 10, ¿recibes soporte técnico rápido cuando una herramienta falla?' },
-        { id, dim: 'Propuestas', type: 'text', secs: 15, text: '¿Qué herramienta o recurso facilitaría más tu actividad habitual?' },
+        { id, dim: 'Logística', type: 'faces', secs: 10, text: '¿Cómo valoras la coordinación operativa entre las plataformas de logística y planta?' },
+        { id, dim: 'Cargas de trabajo', type: 'scale', secs: 12, text: 'Del 0 al 10, ¿cómo gestionamos los picos de volumen y entregas?' },
+        { id, dim: 'Recursos', type: 'text', secs: 15, text: '¿Qué mejora en muelles o sistemas de transporte optimizaría tu labor?' },
+      ]
+      return qs[existingCount % qs.length]
+    }
+    if (isCom) {
+      const qs: Question[] = [
+        { id, dim: 'Comercial', type: 'faces', secs: 10, text: '¿Dispones de las herramientas móviles y soporte de marketing necesarios en tu ruta?' },
+        { id, dim: 'Objetivos', type: 'scale', secs: 12, text: 'Del 0 al 10, ¿sientes que los objetivos comerciales son claros y alcanzables?' },
+        { id, dim: 'Propuestas', type: 'text', secs: 15, text: '¿Qué propuesta comercial ayudaría a reforzar la relación con nuestros clientes?' },
+      ]
+      return qs[existingCount % qs.length]
+    }
+    if (isOfi) {
+      const qs: Question[] = [
+        { id, dim: 'Colaboración', type: 'faces', secs: 10, text: '¿Cómo valoras la flexibilidad y el entorno de trabajo digital en las oficinas?' },
+        { id, dim: 'Eficiencia', type: 'scale', secs: 12, text: 'Del 0 al 10, ¿el volumen de reuniones te permite avanzar en tus prioridades?' },
+        { id, dim: 'Iniciativas', type: 'text', secs: 15, text: '¿Qué iniciativa simplificaría procesos en tu área o departamento?' },
       ]
       return qs[existingCount % qs.length]
     }
@@ -87,6 +161,30 @@ function generateAlternativeQuestion(existingCount: number, lang: LangKey, goal:
     ]
     return qs[existingCount % qs.length]
   }
+  if (isLog) {
+    const qs: Question[] = [
+      { id, dim: 'Logística', type: 'faces', secs: 10, text: 'Com valores la coordinació i el ritme de treball a les plataformes logístiques?' },
+      { id, dim: 'Recursos', type: 'scale', secs: 12, text: 'Del 0 al 10, comptes amb els mitjans adequats per gestionar els pics de càrrega?' },
+      { id, dim: 'Millores', type: 'text', secs: 15, text: 'Quina adaptació en rutes o molls facilitaria més la feina diària?' },
+    ]
+    return qs[existingCount % qs.length]
+  }
+  if (isCom) {
+    const qs: Question[] = [
+      { id, dim: 'Comercial', type: 'faces', secs: 10, text: 'Com valores les eines mòbils i el suport en ruta per atendre els clients?' },
+      { id, dim: 'Agilitat', type: 'scale', secs: 12, text: 'Del 0 al 10, reps respostes ràpides davant d’incidències comercials?' },
+      { id, dim: 'Propostes', type: 'text', secs: 15, text: 'Quina proposta t’agradaria impulsar per millorar la relació amb els establiments?' },
+    ]
+    return qs[existingCount % qs.length]
+  }
+  if (isOfi) {
+    const qs: Question[] = [
+      { id, dim: 'Oficines', type: 'faces', secs: 10, text: 'Com valores la flexibilitat horària i la coordinació amb els altres departaments?' },
+      { id, dim: 'Eficiència', type: 'scale', secs: 12, text: 'Del 0 al 10, la gestió de reunions et deixa espai per a la feina de fons?' },
+      { id, dim: 'Projectes', type: 'text', secs: 15, text: 'Quina millora de processos o digitalització proposaries per al teu equip?' },
+    ]
+    return qs[existingCount % qs.length]
+  }
   const catQs: Question[] = [
     { id, dim: 'Ambient', type: 'faces', secs: 10, text: 'Com valores l’ambient de treball i la companyonia en el teu equip?' },
     { id, dim: 'Comunicació', type: 'scale', secs: 12, text: 'Del 0 al 10, reps amb prou claredat i agilitat la informació que necessites?' },
@@ -104,11 +202,15 @@ export default function Crear() {
   const [loadedId, setLoadedId] = useState<string>()
 
   const [step, setStep] = useState(0)
+  // Control de fases acceptades per impedir avançar sense acceptar la fase prèvia
+  const [acceptedSteps, setAcceptedSteps] = useState<number[]>([])
+  const [maxAcceptedStep, setMaxAcceptedStep] = useState(0)
+
   const [title, setTitle] = useState('')
   const [goal, setGoal] = useState('')
-  const [durationMinutes, setDurationMinutes] = useState<number | ''>('')
+  const [durationMinutes, setDurationMinutes] = useState<number | ''>(2)
   const [lang, setLang] = useState<LangKey>('CASTELLANO')
-  const [departments, setDepartments] = useState<string[]>([])
+  const [departments, setDepartments] = useState<string[]>(['Planta', 'Logística'])
 
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -118,8 +220,8 @@ export default function Crear() {
   const [pool, setPool] = useState<Question[]>([])
   const [sel, setSel] = useState<string[]>([])
   const [editing, setEditing] = useState<string | null>(null)
-  const [zones, setZones] = useState<ZoneKey[]>(['envasat', 'logistica'])
-  const [channels, setChannels] = useState<ChannelKey[]>(['qr', 'app', 'teams', 'placa', 'world'])
+  const [zones, setZones] = useState<ZoneKey[]>(() => getZonesForDepartments(['Planta', 'Logística']))
+  const [channels, setChannels] = useState<ChannelKey[]>(() => getChannelsForDepartments(['Planta', 'Logística']))
   const [opens, setOpens] = useState(today())
   const [closes, setCloses] = useState(plusDays(14))
   const [approved, setApproved] = useState(false)
@@ -145,17 +247,28 @@ export default function Crear() {
   const valid = chosen.length >= 3 && chosen.length <= 12
   const people = SURVEY_ZONES.filter(z => zones.includes(z.key)).reduce((a, z) => a + z.headcount, 0)
 
-  /** WF-01: Crida a la IA d'n8n amb l'idioma seleccionat i el missatge/objectiu */
-  const callWF01 = (extraRestrictions = '') =>
-    generateSurvey({
+  // Sincronitza públic i canals derivats dels departaments de la Fase 1
+  const syncPublicAndChannelsWithDepartments = (newDeps: string[]) => {
+    const derivedZones = getZonesForDepartments(newDeps)
+    const derivedChannels = getChannelsForDepartments(newDeps)
+    setZones(derivedZones)
+    setChannels(derivedChannels)
+  }
+
+  /** WF-01: Crida a la IA d'n8n amb durada, departaments, idioma i objectiu */
+  const callWF01 = (extraRestrictions = '') => {
+    const deptInfo = `Departaments a cobrir: ${collectiveStr}.`
+    const durInfo = `Durada màxima objectiu de l'enquesta: ${durationMinutes || 1} minuts (${durationSecs} segons) de resposta.`
+    return generateSurvey({
       objetivo: goal.trim(),
       colectiu: collectiveStr,
       durada_max: durationSecs,
       idioma: currentLangObj.apiVal,
       restriccions: extraRestrictions
-        ? `${RESTRICTIONS}. ${extraRestrictions}`
-        : `${RESTRICTIONS}. Generar estrictament en idioma ${currentLangObj.apiVal}.`,
+        ? `${RESTRICTIONS}. ${deptInfo} ${durInfo} ${extraRestrictions}`
+        : `${RESTRICTIONS}. ${deptInfo} ${durInfo} Generar estrictament en idioma ${currentLangObj.apiVal}.`,
     })
+  }
 
   const runAI = async () => {
     setLoading(true)
@@ -166,13 +279,55 @@ export default function Crear() {
       setDraft({ id: r.survey_id, survey: r.survey, warnings: r.control_calidad?.anti_sesgo_warnings ?? [] })
       if (!title.trim() && r.survey.titulo) setTitle(r.survey.titulo)
       setPool(qs)
-      setSel(qs.map(q => q.id))
+
+      // Selecció inicial de preguntes respectant la durada marcada a la Fase 1 (mínim 3)
+      let accSecs = 0
+      const initialSel: string[] = []
+      for (const q of qs) {
+        if (initialSel.length < 3 || accSecs + q.secs <= durationSecs) {
+          initialSel.push(q.id)
+          accSecs += q.secs
+        }
+      }
+      setSel(initialSel.length >= 3 ? initialSel : qs.slice(0, Math.max(3, qs.length)).map(q => q.id))
+
+      // Sincronització automàtica de públic i canals amb els departaments de Fase 1
+      syncPublicAndChannelsWithDepartments(departments)
+
+      // Marcar Fase 1 com a acceptada i avançar
+      setAcceptedSteps(prev => Array.from(new Set([...prev, 0])))
+      setMaxAcceptedStep(prev => Math.max(prev, 1))
       setStep(1)
     } catch (e) {
       setGenError(errMsg(e))
     } finally {
       setLoading(false)
     }
+  }
+
+  /** Acceptar Fase 1 sense necessitat de tornar a generar IA si ja hi ha preguntes */
+  const acceptPhase1 = () => {
+    if (goal.trim().length < 5 || departments.length === 0 || !durationMinutes) return
+    syncPublicAndChannelsWithDepartments(departments)
+    setAcceptedSteps(prev => Array.from(new Set([...prev, 0])))
+    setMaxAcceptedStep(prev => Math.max(prev, 1))
+    setStep(1)
+  }
+
+  /** Acceptar Fase 2 (Preguntes) */
+  const acceptPhase2 = () => {
+    if (!valid) return
+    setAcceptedSteps(prev => Array.from(new Set([...prev, 1])))
+    setMaxAcceptedStep(prev => Math.max(prev, 2))
+    setStep(2)
+  }
+
+  /** Acceptar Fase 3 (Públic i canals) */
+  const acceptPhase3 = () => {
+    if (zones.length === 0 || channels.length === 0) return
+    setAcceptedSteps(prev => Array.from(new Set([...prev, 2])))
+    setMaxAcceptedStep(prev => Math.max(prev, 3))
+    setStep(3)
   }
 
   const startManual = () => {
@@ -209,13 +364,13 @@ export default function Crear() {
     setSel(s => s.filter(x => x !== id))
   }
 
-  /** Proposar més preguntes mantenint l'idioma i el missatge */
+  /** Proposar més preguntes mantenint l'idioma, departaments i durada */
   const more = async () => {
     setLoadingMore(true)
     try {
       const existingTexts = pool.map(q => q.text.trim())
       const r = await callWF01(
-        `Generar noves preguntes complementàries diferents a les existents sobre: "${goal.trim()}". Idioma obligatori: ${currentLangObj.apiVal}. Evitar duplicar: ${existingTexts.slice(0, 5).join(' | ')}`
+        `Generar noves preguntes complementàries per als departaments ${collectiveStr} sobre: "${goal.trim()}". Idioma: ${currentLangObj.apiVal}. Evitar duplicar: ${existingTexts.slice(0, 5).join(' | ')}`
       )
       const used = new Set(pool.map(q => q.text.trim().toLowerCase()))
       const extra = r.survey.preguntas
@@ -224,17 +379,16 @@ export default function Crear() {
 
       if (extra.length > 0) {
         setPool(p => [...p, ...extra])
-        toast(`La IA ha proposat ${extra.length} noves preguntes en ${currentLangObj.label}`)
+        toast(`La IA ha proposat ${extra.length} noves preguntes per a ${collectiveStr}`)
       } else {
-        // Generador alternatiu en el mateix idioma per no deixar mai bloquejat l'usuari
-        const fallbackQ = generateAlternativeQuestion(pool.length, lang, goal)
+        const fallbackQ = generateAlternativeQuestion(pool.length, lang, goal, departments)
         setPool(p => [...p, fallbackQ])
-        toast(`Afegida nova proposta adaptada en ${currentLangObj.label}`)
+        toast(`Afegida nova proposta adaptada per a ${collectiveStr}`)
       }
     } catch {
-      const fallbackQ = generateAlternativeQuestion(pool.length, lang, goal)
+      const fallbackQ = generateAlternativeQuestion(pool.length, lang, goal, departments)
       setPool(p => [...p, fallbackQ])
-      toast(`Generada nova pregunta en ${currentLangObj.label} basada en l'objectiu`)
+      toast(`Generada nova pregunta adaptada per a ${collectiveStr}`)
     } finally {
       setLoadingMore(false)
     }
@@ -298,23 +452,25 @@ export default function Crear() {
             </Link>
             <h1 className="serif text-[34px] sm:text-[36px] leading-[1.05] mt-1.5">Nova enquesta</h1>
           </div>
-          <span className="text-[13px] text-ink-muted">La IA d’n8n proposa · no es publica res fins que l’aprovis</span>
         </div>
         <ol className="grid gap-2 grid-cols-2 md:grid-cols-4">
           {STEPS.map((l, i) => {
             const cur = i === step
-            const done = i < step
-            const reachable = i <= step || (i === 1 && pool.length > 0) || (i > 1 && valid)
+            const done = acceptedSteps.includes(i)
+            // No es pot avançar a fases futures sense haver acceptat l'anterior; es pot tornar enrere en qualsevol moment
+            const canNavigate = i <= step || (i <= maxAcceptedStep && acceptedSteps.includes(i - 1))
             return (
               <li key={l}>
                 <button
-                  disabled={!reachable}
+                  type="button"
+                  disabled={!canNavigate}
                   onClick={() => setStep(i)}
                   aria-current={cur ? 'step' : undefined}
                   className={cn(
-                    'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[14px] border-[1.5px] text-left text-sm font-bold disabled:opacity-60 transition-colors',
+                    'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[14px] border-[1.5px] text-left text-sm font-bold transition-colors',
                     cur ? 'border-red bg-paper' : 'border-line',
-                    done ? 'bg-paper' : !cur && 'bg-cream'
+                    done ? 'bg-paper' : !cur && 'bg-cream',
+                    !canNavigate && 'opacity-40 cursor-not-allowed'
                   )}
                 >
                   <span
@@ -349,7 +505,7 @@ export default function Crear() {
               <div>
                 <h2 className="serif text-2xl sm:text-3xl">Què vols saber?</h2>
                 <p className="text-sm text-ink-muted mt-1">
-                  Defineix l'objectiu de la microconsulta perquè la IA prepari preguntes curtes, neutres i adaptades als teus equips.
+                  Defineix l'objectiu de la microconsulta, la durada i els departaments per preparar preguntes precises, neutres i adaptades als teus equips.
                 </p>
               </div>
 
@@ -368,7 +524,7 @@ export default function Crear() {
 
               <div>
                 <label htmlFor="goal" className="text-[13.5px] font-bold block mb-1">
-                  Explica-ho amb les teves paraules
+                  Explica-ho amb les teves paraules *
                 </label>
                 <textarea
                   id="goal"
@@ -378,34 +534,14 @@ export default function Crear() {
                   value={goal}
                   onChange={e => setGoal(e.target.value)}
                 />
-              </div>
-
-              {/* Configuració de To de la IA per defecte i Requisits */}
-              <div className="bg-[#FAF7F2] rounded-[16px] p-4 border border-[#E8DEC8] flex flex-col gap-2.5">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-2">
-                    <Sparkles size={16} className="text-red" />
-                    <span className="text-[13.5px] font-bold text-ink">To de la IA (Per defecte)</span>
-                  </div>
-                  <span className="chip bg-ok-bg text-ok-ink text-xs font-bold">✓ Proper, entenedor i inclusiu</span>
-                </div>
-                <p className="text-xs text-ink-muted leading-relaxed">
-                  Per defecte, la IA redacta les preguntes amb un <strong>to proper, entenedor i empàtic</strong>, aplicant un <strong>llenguatge neutre i inclusiu</strong> (sense biaixos de gènere ni fórmules excloents) per facilitar la comprensió de qualsevol persona treballadora.
-                </p>
-                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-[#E8DEC8]/60 text-[11.5px] font-semibold text-ink-muted">
-                  <span className="flex items-center gap-1"><span className="text-ok font-bold">✓</span> Mínim 3 preguntes requerides</span>
-                  <span>·</span>
-                  <span className="flex items-center gap-1"><span className="text-ok font-bold">✓</span> Sense límit màxim de preguntes</span>
-                  <span>·</span>
-                  <span className="flex items-center gap-1"><span className="text-ok font-bold">✓</span> Anàlisi de conformitat, idioma i temps</span>
-                </div>
+                <span className="text-[11.5px] text-ink-muted mt-1 block">Mínim 5 caràcters per guiar la generació de la consulta.</span>
               </div>
 
               <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {/* Durada màxima: camp numèric en minuts */}
                 <div>
                   <label htmlFor="durMin" className="eyebrow block mb-2 font-bold">
-                    Durada màxima (minuts)
+                    Durada màxima (minuts) *
                   </label>
                   <input
                     id="durMin"
@@ -420,10 +556,12 @@ export default function Crear() {
                       setDurationMinutes(v === '' ? '' : Math.max(1, parseInt(v, 10) || 1))
                     }}
                   />
-                  <span className="text-[11.5px] text-ink-muted mt-1 block">Temps màxim estimat de resposta</span>
+                  <span className="text-[11.5px] text-ink-muted mt-1 block">
+                    Temps màxim estimat: {durationMinutes ? `${durationSecs} segons` : 'pendent'}
+                  </span>
                 </div>
 
-                {/* Idioma: CATALÀ, CASTELLANO, ENGLISH (per defecte CASTELLANO) */}
+                {/* Idioma */}
                 <div>
                   <label htmlFor="lang" className="eyebrow block mb-2 font-bold">
                     Idioma
@@ -444,15 +582,16 @@ export default function Crear() {
                 </div>
               </div>
 
-              {/* Departaments (abans col·lectius): Selector múltiple */}
+              {/* Departaments: Selector múltiple que impactarà les seccions futures */}
               <div className="flex flex-col gap-2 pt-2 border-t border-[#F1EAE0]">
                 <div className="flex justify-between items-center flex-wrap gap-2">
-                  <label className="eyebrow block font-bold">Departaments (Selector múltiple)</label>
+                  <label className="eyebrow block font-bold">Departaments * (Selector múltiple)</label>
                   <button
                     type="button"
-                    onClick={() =>
-                      setDepartments(departments.length === DEPARTAMENTS.length ? [] : [...DEPARTAMENTS])
-                    }
+                    onClick={() => {
+                      const next = departments.length === DEPARTAMENTS.length ? [] : [...DEPARTAMENTS]
+                      setDepartments(next)
+                    }}
                     className="text-xs font-bold text-red-dk hover:underline"
                   >
                     {departments.length === DEPARTAMENTS.length ? 'Deseleccionar tots' : 'Seleccionar tots els departaments'}
@@ -480,8 +619,8 @@ export default function Crear() {
                 </div>
                 <p className="text-xs text-ink-muted">
                   {departments.length === 0
-                    ? 'Selecciona un o diversos departaments als quals anirà adreçada la consulta.'
-                    : `Departaments seleccionats: ${departments.join(', ')}`}
+                    ? '⚠️ Cal seleccionar almenys un departament per configurar les preguntes, zones i canals.'
+                    : `Departaments seleccionats (${departments.length}): ${departments.join(', ')}. S'adaptaran les preguntes, zones i canals de distribució.`}
                 </p>
               </div>
 
@@ -492,19 +631,38 @@ export default function Crear() {
                 </div>
               )}
 
-              <div className="flex justify-end pt-3 border-t border-[#F1EAE0]">
-                <button
-                  onClick={runAI}
-                  disabled={loading || goal.trim().length < 5 || departments.length === 0}
-                  className="btn-red !h-[50px] !px-6 !text-[15px] font-bold shadow-sm"
-                >
-                  <Sparkles size={18} aria-hidden />
-                  {loading
-                    ? 'La IA està preparant les preguntes…'
-                    : pool.length
-                    ? 'Tornar a generar preguntes'
-                    : 'Generar preguntes amb IA'}
-                </button>
+              <div className="flex flex-wrap justify-between items-center gap-3 pt-3 border-t border-[#F1EAE0]">
+                <div className="text-xs text-ink-muted font-medium">
+                  {pool.length > 0 && (
+                    <span className="text-ok font-semibold">
+                      ✓ Hi ha {pool.length} preguntes preparades prèviament.
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2.5 items-center">
+                  {pool.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={acceptPhase1}
+                      disabled={goal.trim().length < 5 || departments.length === 0 || !durationMinutes}
+                      className="btn-ink !h-[50px] !px-6 !text-[15px] font-bold shadow-sm"
+                    >
+                      Acceptar i continuar →
+                    </button>
+                  )}
+                  <button
+                    onClick={runAI}
+                    disabled={loading || goal.trim().length < 5 || departments.length === 0 || !durationMinutes}
+                    className="btn-red !h-[50px] !px-6 !text-[15px] font-bold shadow-sm"
+                  >
+                    <Sparkles size={18} aria-hidden />
+                    {loading
+                      ? 'La IA està preparant les preguntes…'
+                      : pool.length
+                      ? 'Tornar a generar preguntes amb IA'
+                      : 'Generar preguntes amb IA'}
+                  </button>
+                </div>
               </div>
             </>
           )}
@@ -517,13 +675,38 @@ export default function Crear() {
               <div className="flex flex-wrap justify-between items-end gap-2.5">
                 <div>
                   <h2 className="serif text-2xl sm:text-3xl">La IA proposa {pool.length} preguntes</h2>
-                  <p className="text-[13.5px] text-ink-muted">
-                    Idioma: <strong className="text-ink">{currentLangObj.label}</strong> · Tria’n entre 3 i 6. Pots editar-les, regenerar-les o esborrar-les.
+                  <div className="flex flex-wrap items-center gap-2 text-[13px] text-ink-muted mt-1">
+                    <span>Idioma: <strong className="text-ink">{currentLangObj.label}</strong></span>
+                    <span>·</span>
+                    <span>Departaments: <strong className="text-ink">{collectiveStr}</strong></span>
+                    <span>·</span>
+                    <span>
+                      Objectiu Fase 1: <strong className="text-ink">{durationMinutes || 1} min ({durationSecs} s)</strong>
+                    </span>
+                  </div>
+                  <p className="text-xs text-ink-muted mt-1">
+                    Tria’n almenys 3 preguntes. Pots editar-les, regenerar-les o esborrar-les.
                   </p>
                 </div>
                 <button onClick={more} disabled={loadingMore} className="btn-line !h-[40px] !text-[13px] font-bold">
                   {loadingMore ? 'La IA està pensant noves preguntes…' : '+ Proposar-ne més'}
                 </button>
+              </div>
+
+              {/* Indicador de concordança de temps amb la Fase 1 */}
+              <div className={cn(
+                'rounded-[14px] p-3 text-xs font-semibold flex items-center justify-between flex-wrap gap-2 border',
+                secs <= durationSecs ? 'bg-ok-bg text-ok-ink border-ok/30' : 'bg-warn-bg text-warn-ink border-warn/30'
+              )}>
+                <span className="flex items-center gap-1.5">
+                  <Clock size={15} />
+                  Temps acumulat seleccionat: <strong>{secs} segons</strong> (Objectiu marcat: {durationSecs} s)
+                </span>
+                <span>
+                  {secs <= durationSecs
+                    ? '✓ Dins del temps marcat a la Fase 1'
+                    : '⚠️ Les preguntes seleccionades superen el temps orientatiu marcat'}
+                </span>
               </div>
 
               <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
@@ -599,6 +782,25 @@ export default function Crear() {
                   )
                 })}
               </div>
+
+              {/* Barra de navegació a peu de pàgina per a Fase 2 */}
+              <div className="flex justify-between items-center pt-4 border-t border-[#F1EAE0]">
+                <button
+                  type="button"
+                  className="btn-line !h-11 px-5 font-bold"
+                  onClick={() => setStep(0)}
+                >
+                  ← Enrere (Objectiu)
+                </button>
+                <button
+                  type="button"
+                  className="btn-ink !h-11 px-6 font-bold"
+                  disabled={!valid}
+                  onClick={acceptPhase2}
+                >
+                  Acceptar i continuar →
+                </button>
+              </div>
             </>
           )}
 
@@ -607,8 +809,21 @@ export default function Crear() {
               ======================================================== */}
           {step === 2 && (
             <>
+              {/* Notificació d'integració amb departaments de Fase 1 */}
+              <div className="rounded-[14px] bg-[#FAF7F2] p-3.5 border border-[#E8DEC8] flex items-start gap-2.5 text-xs text-ink leading-relaxed">
+                <Info size={16} className="text-red shrink-0 mt-0.5" />
+                <div>
+                  <strong>Sincronitzat amb la Fase 1:</strong> Hem preseleccionat les zones i canals òptims per als departaments marcats (<strong>{collectiveStr}</strong>). Pots ajustar-los lliurement segons les teves necessitats.
+                </div>
+              </div>
+
               <div>
-                <h2 className="serif text-2xl">A qui va dirigida?</h2>
+                <div className="flex justify-between items-baseline flex-wrap gap-2">
+                  <h2 className="serif text-2xl">A qui va dirigida?</h2>
+                  <span className="text-xs text-ink-muted font-semibold">
+                    Departaments base: <strong>{collectiveStr}</strong>
+                  </span>
+                </div>
                 <p className="text-[13px] text-ink-muted mb-2.5">
                   Zones de Damm World. Els resultats d’una zona només es veuen amb {MIN_SAMPLE} respostes o més per garantir l'anonimat (k≥5).
                 </p>
@@ -657,7 +872,7 @@ export default function Crear() {
               <div>
                 <h2 className="serif text-2xl">Per on arribarà?</h2>
                 <p className="text-[13px] text-ink-muted mb-2.5">
-                  Canals de distribució de la microconsulta. Tots porten al mateix enllaç anònim, sense iniciar sessió.
+                  Canals de distribució de la microconsulta, adaptats als canals habituals de {collectiveStr}.
                 </p>
                 <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(230px,1fr))]">
                   {CHANNELS.map(c => {
@@ -688,7 +903,7 @@ export default function Crear() {
                 </div>
               </div>
 
-              {/* Nova secció: Obertura i tancament d'enquesta */}
+              {/* Secció: Obertura i tancament d'enquesta */}
               <div className="pt-4 border-t border-[#F1EAE0] flex flex-col gap-3">
                 <h2 className="serif text-2xl">Obertura i tancament de l’enquesta</h2>
                 <p className="text-[13px] text-ink-muted">
@@ -725,15 +940,20 @@ export default function Crear() {
               </div>
 
               <div className="flex gap-2 justify-end pt-3 border-t border-[#F1EAE0]">
-                <button className="btn-line !h-11 px-5" onClick={() => setStep(1)}>
-                  Enrere
+                <button
+                  type="button"
+                  className="btn-line !h-11 px-5 font-bold"
+                  onClick={() => setStep(1)}
+                >
+                  ← Enrere (Preguntes)
                 </button>
                 <button
+                  type="button"
                   className="btn-ink !h-11 px-6 font-bold"
                   disabled={zones.length === 0 || channels.length === 0}
-                  onClick={() => setStep(3)}
+                  onClick={acceptPhase3}
                 >
-                  Continuar · Revisió i publicació →
+                  Acceptar i continuar · Revisió →
                 </button>
               </div>
             </>
@@ -777,7 +997,7 @@ export default function Crear() {
                     <div className="bg-white rounded-[12px] p-2.5 border border-[#E8DEC8]">
                       <span className="text-xs text-ink-muted block font-semibold">Temps</span>
                       <strong className="text-xl font-extrabold text-ink tabular-nums">{secs} s</strong>
-                      <span className="text-[11px] text-ink-muted block">estimat</span>
+                      <span className="text-[11px] text-ink-muted block">obj: {durationSecs} s</span>
                     </div>
                     <div className="bg-white rounded-[12px] p-2.5 border border-[#E8DEC8]">
                       <span className="text-xs text-ink-muted block font-semibold">Persones</span>
@@ -787,15 +1007,19 @@ export default function Crear() {
                   </div>
                   <div className="flex flex-wrap gap-2 text-xs font-semibold text-ink-muted pt-1">
                     <span>
+                      Departaments (Fase 1): <strong className="text-ink">{collectiveStr}</strong>
+                    </span>
+                    <span>·</span>
+                    <span>
+                      Durada objectiu: <strong className="text-ink">{durationMinutes || 1} min</strong>
+                    </span>
+                    <span>·</span>
+                    <span>
                       Idioma: <strong>{currentLangObj.label}</strong>
                     </span>
                     <span>·</span>
                     <span>
                       Canals: <strong>{channels.length} seleccionats</strong>
-                    </span>
-                    <span>·</span>
-                    <span>
-                      Departaments: <strong>{departments.length > 0 ? departments.join(', ') : 'Tots'}</strong>
                     </span>
                   </div>
                 </div>
@@ -851,8 +1075,12 @@ export default function Crear() {
                 </button>
 
                 <div className="flex gap-2">
-                  <button className="btn-line !h-[52px] px-5" onClick={() => setStep(2)}>
-                    Enrere
+                  <button
+                    type="button"
+                    className="btn-line !h-[52px] px-5 font-bold"
+                    onClick={() => setStep(2)}
+                  >
+                    ← Enrere
                   </button>
                   <button
                     onClick={() => void publish()}
@@ -877,7 +1105,7 @@ export default function Crear() {
 
         {/* ========================================================
             BARRA LATERAL DE RESUM
-            (Exclusiva per a les Fases 2 i 3, segons especificació)
+            (Exclusiva per a les Fases 2 i 3)
             ======================================================== */}
         {showSummarySidebar && (
           <aside
@@ -885,8 +1113,11 @@ export default function Crear() {
             className="card p-5 flex-[1_1_300px] min-w-0 flex flex-col gap-3.5 lg:sticky lg:top-6"
           >
             <div>
-              <div className="eyebrow">Resum</div>
+              <div className="eyebrow">Resum de la consulta</div>
               <div className="serif text-[22px] leading-tight mt-1">{title || 'Sense nom'}</div>
+              <div className="text-xs text-ink-muted font-medium mt-1">
+                Departaments: <strong>{collectiveStr}</strong>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
@@ -898,13 +1129,21 @@ export default function Crear() {
                     <span className="text-xs font-semibold text-ink-muted"> / mín. 3</span>
                   </>,
                 ],
-                ['Temps', `${secs} s`],
+                [
+                  'Temps',
+                  <>
+                    {secs} s
+                    <span className="text-[11px] block font-medium text-ink-muted">
+                      obj: {durationSecs} s
+                    </span>
+                  </>,
+                ],
                 ['Persones', people || '—'],
                 ['Canals', channels.length],
               ].map(([l, v]) => (
                 <div key={String(l)} className="bg-cream rounded-[14px] px-3 py-2.5">
                   <div className="text-xs text-ink-muted">{l}</div>
-                  <div className="text-[22px] font-extrabold tabular-nums">{v}</div>
+                  <div className="text-[20px] font-extrabold tabular-nums leading-tight mt-0.5">{v}</div>
                 </div>
               ))}
             </div>
@@ -916,7 +1155,9 @@ export default function Crear() {
                   valid ? 'bg-ok-bg text-ok-ink' : 'bg-warn-bg text-warn-ink'
                 )}
               >
-                {valid ? `✓ Compleix el requisit: ${chosen.length} seleccionades (entre 3 i 12)` : `Cal seleccionar entre 3 i 12 preguntes (en portes ${chosen.length})`}
+                {valid
+                  ? `✓ Compleix el requisit: ${chosen.length} seleccionades (mín. 3)`
+                  : `Cal seleccionar almenys 3 preguntes (en portes ${chosen.length})`}
               </div>
             )}
 
@@ -947,16 +1188,21 @@ export default function Crear() {
 
             <PrivacyNote>La IA proposa, RRHH decideix. Res es publica sense la teva aprovació.</PrivacyNote>
 
-            {/* Fase 2: El pas a la següent fase ha de ser "Acceptar i continuar" de la part de resum */}
+            {/* Fase 2: Botons de navegació a la part de resum */}
             {step === 1 && (
               <div className="flex gap-2">
-                <button className="btn-line" onClick={() => setStep(0)}>
+                <button
+                  type="button"
+                  className="btn-line"
+                  onClick={() => setStep(0)}
+                >
                   Enrere
                 </button>
                 <button
+                  type="button"
                   className="btn-ink flex-1 !font-bold"
                   disabled={!valid}
-                  onClick={() => setStep(2)}
+                  onClick={acceptPhase2}
                 >
                   Acceptar i continuar →
                 </button>
@@ -966,13 +1212,18 @@ export default function Crear() {
             {/* Fase 3: Botons de navegació a la part de resum */}
             {step === 2 && (
               <div className="flex gap-2">
-                <button className="btn-line" onClick={() => setStep(1)}>
+                <button
+                  type="button"
+                  className="btn-line"
+                  onClick={() => setStep(1)}
+                >
                   Enrere
                 </button>
                 <button
+                  type="button"
                   className="btn-ink flex-1 !font-bold"
                   disabled={zones.length === 0 || channels.length === 0}
-                  onClick={() => setStep(3)}
+                  onClick={acceptPhase3}
                 >
                   Continuar · Revisió →
                 </button>

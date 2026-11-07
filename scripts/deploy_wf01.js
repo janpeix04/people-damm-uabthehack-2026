@@ -202,7 +202,7 @@ const surveyProposal = {
   colectiu,
   centre_tipus,
   idioma,
-  canal_sugerido: perfil.canal_preferit,
+  canal_sugerido: perfil?.canal_preferit || 'Mòbil-QR',
   estimacion_segundos: tiempoEstimadoCalc,
   preguntas: preguntes,
   origen_generacion: "Generador Adaptativo Local Damm"
@@ -233,7 +233,16 @@ if (!survey && item.candidates) {
   }
 }
 
-const prevContext = $('Code - Adaptar Colectivo y Prompt').item?.json || {};
+let prevContext = {};
+try {
+  prevContext = $('Code - Adaptar Colectivo y Prompt').first()?.json || {};
+} catch (e1) {
+  try {
+    prevContext = $('Code - Adaptar Colectivo y Prompt').all()[0]?.json || {};
+  } catch (e2) {
+    prevContext = {};
+  }
+}
 const lang = String(prevContext.idioma || survey?.idioma || "Castellano").toLowerCase();
 const isEsp = lang.includes("cast") || lang.includes("esp");
 const isEng = lang.includes("eng") || lang.includes("ang");
