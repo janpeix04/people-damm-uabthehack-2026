@@ -37,6 +37,7 @@ export default function WorkerPlaca() {
         <button onClick={() => setModal('topics')} aria-label="Temes de la setmana" className="btn-line !h-[52px] !rounded-[18px] shadow-lift"><MessageCircle size={18} className="text-rain" aria-hidden /><span className="hidden sm:inline">Temes</span></button>
       </div>
 
+      <p className="hidden xl:block absolute right-3 bottom-3 max-w-[230px] text-[11.5px] leading-snug text-ink-soft bg-paper/85 rounded-[12px] px-2.5 py-2"><strong className="text-ink">Mou-te:</strong> toca el terra per caminar, fletxes o WASD, botó dret per desplaçar la vista.</p>
       <p className="hidden xl:block absolute left-3 bottom-3 max-w-[240px] text-[11.5px] leading-snug text-ink-soft bg-paper/85 rounded-[12px] px-2.5 py-2">Personatges il·lustratius: no representen ningú real. Les bafarades mostren temes agregats i moderats.</p>
 
       <IdeaModal open={modal === 'idea'} onClose={() => setModal(null)} />

@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { mountScene, webglAvailable, type MountOptions, type SceneHandle } from '../three/engine.js'
-import { HAIRS, SHIRTS, SKINS, WEATHER, ZONES } from '../data/mock'
+import { HAIRS, SHIRTS, SKINS, MOODS, ZONES } from '../data/mock'
 import type { Avatar } from '../data/types'
 
 export const avatarColors = (a: Avatar) => ({ skin: SKINS[a.skin], hair: HAIRS[a.hair], shirt: SHIRTS[a.shirt], style: a.style, logo: a.logo })
@@ -9,10 +9,10 @@ export const zonePins = () => ZONES.map(z => ({
   key: z.key,
   name: z.name,
   score: z.score != null ? z.score.toLocaleString('ca-ES', { minimumFractionDigits: 1 }) : z.key === 'jardi' ? '60%' : '?',
-  weatherLabel: z.weatherLabel,
-  bg: WEATHER[z.weather].bg,
-  ink: WEATHER[z.weather].ink,
-  path: WEATHER[z.weather].path,
+  moodLabel: z.moodLabel,
+  bg: MOODS[z.mood].bg,
+  ink: MOODS[z.mood].ink,
+  path: MOODS[z.mood].path,
 }))
 
 interface Props extends Omit<MountOptions, 'avatar'> {

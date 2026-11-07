@@ -10,7 +10,7 @@ export interface ZonePin {
   key: string
   name: string
   score: string
-  weatherLabel: string
+  moodLabel: string
   bg: string
   ink: string
   path: string

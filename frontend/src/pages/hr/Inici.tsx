@@ -1,14 +1,14 @@
 import { Link } from 'react-router-dom'
 import { Search, Sparkles } from 'lucide-react'
-import { AI_RECS, channelLabel, WEATHER, ZONES, zoneByKey } from '../../data/mock'
+import { AI_RECS, channelLabel, MOODS, ZONES, zoneByKey } from '../../data/mock'
 import { useApp } from '../../store/AppContext'
-import { FestaCard, fmt, Meter, PathIcon, WeatherBadge } from '../../components/ui'
+import { FestaCard, fmt, Meter, PathIcon, MoodBadge } from '../../components/ui'
 
 export default function HRInici() {
   const { surveys, festa } = useApp()
   const open = surveys.filter(s => s.status === 'open')
   const kpis = [
-    { label: 'Clima general', value: '6,5', note: '▼ 0,2 respecte a octubre', noteCls: 'text-[#B4261E]', w: 'part' as const },
+    { label: 'Clima general', value: '6,5', note: '▼ 0,2 respecte a octubre', noteCls: 'text-[#B4261E]', w: 'uneasy' as const },
     { label: 'Participació', value: `${Math.round(festa.pct)}%`, note: 'Objectiu 60%', noteCls: 'text-ink-muted', w: null },
     { label: 'Respostes agregades', value: (892 + festa.responses).toLocaleString('ca-ES'), note: '+212 aquesta setmana', noteCls: 'text-ok', w: null },
     { label: 'Enquestes actives', value: String(open.length), note: open.length ? `La primera tanca el ${new Date(open.map(s => s.closesAt).sort()[0]).toLocaleDateString('ca-ES', { day: 'numeric', month: 'short' })}` : 'Cap oberta', noteCls: 'text-ink-muted', w: null },
@@ -30,7 +30,7 @@ export default function HRInici() {
       <section className="flex flex-wrap gap-5 items-stretch">
         <div className="flex-[999_1_460px] min-w-0 flex flex-col justify-center gap-2">
           <h1 className="serif text-[34px] sm:text-[40px] leading-[1.05]">Bon dia, equip de Persones</h1>
-          <p className="text-base leading-relaxed text-ink-muted max-w-[620px]">El clima general està <strong className="text-ink">parcialment ennuvolat (6,5)</strong>. Envasat i Logística necessiten atenció aquesta setmana, i Manteniment encara no té prou respostes.</p>
+          <p className="text-base leading-relaxed text-ink-muted max-w-[620px]">El clima general és de <strong className="text-ink">6,5 i l’emoció predominant és inquietud</strong>. Envasat i Logística necessiten atenció aquesta setmana, i Manteniment encara no té prou respostes.</p>
         </div>
         <div className="flex-[1_1_340px] min-w-0"><FestaCard /></div>
       </section>
@@ -38,7 +38,7 @@ export default function HRInici() {
       <section aria-label="Indicadors" className="grid gap-3.5 grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
         {kpis.map(k => (
           <div key={k.label} className="card p-4 flex gap-3.5 items-center">
-            {k.w ? <WeatherBadge w={k.w} /> : <span className="w-[46px] h-[46px] rounded-[14px] bg-red-soft grid place-items-center shrink-0"><span className="w-2.5 h-2.5 rounded-full bg-red" /></span>}
+            {k.w ? <MoodBadge w={k.w} /> : <span className="w-[46px] h-[46px] rounded-[14px] bg-red-soft grid place-items-center shrink-0"><span className="w-2.5 h-2.5 rounded-full bg-red" /></span>}
             <div className="min-w-0">
               <div className="text-[12.5px] font-semibold text-ink-muted">{k.label}</div>
               <div className="serif text-[30px] leading-tight tabular-nums">{k.value}</div>
@@ -51,16 +51,16 @@ export default function HRInici() {
       <div className="flex flex-wrap gap-5 items-start">
         <section className="card p-5 flex-[999_1_560px] min-w-0 flex flex-col gap-3.5">
           <div className="flex flex-wrap justify-between items-end gap-2">
-            <div><h2 className="serif text-2xl">Mapa del clima</h2><p className="text-[13px] text-ink-muted">Cada zona de Damm World amb el seu temps, nota i participació</p></div>
+            <div><h2 className="serif text-2xl">Mapa d’emocions</h2><p className="text-[13px] text-ink-muted">Emoció predominant de cada equip (agregada), amb la nota i la participació</p></div>
             <Link to="/rrhh/world" className="text-[13.5px] font-bold text-red-dk">Obrir Damm World 3D →</Link>
           </div>
           <div className="grid gap-2.5 grid-cols-[repeat(auto-fill,minmax(190px,1fr))]">
             {ZONES.map(z => {
-              const w = WEATHER[z.weather]
+              const w = MOODS[z.mood]
               return (
-                <Link to={`/rrhh/world?zona=${z.key}`} key={z.key} className="rounded-[16px] p-3.5 flex flex-col gap-2 hover:-translate-y-0.5 transition" style={{ background: w.bg, border: z.weather === 'rain' ? '1px solid #BFD2EC' : '1px solid transparent' }}>
+                <Link to={`/rrhh/world?zona=${z.key}`} key={z.key} className="rounded-[16px] p-3.5 flex flex-col gap-2 hover:-translate-y-0.5 transition" style={{ background: w.bg, border: z.mood === 'stressed' ? '1px solid #F2B8B1' : '1px solid transparent' }}>
                   <div className="flex justify-between items-center gap-2"><span className="text-sm font-bold">{z.name}</span><PathIcon d={w.path} size={22} color={w.ink} /></div>
-                  <div className="flex items-baseline gap-2"><span className="serif text-[26px] leading-none">{z.score != null ? fmt(z.score) : z.key === 'jardi' ? '60%' : '—'}</span><span className="text-xs font-bold" style={{ color: w.ink }}>{z.weatherLabel}</span></div>
+                  <div className="flex items-baseline gap-2"><span className="serif text-[26px] leading-none">{z.score != null ? fmt(z.score) : z.key === 'jardi' ? '60%' : '—'}</span><span className="text-xs font-bold" style={{ color: w.ink }}>{z.moodLabel}</span></div>
                   {z.survey && <div className="h-1.5 rounded-full bg-white/85"><div className="h-full rounded-full bg-ink" style={{ width: `${z.participation}%` }} /></div>}
                   <div className="text-[11.5px] text-ink-soft">{z.key === 'manteniment' ? `${z.responses} de 10 respostes: ocult` : z.key === 'jardi' ? 'S’obre al 60% de planta' : `${z.headcount} persones · ${z.participation}%`}</div>
                 </Link>
