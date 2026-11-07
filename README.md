@@ -75,30 +75,107 @@ La confianza es la base para que las personas respondan con sinceridad. Nuestra 
 
 ---
 
-## 🚀 Puesta en Marcha Rápida
+## 🚀 Puesta en Marcha (macOS, Windows y Linux)
 
-### 1. Clonar y configurar variables de entorno
-Crea tu archivo `.env` a partir de la plantilla `.env.example` (nunca subas tus claves al repositorio):
+Todo el backend corre en **Docker** (n8n + task runner aislado). En tu equipo solo necesitas Docker, Node.js y Git.
+
+### 0. Requisitos previos
+
+| Herramienta | macOS | Windows 10/11 | Linux (Ubuntu/Debian) |
+|---|---|---|---|
+| **Docker** | [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/) o `brew install --cask docker` | [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) (activa **WSL 2** cuando lo pida y reinicia) | [Docker Engine + plugin compose](https://docs.docker.com/engine/install/ubuntu/), luego `sudo usermod -aG docker $USER` y vuelve a iniciar sesión |
+| **Node.js ≥ 20** (solo scripts y tests) | `brew install node` | [nodejs.org](https://nodejs.org) (LTS) o `winget install OpenJS.NodeJS.LTS` | [nodejs.org](https://nodejs.org/en/download/package-manager) o `nvm install --lts` |
+| **Git** | `xcode-select --install` | `winget install Git.Git` | `sudo apt install git` |
+
+Comprueba que todo está listo (Docker Desktop debe estar **abierto** en macOS/Windows):
 
 ```bash
-cp .env.example .env
+docker --version && docker compose version && node --version
 ```
 
-Variables principales requeridas en `.env`:
+> No hace falta instalar n8n: la imagen Docker ya fija la versión (`n8nio/n8n:2.46.6`), igual en todos los equipos.
+
+### 1. Clonar y configurar `.env`
+
+```bash
+git clone <URL_DEL_REPOSITORIO> damm && cd damm
+cp .env.example .env          # Windows (PowerShell): Copy-Item .env.example .env
+```
+
+Edita `.env` y rellena:
+
+| Variable | De dónde sale |
+|---|---|
+| `N8N_RUNNERS_AUTH_TOKEN` | Genera uno: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| `LLM_API_KEY` | Clave del LLM de la UAB The Hack! |
+| `TYPEFORM_TOKEN` | Typeform → Account → Personal tokens (opcional: sin él WF-02 usa un modo simulado) |
+| `TEAMS_WEBHOOK_URL` | Opcional |
+| `N8N_API_KEY` | Se crea en el paso 3 |
+
+> `.env` está en `.gitignore`: **nunca** lo subas ni lo compartas por chat. Cada persona usa sus propias claves.
+
+### 2. Arrancar n8n
+
+```bash
+npm run build:mcp      # instala y compila mcp-n8n-local (lo usan scripts y tests)
+npm run n8n:up         # levanta n8n + task runner → http://localhost:5678
+```
+
+### 3. Crear la API key de n8n (solo la primera vez)
+
+1. Abre `http://localhost:5678` y crea la cuenta owner (es local, no se envía a ningún sitio).
+2. **Settings → n8n API → Create API Key** y pégala en `.env` como `N8N_API_KEY`.
+
+### 4. Desplegar y activar los workflows
+
+```bash
+npm run setup:workflows   # crea WF-01..04 (si faltan), los actualiza y los activa
+```
+
+Webhooks disponibles en `http://localhost:5678/webhook/{generate-survey,publish-survey,ingest-responses,analytics}`.
+
+### Comandos útiles
+
+| Acción | Comando |
+|---|---|
+| Parar | `npm run n8n:down` (los datos persisten en el volumen `n8n_data`) |
+| Ver logs | `npm run n8n:logs` |
+| Estado | `docker compose ps` |
+| Borrar todo (cuenta, workflows, ejecuciones) | `docker compose down -v` |
+
+### Acceso desde otros dispositivos de la red (opcional)
+
+Por defecto n8n **solo escucha en `127.0.0.1`**, así nadie más en tu red (p. ej. la wifi del hackathon) puede verlo. Para probar desde el móvil u otro portátil en la misma red, añade a `.env`:
+
 ```env
-N8N_API_URL=http://localhost:5678/api/v1
-N8N_API_KEY=tu_api_key_local_de_n8n
-TYPEFORM_TOKEN=tu_personal_access_token_de_typeform
-LLM_API_KEY=tu_api_key_del_modelo_ia
-MIN_ANONYMITY_THRESHOLD=5
+N8N_BIND=0.0.0.0
+N8N_PUBLIC_URL=http://<IP_DE_TU_EQUIPO>:5678/
 ```
 
-### 2. Iniciar el motor `n8n` localmente
+y ejecuta `npm run n8n:up`. Ciérralo de nuevo (borra esas líneas) cuando termines. Los scripts y tests se ejecutan siempre en el equipo que tiene n8n (`mcp-n8n-local` solo permite `localhost` como protección SSRF).
+
+### Privacidad del entorno Docker
+
+- Al contenedor solo se le pasan las variables que usan los workflows (`LLM_API_KEY`, `TYPEFORM_TOKEN`, `TEAMS_WEBHOOK_URL`), no todo `.env`.
+- Los nodos *Code* se ejecutan en un contenedor *runner* separado.
+- Los datos de ejecución (que incluyen comentarios antes de anonimizar) se **purgan a las 72 h**.
+- Telemetría, plantillas y paquetes comunitarios no verificados están desactivados.
+
+*(Para conectar el agente con `mcp-n8n-local`, consulta [`ANTIGRAVITY_SETUP.md`](./ANTIGRAVITY_SETUP.md)).*
+
+### 5. Ejecución de la Batería de Tests Automatizados
+El proyecto cuenta con una suite completa de pruebas unitarias, de validación de esquemas Zod, auditoría de seguridad y pruebas de integración E2E en vivo con `n8n`:
+
 ```bash
-npx n8n start
-# Disponible en http://localhost:5678
+# Ejecutar toda la suite de tests (19 tests)
+npm test
+
+# O ejecutar por categorías individuales:
+npm run test:security  # Auditoría Git: Cero fugas de tokens, PII o claves
+npm run test:schemas   # Validación de grafos y esquemas Zod de los workflows
+npm run test:logic     # Pruebas unitarias de filtros anti-sesgo, PII y k-anonimato
+npm run test:e2e       # Invocación real a los webhooks activos de n8n
 ```
-*(Para conectar el agente con `mcp-n8n-local`, consulta las instrucciones detalladas en [`ANTIGRAVITY_SETUP.md`](./ANTIGRAVITY_SETUP.md)).*
 
 ---
 

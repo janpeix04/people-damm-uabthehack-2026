@@ -147,7 +147,7 @@ Construiremos un generador reproducible (`scripts/generate_synthetic_data.js` o 
 - **Escenario B (Colectivo de Planta/Logística y Alerta de Representatividad):**
   - El dataset introduce un **sesgo intencionado de cobertura**: mientras `Oficina` responde al 75% vía `Correu`/`Teams`, el colectivo de `Logística` y el turno de noche en `Fàbrica` tienen una participación inicial muy baja (< 8%), disparando la alerta de representatividad en el dashboard y activando la campaña vía cartel `Mòbil-QR`.
 - **Escenario C (Gran Volumen de Comentarios y Señales Débiles):**
-  - Más de **500 comentarios abiertos** en catalán y castellano con ruido realista (faltas de ortografía, frases cortas de móvil, ironía y nombres/teléfonos ficticios infiltrados como *"Preguntad a Joan Garcia en el 612345678"* para demostrar en vivo cómo el sanitizador PII los transforma en `"[NOMBRE_ANONIMIZADO]"`, `"[TELÉFONO]"`).
+  - Más de **500 comentarios abiertos** en catalán y castellano con ruido realista (faltas de ortografía, frases cortas de móvil, ironía y datos identificativos ficticios infiltrados como *"Preguntad al responsable en el 600000000"* para demostrar en vivo cómo el sanitizador PII los transforma en `"[NOMBRE_ANONIMIZADO]"`, `"[TELÉFONO]"`).
   - Incluye una **señal débil emergente** (p. ej., fallos recurrentes en las nuevas PDA de almacén/logística en el último período) que pasaría desapercibida en la media global pero que el detector de anomalías de `n8n` saca a la luz.
 
 ---

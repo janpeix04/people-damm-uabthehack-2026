@@ -1,12 +1,27 @@
 # Dependencias y compilados
 node_modules/
 dist/
+build/
+coverage/
+.nyc_output/
 
-# Variables de entorno y secretos
-.env
-.env.*
-*.env
-!.env.example
+# Variables de entorno y secretos en cualquier nivel de carpetas
+**/.env
+**/.env.*
+**/*.env
+!**/.env.example
+!**/*.env.example
+
+# Claves criptográficas, certificados y credenciales
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+credentials.json
+token.json
+secrets/
 
 # Archivos de base de datos y n8n local
 n8n-server/
@@ -21,7 +36,18 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 Thumbs.db
+Desktop.ini
 
-# Scripts locales del entorno de ejecución
+# Configuraciones de IDE locales
+.vscode/
+.idea/
+
+# Scripts locales de ejecución con variables de entorno
 start-n8n.bat
 start-n8n.ps1
+start-*.bat
+start-*.ps1
+start-*.sh
+local-*.bat
+local-*.ps1
+local-*.sh
