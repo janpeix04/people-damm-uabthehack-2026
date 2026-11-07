@@ -201,15 +201,38 @@
 
 .people-options-header {
   display: flex;
-  justify-content: center;
-  margin-bottom: clamp(10px, 2vh, 16px);
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(10px, 1.6vh, 14px);
+  margin-bottom: clamp(20px, 4vh, 40px);
+  text-align: center;
 }
 
 .people-options-header img {
-  width: clamp(90px, 9vw, 116px);
+  width: clamp(220px, 28vw, 340px);
   height: auto;
-  filter: drop-shadow(0 10px 18px rgba(108, 8, 25, .08));
+  filter: drop-shadow(0 18px 30px rgba(108, 8, 25, .1));
   user-select: none;
+}
+
+.people-options-tagline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #675f5b;
+  font-size: clamp(12px, 1.1vw, 14px);
+  font-weight: 750;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.people-options-tagline::before,
+.people-options-tagline::after {
+  content: "";
+  width: clamp(22px, 4vw, 44px);
+  height: 1.5px;
+  border-radius: 2px;
+  background: rgba(184, 30, 49, .45);
 }
 
 .people-options-grid {
@@ -249,10 +272,11 @@
 .people-role-visual {
   position: relative;
   display: flex;
-  height: clamp(190px, 34vh, 260px);
+  height: clamp(200px, 34vh, 270px);
+  /* marge superior perquè el ninot no es talli en aixecar-se amb el hover */
+  padding-top: clamp(18px, 3vh, 28px);
   align-items: flex-end;
   justify-content: center;
-  overflow: hidden;
 }
 
 .people-role-halo {
@@ -306,8 +330,11 @@
 }
 
 .people-role-title--worker {
+  /* daurat de la samarreta del ninot, prou fosc per llegir-se sobre el crema */
+  color: #b57d07;
   font-size: clamp(28px, 3.15vw, 40px);
   letter-spacing: -.045em;
+  -webkit-text-stroke-color: #b57d07;
 }
 
 .people-role-action {
@@ -391,7 +418,7 @@
   }
 
   .people-role-card:hover .people-role-visual img {
-    transform: translate3d(0, -7px, 0) scale(1.025);
+    transform: translate3d(0, -4px, 0) scale(1.03);
   }
 
   .people-role-card:hover .people-role-arrow {
@@ -401,11 +428,12 @@
 
 @media (max-width: 767px) {
   .people-logo-stage { width: clamp(255px, 76vw, 390px); }
-  .people-options-header { margin-bottom: 12px; }
-  .people-options-header img { width: 92px; }
+  .people-options-header { margin-bottom: 18px; }
+  .people-options-header img { width: clamp(180px, 56vw, 240px); }
+  .people-options-tagline { font-size: 11px; letter-spacing: .1em; }
   .people-options-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(8px, 2.8vw, 12px); }
   .people-role-card { border-radius: 18px; }
-  .people-role-visual { height: clamp(155px, 30vh, 210px); }
+  .people-role-visual { height: clamp(160px, 30vh, 215px); padding-top: 14px; }
   .people-role-visual img { width: min(100%, 210px); height: 100%; }
   .people-role-copy { min-height: 116px; padding: 2px clamp(10px, 3.2vw, 16px) 15px; }
   .people-role-title { font-size: clamp(22px, 6.6vw, 32px); -webkit-text-stroke-width: 1px; }
@@ -415,9 +443,9 @@
 }
 
 @media (min-width: 768px) and (max-height: 820px) {
-  .people-options-header { margin-bottom: 10px; }
-  .people-options-header img { width: 92px; }
-  .people-role-visual { height: clamp(180px, 33vh, 240px); }
+  .people-options-header { margin-bottom: 18px; gap: 8px; }
+  .people-options-header img { width: clamp(190px, 20vw, 250px); }
+  .people-role-visual { height: clamp(185px, 32vh, 240px); padding-top: 16px; }
   .people-role-copy { min-height: 116px; padding-bottom: 16px; }
   .people-role-title { font-size: clamp(32px, 3.6vw, 44px); }
   .people-role-title--worker { font-size: clamp(27px, 3vw, 37px); }
