@@ -56,7 +56,9 @@ export const Scene3D = forwardRef<SceneHandle | null, Props>(function Scene3D({ 
   useEffect(() => { if (avatar && handle.current) handle.current.setAvatar(avatarColors(avatar)) }, [avatar])
 
   return (
-    <div ref={box} className={className} style={{ position: 'relative', overflow: 'hidden', background: kind === 'world' ? '#9FC4D4' : '#CFE2EA' }}>
+    // La posició la decideix qui fa servir el component (normalment `absolute inset-0`):
+    // un `position` en línia la sobreescriuria i el contenidor quedaria amb alçada 0.
+    <div ref={box} className={className ?? 'relative w-full h-full'} style={{ overflow: 'hidden', isolation: 'isolate', background: kind === 'world' ? '#9FC4D4' : '#CFE2EA' }}>
       {state === 'loading' && <div className="absolute inset-0 grid place-items-center serif text-2xl text-ink bg-cream z-10">{kind === 'plaza' ? 'Construint la plaça…' : 'Construint Damm World…'}</div>}
       {state === 'nogl' && <div className="absolute inset-0 grid place-items-center p-6 text-center text-ink-muted bg-cream z-10">Aquest navegador no permet gràfics 3D. Pots fer servir la resta de l’app amb normalitat.</div>}
     </div>
