@@ -12,14 +12,13 @@ import Detall from './pages/hr/Detall'
 import Crear from './pages/hr/Crear'
 import Analisi from './pages/hr/Analisi'
 import WorkerInici from './pages/worker/Inici'
-import HemFet from './pages/worker/HemFet'
+import WorkerEnquestes from './pages/worker/Enquestes'
 import Recompenses from './pages/worker/Recompenses'
 
 // Les pantalles 3D carreguen three.js només quan cal.
 const HRWorld = lazy(() => import('./pages/hr/World'))
 const HRPlaca = lazy(() => import('./pages/hr/Placa'))
 const WorkerPlaca = lazy(() => import('./pages/worker/Placa'))
-const WorkerWorld = lazy(() => import('./pages/worker/World'))
 
 const Loading = () => <div className="h-full min-h-[60vh] grid place-items-center serif text-2xl">Carregant…</div>
 
@@ -43,9 +42,8 @@ export default function App() {
             </Route>
             <Route path="/app" element={<WorkerLayout />}>
               <Route index element={<WorkerInici />} />
+              <Route path="enquestes" element={<WorkerEnquestes />} />
               <Route path="placa" element={<WorkerPlaca />} />
-              <Route path="world" element={<WorkerWorld />} />
-              <Route path="hem-fet" element={<HemFet />} />
               <Route path="recompenses" element={<Recompenses />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -38,7 +38,16 @@ test('E2E Live WF-01: Generación de microconsulta adaptada con LLM ornith y ant
   assert.equal(data.approved_by_human, false, 'Debe requerir aprobación humana previa');
   assert.ok(data.survey, 'Debe contener la propuesta de microconsulta');
   assert.ok(Array.isArray(data.survey.preguntas), 'Debe incluir lista de preguntas');
-  assert.ok(data.survey.preguntas.length <= 4, 'Planta debe tener 4 preguntas como máximo');
+  assert.ok(data.survey.preguntas.length >= 3, 'Debe tener al menos 3 preguntas (mínimo 3 sin límite máximo)');
+
+  // Verificación del análisis de calidad de la IA
+  const analisis = data.survey.analisis_ia || data.control_calidad?.analisis_ia;
+  if (analisis) {
+    assert.equal(analisis.objetivo_correcto, true, 'Debe analizar que sea correcto sobre lo que se pide');
+    assert.equal(analisis.idioma_correcto, true, 'Debe verificar que el idioma sea correcto');
+    assert.ok(analisis.tiempo_estimado_segundos > 0, 'Debe estimar el tiempo para responder');
+    assert.equal(analisis.tono_verificado, true, 'Debe verificar el tono cercano e inclusivo por defecto');
+  }
 });
 
 test('E2E Live WF-02: Rechazo automático de publicación si falta firma humana (403)', async () => {

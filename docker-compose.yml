@@ -1,5 +1,6 @@
 # n8n local para Damm Pulse IA — http://localhost:5678
 # Frontend (build estático servido con nginx) — http://localhost:8080
+# PostgreSQL (People Listening Platform) — localhost:54322
 # Las variables ${...} se leen del archivo .env de esta carpeta (ver .env.example).
 # Solo se pasan al contenedor las variables que usan los workflows: con
 # N8N_BLOCK_ENV_ACCESS_IN_NODE=false cualquier workflow puede leer el entorno del contenedor.
@@ -73,5 +74,30 @@ services:
       # Mismo criterio que n8n: solo localhost salvo N8N_BIND=0.0.0.0
       - "${N8N_BIND:-127.0.0.1}:${FRONTEND_PORT:-8080}:80"
 
+  postgres:
+    image: postgres:17-alpine
+    container_name: damm-postgres
+    restart: unless-stopped
+    ports:
+      - "${N8N_BIND:-127.0.0.1}:${POSTGRES_PORT:-54322}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-damm_pulse}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      TZ: Europe/Madrid
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./supabase/migrations/20261107162128_init_people_listening_platform.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./supabase/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+      - ./supabase/tests/database/001_privacy_invariants.sql:/docker-entrypoint-initdb.d/03-verify-invariants.sql:ro
+      - ./supabase/migrations/20261108090000_worker_app_wallet_rewards.sql:/docker-entrypoint-initdb.d/04-worker-app.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-damm_pulse}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
 volumes:
   n8n_data:
+  postgres_data:

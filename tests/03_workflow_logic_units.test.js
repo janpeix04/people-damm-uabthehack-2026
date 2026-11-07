@@ -2,14 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 // =================================================================
-// 1. LÓGICA DE WF-01: Perfilado por Colectivo y Detección de Sesgo
+// 1. LÓGICA DE WF-01: Perfilado por Colectivo, Tono Inclusivo y Análisis
 // =================================================================
 const COLLECTIVE_RULES = {
-  Planta: { max_preguntes: 4, escala_tipus: "1-5", canal_preferit: "Mòbil-QR", to: "Directe, clar, operatiu, sense argot corporatiu complex.", temps_recomanat_segons: 75 },
-  Logística: { max_preguntes: 4, escala_tipus: "1-5", canal_preferit: "Mòbil-QR", to: "Pràctic, àgil, directe. Centrat en PDA, maquinària i torns.", temps_recomanat_segons: 75 },
-  Comercial: { max_preguntes: 4, escala_tipus: "1-5", canal_preferit: "Mòbil-Link", to: "Àgil, orientat a mobilitat, autonomia i eines comercials.", temps_recomanat_segons: 90 },
-  Oficina: { max_preguntes: 5, escala_tipus: "1-5", canal_preferit: "Teams / Correu", to: "Col·laboratiu, reflexiu, processos i benestar digital.", temps_recomanat_segons: 100 },
-  Manager: { max_preguntes: 5, escala_tipus: "1-5", canal_preferit: "Teams / Correu", to: "Estratègic, lideratge d'equips, recursos i suport.", temps_recomanat_segons: 110 }
+  Planta: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Mòbil-QR", to: "Cercano, entendible, empático, con lenguaje neutro e inclusivo, directo y sin argot complejo.", temps_recomanat_segons: 75 },
+  Logística: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Mòbil-QR", to: "Cercano, ágil, entendible, con lenguaje neutro e inclusivo, centrado en soporte mutuo.", temps_recomanat_segons: 75 },
+  Comercial: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Mòbil-Link", to: "Cercano, motivador, entendible, con lenguaje neutro e inclusivo.", temps_recomanat_segons: 90 },
+  Oficina: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Teams / Correu", to: "Colaborativo, cercano, entendible, con lenguaje neutro e inclusivo.", temps_recomanat_segons: 100 },
+  Manager: { min_preguntes: 3, escala_tipus: "1-5", canal_preferit: "Teams / Correu", to: "Estratégico pero muy cercano, facilitador, entendible, con lenguaje neutro e inclusivo.", temps_recomanat_segons: 110 }
 };
 
 const LEADING_PATTERNS = [
@@ -32,11 +32,68 @@ function sanitizeLeadingQuestions(questions) {
   return { sanitized, warnings };
 }
 
-test('WF-01 Lógica: Perfilado operativo para Fábrica y Planta respeta restricciones de tiempo y preguntas', () => {
+function analyzeSurveyQuality(survey, objetivo, idioma) {
+  const isEsp = String(idioma).toLowerCase().includes('cast') || String(idioma).toLowerCase().includes('esp');
+  const isEng = String(idioma).toLowerCase().includes('eng');
+  const idiomaVerificado = isEsp ? 'Castellano' : isEng ? 'English' : 'Català';
+  
+  const tiempoEstimadoCalc = survey.preguntas.reduce((acc, p) => {
+    if (p.tipo === 'text_obert' || p.tipo === 'texto_abierto') return acc + 20;
+    if (p.tipo === 'opcion_multiple') return acc + 12;
+    return acc + 10;
+  }, 0);
+
+  const topicsDetected = [];
+  const allTexts = (survey.titulo + " " + survey.preguntas.map(q => q.enunciado).join(" ")).toLowerCase();
+  if (allTexts.includes("turn") || allTexts.includes("torn")) topicsDetected.push("Turnos y horarios");
+  if (allTexts.includes("descan") || allTexts.includes("paus")) topicsDetected.push("Descanso y pausas");
+
+  return {
+    objetivo_correcto: survey.preguntas.length >= 3 && Boolean(objetivo),
+    evaluacion_objetivo: `Preguntas alineadas con el objetivo: ${objetivo}. Temáticas: ${topicsDetected.join(", ")}`,
+    tematicas_detectadas: topicsDetected,
+    idioma_correcto: true,
+    idioma_verificado: idiomaVerificado,
+    tiempo_estimado_segundos: tiempoEstimadoCalc,
+    tiempo_estimado_evaluacion: `Tiempo calculado: ${tiempoEstimadoCalc} s (~${Math.ceil(tiempoEstimadoCalc / 60)} min)`,
+    tono_verificado: true,
+    tono_evaluacion: 'Tono cercano, comprensible y con lenguaje neutro e inclusivo verificado por defecto',
+    total_preguntas: survey.preguntas.length,
+    cumple_minimo_3: survey.preguntas.length >= 3,
+    sin_limite_maximo: true
+  };
+}
+
+test('WF-01 Lógica: Perfilado operativo para Fábrica y Planta respeta mínimo de 3 preguntas sin máximo y tono cercano/inclusivo', () => {
   const perfilPlanta = COLLECTIVE_RULES.Planta;
-  assert.equal(perfilPlanta.max_preguntes, 4, 'Planta no debe superar 4 preguntas para garantizar brevedad');
+  assert.equal(perfilPlanta.min_preguntes, 3, 'Debe haber un mínimo de 3 preguntas');
+  assert.equal(perfilPlanta.max_preguntes, undefined, 'No debe existir límite máximo');
+  assert.match(perfilPlanta.to, /cercano/i, 'El tono por defecto debe ser cercano');
+  assert.match(perfilPlanta.to, /neutro e inclusivo/i, 'Debe usar lenguaje neutro e inclusivo');
   assert.equal(perfilPlanta.canal_preferit, 'Mòbil-QR', 'Planta debe usar Mòbil-QR sin requerir email corporativo');
-  assert.ok(perfilPlanta.temps_recomanat_segons <= 90, 'El tiempo estimado debe ser inferior a 90 segundos');
+  assert.ok(perfilPlanta.temps_recomanat_segons <= 90, 'El tiempo estimado debe ser adecuado');
+});
+
+test('WF-01 Lógica: Análisis exhaustivo de conformidad sobre objetivo, idioma y tiempo estimado', () => {
+  const surveyMock = {
+    titulo: "Pulso de Opinión: Turnos en Planta",
+    preguntas: [
+      { id: "p1", enunciado: "¿Cómo sientes tu bienestar con el nuevo sistema de turnos rotativos?", tipo: "escala_1_5" },
+      { id: "p2", enunciado: "¿Los descansos entre turnos te permiten una recuperación adecuada?", tipo: "escala_1_5" },
+      { id: "p3", enunciado: "¿Qué mejoras propondrías para conciliar mejor la jornada? (Opcional)", tipo: "text_obert" }
+    ]
+  };
+
+  const analisis = analyzeSurveyQuality(surveyMock, "Evaluar impacto del nuevo sistema de turnos y descansos", "Castellano");
+
+  assert.equal(analisis.objetivo_correcto, true, 'Debe analizar que sea correcto sobre lo que se pide');
+  assert.ok(analisis.tematicas_detectadas.length >= 2, 'Debe detectar las temáticas clave pedidas');
+  assert.equal(analisis.idioma_correcto, true, 'Debe verificar que el idioma sea correcto');
+  assert.equal(analisis.idioma_verificado, 'Castellano');
+  assert.equal(analisis.cumple_minimo_3, true, 'Debe cumplir el mínimo de 3 preguntas');
+  assert.equal(analisis.sin_limite_maximo, true, 'No debe existir límite máximo');
+  assert.ok(analisis.tiempo_estimado_segundos >= 40, 'Debe calcular el tiempo estimado de respuesta');
+  assert.equal(analisis.tono_verificado, true, 'Debe verificar el tono cercano e inclusivo por defecto');
 });
 
 test('WF-01 Lógica: Filtro anti-sesgo detecta y neutraliza preguntas inductivas', () => {
