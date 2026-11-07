@@ -60,7 +60,7 @@ export default function HRInici() {
               return (
                 <Link to={`/rrhh/world?zona=${z.key}`} key={z.key} className="rounded-[16px] p-3.5 flex flex-col gap-2 hover:-translate-y-0.5 transition" style={{ background: w.bg, border: z.mood === 'stressed' ? '1px solid #F2B8B1' : '1px solid transparent' }}>
                   <div className="flex justify-between items-center gap-2"><span className="text-sm font-bold">{z.name}</span><PathIcon d={w.path} size={22} color={w.ink} /></div>
-                  <div className="flex items-baseline gap-2"><span className="serif text-[26px] leading-none">{z.score != null ? fmt(z.score) : z.key === 'jardi' ? '60%' : '—'}</span><span className="text-xs font-bold" style={{ color: w.ink }}>{z.moodLabel}</span></div>
+                  <div className="flex items-baseline gap-2"><span className="serif text-[26px] leading-none">{z.score != null ? fmt(z.score) : z.key === 'jardi' ? '60%' : 'Sense dades'}</span><span className="text-xs font-bold" style={{ color: w.ink }}>{z.moodLabel}</span></div>
                   {z.survey && <div className="h-1.5 rounded-full bg-white/85"><div className="h-full rounded-full bg-ink" style={{ width: `${z.participation}%` }} /></div>}
                   <div className="text-[11.5px] text-ink-soft">{z.key === 'manteniment' ? `${z.responses} de 10 respostes: ocult` : z.key === 'jardi' ? 'S’obre al 60% de planta' : `${z.headcount} persones · ${z.participation}%`}</div>
                 </Link>

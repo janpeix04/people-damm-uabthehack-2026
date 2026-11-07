@@ -140,7 +140,7 @@ export const TEMPLATES = [
 export const INITIATIVES: Initiative[] = [
   { id: 'a1', title: 'Pauses escalonades a la línia 3', problem: 'No es pot fer el descans complet en canvis de torn.', action: 'Pilot de 6 setmanes amb relleu fix per línia.', owner: 'Cap d’Envasat', status: 'encurs', due: '15 des.', kpi: 'Índex de descans ≥ 6,0', zone: 'envasat', fromAI: true },
   { id: 'a2', title: 'Calendari de torns a 4 setmanes', problem: 'Canvis de torn d’última hora.', action: 'Publicar el calendari al tauler digital i per WhatsApp.', owner: 'RRHH · Planificació', status: 'revisio', due: '1 des.', kpi: 'Conciliació +0,5 en 2 mesos', zone: 'envasat', fromAI: true },
-  { id: 'a3', title: 'Sincro setmanal Logística–Envasat', problem: 'Pics de càrrega no anticipats.', action: 'Reunió de 15 min cada dilluns entre caps de torn.', owner: 'Cap de Logística', status: 'proposada', due: '30 nov.', kpi: 'Estrès percebut −10%', zone: 'logistica', fromAI: true },
+  { id: 'a3', title: 'Sincro setmanal Logística-Envasat', problem: 'Pics de càrrega no anticipats.', action: 'Reunió de 15 min cada dilluns entre caps de torn.', owner: 'Cap de Logística', status: 'proposada', due: '30 nov.', kpi: 'Estrès percebut -10%', zone: 'logistica', fromAI: true },
   { id: 'a4', title: 'Sala de descans climatitzada', problem: 'Calor a envasat i menjador saturat.', action: 'Sala nova amb fonts d’aigua i seients.', owner: 'Serveis Generals', status: 'implementada', due: '20 oct.', kpi: 'Mencions sobre calor −50%', zone: 'envasat' },
   { id: 'a5', title: 'Fitxatge més ràpid', problem: 'App de fitxatge lenta en hores punta.', action: 'Servidor actualitzat i mode sense connexió.', owner: 'IT · Aplicacions', status: 'avaluacio', due: '31 oct.', kpi: 'Temps de fitxatge < 5 s', zone: 'logistica' },
   { id: 'a6', title: 'Dimecres sense reunions', problem: 'Volum de reunions creixent.', action: 'Bloquejar els dimecres a la tarda.', owner: 'Direcció de Persones', status: 'proposada', due: '15 gen.', kpi: 'Mencions sobre reunions −30%', zone: 'oficines', fromAI: true },
@@ -149,7 +149,7 @@ export const INITIATIVES: Initiative[] = [
 export const AI_RECS = [
   { id: 'r1', title: 'Pauses escalonades a Envasat', why: 'Descans és la dimensió que més cau (−0,7) i concentra 241 mencions.', cta: 'Veure anàlisi', to: '/rrhh/analisi' },
   { id: 'r2', title: 'Microenquesta per al torn de nit', why: '3 preguntes en 30 s, difosa per QR al menjador entre les 2 h i les 4 h.', cta: 'Crear amb IA', to: '/rrhh/crear?plantilla=1' },
-  { id: 'r3', title: 'Sincro Logística–Envasat', why: 'Tema emergent a l’alça durant 3 mesos.', cta: 'Veure anàlisi', to: '/rrhh/analisi' },
+  { id: 'r3', title: 'Sincro Logística-Envasat', why: 'Tema emergent a l’alça durant 3 mesos.', cta: 'Veure anàlisi', to: '/rrhh/analisi' },
 ]
 
 export const PLAZA_TOPICS = [

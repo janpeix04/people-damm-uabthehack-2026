@@ -121,7 +121,7 @@ let preguntes = [];
 
 if (objetivo.toLowerCase().includes("torn") || objetivo.toLowerCase().includes("turno") || colectiu === "Planta") {
   titulo = isCat 
-    ? "Pols d'Opinió: Adaptació i Benestar en l'Equip" 
+    ? "Pols d'Opinió: Adaptació i Benestar en l'Equip"
     : isEng
     ? "Pulse Survey: Adaptation and Team Wellbeing"
     : "Pulso de Opinión: Adaptación y Bienestar en el Equipo";

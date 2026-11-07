@@ -23,7 +23,7 @@ export default function HRLayout() {
   const active = surveys.filter(s => s.status === 'open').length
 
   const nav = (compact = false) => (
-    <nav aria-label="Portal RRHH" className="flex flex-col gap-0.5">
+    <nav aria-label="Portal de Manager i Persones" className="flex flex-col gap-0.5">
       {NAV.map(n => (
         <NavLink key={n.to} to={n.to} end={n.end} onClick={() => setOpen(false)} title={compact ? n.label : undefined} aria-label={compact ? n.label : undefined}
           className={({ isActive }) => cn('flex items-center gap-3 rounded-[12px] text-[14.5px] font-semibold transition', compact ? 'justify-center h-11 w-11 mx-auto' : 'px-3 py-2.5', isActive ? 'bg-red text-white' : 'text-ink-soft hover:bg-cream')}>
@@ -49,8 +49,8 @@ export default function HRLayout() {
   const fullBleed = loc.pathname.startsWith('/rrhh/world') || loc.pathname.startsWith('/rrhh/placa')
 
   return (
-    <div className="min-h-full flex">
-      <aside className={cn('hidden lg:flex shrink-0 flex-col gap-6 bg-paper border-r border-line py-5 sticky top-0 h-screen overflow-y-auto scroll-thin transition-[width] duration-200', mini ? 'w-[88px] px-2' : 'w-[264px] px-4')}>
+    <div className="min-h-[100dvh] flex bg-cream">
+      <aside className={cn('hidden lg:flex shrink-0 flex-col gap-6 bg-paper border-r border-line py-5 sticky top-0 h-[100dvh] overflow-y-auto scroll-thin transition-[width] duration-300', mini ? 'w-[88px] px-2' : 'w-[264px] px-4')}>
         {mini ? <div className="flex justify-center"><Logo size="sm" /></div> : <div className="px-1.5 flex justify-center"><div className="w-[110px]"><Logo size="full" /></div></div>}
         {nav(mini)}
         {footer(mini)}
@@ -66,7 +66,7 @@ export default function HRLayout() {
         </header>
         {open && (
           <div className="lg:hidden fixed inset-0 z-50 bg-ink/40" onClick={() => setOpen(false)}>
-            <div className="absolute right-0 top-0 h-full w-[290px] max-w-[85vw] bg-paper p-4 flex flex-col gap-5 overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="page-enter absolute right-0 top-0 h-full w-[300px] max-w-[88vw] bg-paper p-4 flex flex-col gap-5 overflow-y-auto shadow-lift" onClick={e => e.stopPropagation()}>
               <div className="flex justify-between items-center"><span className="serif text-xl">Menú</span><button className="w-10 h-10 grid place-items-center rounded-[12px] bg-cream" onClick={() => setOpen(false)} aria-label="Tancar el menú"><X size={20} /></button></div>
               {nav()}
               {footer()}

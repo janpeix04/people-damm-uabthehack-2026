@@ -1,4 +1,4 @@
-# Build estático del frontend (Vite) servido con nginx — http://localhost:8080
+# Build estático del frontend (Vite) servido con nginx: http://localhost:8080
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./

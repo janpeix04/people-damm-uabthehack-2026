@@ -36,7 +36,7 @@ function analyzeSurveyQuality(survey, objetivo, idioma) {
   const isEsp = String(idioma).toLowerCase().includes('cast') || String(idioma).toLowerCase().includes('esp');
   const isEng = String(idioma).toLowerCase().includes('eng');
   const idiomaVerificado = isEsp ? 'Castellano' : isEng ? 'English' : 'Català';
-  
+
   const tiempoEstimadoCalc = survey.preguntas.reduce((acc, p) => {
     if (p.tipo === 'text_obert' || p.tipo === 'texto_abierto') return acc + 20;
     if (p.tipo === 'opcion_multiple') return acc + 12;

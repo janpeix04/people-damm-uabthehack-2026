@@ -9,7 +9,7 @@ export default function HRWorld() {
   const [q] = useSearchParams()
   const [zone, setZone] = useState<ZoneKey>((q.get('zona') as ZoneKey) || 'envasat')
   return (
-    <div className="relative h-[calc(100dvh-64px)] lg:h-screen">
+    <div className="relative h-[calc(100dvh-64px)] lg:h-[100dvh]">
       <Scene3D kind="world" className="absolute inset-0" zones={zonePins()} initialZone={zone} onZone={z => setZone(z as ZoneKey)} ariaLabel="Damm World: fàbrica de cervesa en 3D amb l’emoció predominant de cada equip" />
       <div className="absolute left-4 top-4 bg-paper/95 border border-line rounded-[18px] shadow-lift px-4 py-3 pointer-events-none">
         <h1 className="serif text-[26px] leading-none">Damm World</h1>

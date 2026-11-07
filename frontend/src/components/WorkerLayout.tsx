@@ -17,11 +17,12 @@ const TABS: { to: string; label: string; Icon: typeof Home }[] = [
 export default function WorkerLayout() {
   const { pending, points, toast } = useApp()
   const nav = useNavigate()
-  const fullBleed = useLocation().pathname.startsWith('/app/placa')
+  const location = useLocation()
+  const fullBleed = location.pathname.startsWith('/app/placa')
   const answerNext = () => (pending.length ? nav(`/e/${pending[0].id}`) : toast('No tens cap enquesta pendent. Gràcies!'))
 
   return (
-    <div className="min-h-full flex flex-col">
+    <div className="min-h-[100dvh] flex flex-col bg-cream">
       <header className="sticky top-0 z-40 bg-paper/90 backdrop-blur border-b border-line">
         <div className="max-w-6xl mx-auto h-16 md:h-[72px] px-4 md:px-6 flex items-center gap-6">
           <Link to="/app" className="flex items-center gap-2.5 shrink-0" aria-label="People Damm, inici">
@@ -47,7 +48,7 @@ export default function WorkerLayout() {
       </header>
 
       <main className={cn('flex-1 min-h-0', !fullBleed && 'pb-[96px] md:pb-0')}>
-        <Outlet />
+        <div key={location.pathname} className="page-enter h-full"><Outlet /></div>
       </main>
 
       <footer className={cn('border-t border-line bg-paper', fullBleed ? 'hidden' : 'hidden md:block')}>
@@ -56,7 +57,7 @@ export default function WorkerLayout() {
           <span className="flex items-center gap-4 whitespace-nowrap">
             <span className="eyebrow">Accés intern (demo)</span>
             <Link to="/" className="font-bold hover:text-ink">Inici demo</Link>
-            <Link to="/rrhh" className="font-bold hover:text-ink">Portal RRHH</Link>
+            <Link to="/rrhh" className="font-bold hover:text-ink">Manager i Persones</Link>
           </span>
         </div>
       </footer>
@@ -67,7 +68,7 @@ export default function WorkerLayout() {
           <button
             onClick={answerNext}
             aria-label={pending.length ? `Respondre enquesta. Pendents: ${pending.length}` : 'Cap enquesta pendent'}
-            className="flex flex-col items-center gap-1 text-[10.5px] font-bold text-red"
+            className="flex flex-col items-center gap-1 text-[10.5px] font-bold text-red active:scale-95 transition-transform"
           >
             <span className="relative w-14 h-14 -mt-7 rounded-full bg-red grid place-items-center shadow-red">
               <ClipboardCheck size={24} color="#fff" aria-hidden />

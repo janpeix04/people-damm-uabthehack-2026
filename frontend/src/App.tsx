@@ -20,12 +20,21 @@ const HRWorld = lazy(() => import('./pages/hr/World'))
 const HRPlaca = lazy(() => import('./pages/hr/Placa'))
 const WorkerPlaca = lazy(() => import('./pages/worker/Placa'))
 
-const Loading = () => <div className="h-full min-h-[60vh] grid place-items-center serif text-2xl">Carregant…</div>
+const Loading = () => (
+  <div className="min-h-[60vh] grid place-items-center px-6" role="status" aria-label="Carregant">
+    <div className="w-full max-w-sm rounded-[16px] border border-line bg-paper p-6 shadow-card">
+      <div className="skeleton-bar h-4 w-24" />
+      <div className="skeleton-bar mt-5 h-9 w-4/5" />
+      <div className="skeleton-bar mt-3 h-3 w-full" />
+      <div className="skeleton-bar mt-2 h-3 w-2/3" />
+    </div>
+  </div>
+)
 
 export default function App() {
   return (
     <AppProvider>
-      <HashRouter>
+      <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Suspense fallback={<Loading />}>
           <Routes>
             <Route path="/" element={<Landing />} />

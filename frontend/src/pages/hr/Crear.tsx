@@ -9,7 +9,7 @@ import { cn, PathIcon, PrivacyNote } from '../../components/ui'
 import { SurveyRunner } from '../../components/SurveyRunner'
 
 const STEPS = ['Objectiu', 'Preguntes', 'Públic i canals', 'Revisió i publicació']
-const TYPE_LABEL: Record<Question['type'], string> = { faces: 'Cares', list: 'Opcions', scale: '0–10', yesno: 'Sí / No', text: 'Text opcional' }
+const TYPE_LABEL: Record<Question['type'], string> = { faces: 'Cares', list: 'Opcions', scale: '0-10', yesno: 'Sí / No', text: 'Text opcional' }
 const today = () => new Date().toISOString().slice(0, 10)
 const plusDays = (d: number) => new Date(Date.now() + d * 864e5).toISOString().slice(0, 10)
 
@@ -1001,7 +1001,7 @@ export default function Crear() {
                     </div>
                     <div className="bg-white rounded-[12px] p-2.5 border border-[#E8DEC8]">
                       <span className="text-xs text-ink-muted block font-semibold">Persones</span>
-                      <strong className="text-xl font-extrabold text-ink tabular-nums">{people || '—'}</strong>
+                      <strong className="text-xl font-extrabold text-ink tabular-nums">{people || 'Sense dades'}</strong>
                       <span className="text-[11px] text-ink-muted block">plantilla</span>
                     </div>
                   </div>
@@ -1138,7 +1138,7 @@ export default function Crear() {
                     </span>
                   </>,
                 ],
-                ['Persones', people || '—'],
+                ['Persones', people || 'Sense dades'],
                 ['Canals', channels.length],
               ].map(([l, v]) => (
                 <div key={String(l)} className="bg-cream rounded-[14px] px-3 py-2.5">

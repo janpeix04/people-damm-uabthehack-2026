@@ -201,7 +201,7 @@ function AvatarPreview({ a }: { a: Avatar }) {
       <ellipse cx="60" cy="142" rx="26" ry="5" fill="rgba(0,0,0,.12)" />
       <rect x="47" y="112" width="11" height="28" rx="5" fill="#2B3346" /><rect x="62" y="112" width="11" height="28" rx="5" fill="#2B3346" />
       <rect x="40" y="76" width="40" height="44" rx="18" fill={SHIRTS[a.shirt]} stroke={light ? '#E3DCD0' : 'none'} />
-      {a.logo && <text x="60" y="100" textAnchor="middle" fontFamily="Figtree, sans-serif" fontWeight="800" fontSize="9" fill={light ? '#C8102E' : '#FFFFFF'}>DAMM</text>}
+      {a.logo && <text x="60" y="100" textAnchor="middle" fontFamily="Arial, Helvetica, sans-serif" fontWeight="800" fontSize="9" fill={light ? '#C8102E' : '#FFFFFF'}>DAMM</text>}
       <circle cx="60" cy="48" r="28" fill={SKINS[a.skin]} />
       {a.style === 2 ? [32, 42, 54, 66, 78, 88].map(x => <circle key={x} cx={x} cy={30 + Math.abs(60 - x) * .25} r="9" fill={HAIRS[a.hair]} />)
         : <path d={a.style === 1 ? 'M30 60 C26 22 94 22 90 60 L84 48 C80 34 40 34 36 48Z' : 'M32 46 C32 22 50 18 60 18 C74 18 88 24 88 46 C82 34 72 30 60 30 C48 30 38 34 32 46Z'} fill={HAIRS[a.hair]} />}

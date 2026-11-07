@@ -12,8 +12,8 @@ export default function HRPlaca() {
   const moderant = ideas.filter(i => i.status === 'moderant').length
 
   return (
-    <div className="relative h-[calc(100dvh-64px)] lg:h-screen">
-      <Scene3D kind="plaza" className="absolute inset-0" ariaLabel="La Plaça en 3D: font, terrassa, escenari i persones conversant"
+    <div className="relative h-[calc(100dvh-64px)] lg:h-[100dvh]">
+      <Scene3D kind="plaza" className="absolute inset-0" ariaLabel="La Plaça en 3D: font, terrassa, escenari, parada de l’enquesta i persones conversant"
         festa={plazaWeek.pct} readOnly
         onAction={a => (a === 'stage' ? toast(plazaWeek.pct >= 60 ? 'Concert desbloquejat aquesta setmana per la participació a La Plaça' : 'El concert s’obre al 60% de participació setmanal a La Plaça') : a === 'idea' ? setModal('ideas') : toast('Vista de RRHH: les enquestes les responen els treballadors'))} />
 

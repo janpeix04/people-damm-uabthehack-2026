@@ -34,7 +34,7 @@ export interface Question {
   secs: number
   options?: string[]
   alts?: string[]
-  /** Escala amb límits propis (per defecte 0–10) */
+  /** Escala amb límits propis (per defecte 0-10) */
   min?: number
   max?: number
   help?: string

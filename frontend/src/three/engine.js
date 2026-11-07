@@ -1,5 +1,5 @@
 /* eslint-disable */
-// Motor 3D de Damm Pulse (three.js r128).
+// Motor 3D de People Damm (three.js r128).
 // Les escenes (La Plaça i Damm World) es construeixen una sola vegada i es reutilitzen.
 // Els personatges són il·lustratius: no representen cap persona real.
 import * as THREE from 'three';

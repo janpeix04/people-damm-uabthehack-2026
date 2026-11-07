@@ -64,7 +64,7 @@ export default function Analisi() {
 
         <section className="card p-5 min-w-0">
           <h2 className="serif text-[22px]">Comparativa per zones</h2>
-          <p className="text-xs text-ink-muted mb-3">Mitjana per dimensió (0–10) · més fosc = més alt · Manteniment ocult (menys de 10 respostes)</p>
+          <p className="text-xs text-ink-muted mb-3">Mitjana per dimensió (0-10). Més fosc indica més alt. Manteniment queda ocult amb menys de 10 respostes.</p>
           <div className="overflow-x-auto scroll-thin">
             <table className="w-full min-w-[560px] text-[12.5px] border-separate border-spacing-1">
               <thead><tr><th />{heatKeys.map(k => <th key={k} className="font-bold text-ink-muted text-[11px] text-center">{zoneByKey(k).name.replace('Recepció de ', '')}</th>)}</tr></thead>
