@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom'
 import { BarChart3, ClipboardList, Factory, Home, Menu, MessageCircle, Sparkles, X } from 'lucide-react'
-import { Brand, cn } from './ui'
+import { Brand, Logo, cn } from './ui'
 import { useApp } from '../store/AppContext'
 
 const NAV = [
@@ -46,7 +46,7 @@ export default function HRLayout() {
   return (
     <div className="min-h-full flex">
       <aside className="hidden lg:flex w-[264px] shrink-0 flex-col gap-6 bg-paper border-r border-line px-4 py-5 sticky top-0 h-screen overflow-y-auto scroll-thin">
-        <div className="px-1.5"><Brand /></div>
+        <div className="px-1.5 flex justify-center"><div className="w-[110px]"><Logo size="full" /></div></div>
         {nav}
         {footer}
       </aside>

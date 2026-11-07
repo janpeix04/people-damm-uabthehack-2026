@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { BASE_RESPONSES, FESTA_GOAL, INITIATIVES, SURVEYS, TOTAL_HEADCOUNT } from '../data/mock'
 import type { ActionStatus, Avatar, Idea, Initiative, Survey } from '../data/types'
 
+export const POINTS_PER_SURVEY = 50
+
 interface Persisted {
   surveys: Survey[]
   answered: string[]
@@ -95,6 +97,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       submitResponse: id => setSt(p => ({
         ...p,
         extra: p.extra + 1,
+        // Els punts premien participar (un cop per enquesta), mai el contingut.
+        points: p.answered.includes(id) ? p.points : p.points + POINTS_PER_SURVEY,
         answered: p.answered.includes(id) ? p.answered : [...p.answered, id],
         surveys: p.surveys.map(s => (s.id === id ? { ...s, responses: s.responses + 1 } : s)),
       })),

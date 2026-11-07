@@ -7,32 +7,25 @@ import { useApp } from '../store/AppContext'
 export const cn = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
 export const fmt = (n: number, d = 1) => n.toLocaleString('ca-ES', { minimumFractionDigits: d, maximumFractionDigits: d })
 
-/** Espai reservat per al logotip oficial: no reproduïm la marca. */
-export function LogoSlot({ size = 'md', light }: { size?: 'sm' | 'md'; light?: boolean }) {
+/** Logotip de People Damm. `light` el mostra en blanc sobre fons de color. */
+export function Logo({ size = 'md', light, className }: { size?: 'sm' | 'md' | 'lg' | 'full'; light?: boolean; className?: string }) {
   return (
-    <div
-      aria-label="Espai per al logotip de Damm"
+    <img
+      src="/logo-people-damm.png"
+      alt="People Damm"
+      draggable={false}
       className={cn(
-        'grid place-items-center text-center font-extrabold tracking-[.12em] leading-tight rounded-[10px] border-[1.5px] border-dashed shrink-0',
-        size === 'sm' ? 'w-[70px] h-[34px] text-[8.5px]' : 'w-[92px] h-[42px] text-[10px]',
-        light ? 'border-white/80 text-white' : 'border-red bg-red-soft text-red-dk',
+        'shrink-0 select-none',
+        size === 'full' ? 'w-full h-auto' : size === 'sm' ? 'w-auto h-[34px]' : size === 'md' ? 'w-auto h-[44px]' : 'w-auto h-[110px] sm:h-[140px]',
+        light && 'brightness-0 invert',
+        className,
       )}
-    >
-      LOGO<br />DAMM
-    </div>
+    />
   )
 }
 
-export function Brand({ sub = 'Persones' }: { sub?: string }) {
-  return (
-    <div className="flex items-center gap-3">
-      <LogoSlot />
-      <div>
-        <div className="serif text-[21px] leading-none">Damm Pulse</div>
-        <div className="text-[10.5px] font-bold tracking-[.14em] uppercase text-ink-muted mt-1">{sub}</div>
-      </div>
-    </div>
-  )
+export function Brand() {
+  return <Logo />
 }
 
 export function PathIcon({ d, size = 20, color = 'currentColor', stroke = 2, className }: { d: string; size?: number; color?: string; stroke?: number; className?: string }) {

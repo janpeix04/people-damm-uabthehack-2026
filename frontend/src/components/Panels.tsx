@@ -132,7 +132,6 @@ export function TopicsModal({ open, onClose }: { open: boolean; onClose: () => v
           </div>
         ))}
         <p className="text-xs text-ink-muted mt-1">Opinions agrupades i moderades. Mai es mostren comentaris individuals.</p>
-        <Link to="/app/hem-fet" className="text-sm font-bold text-red-dk">Veure “Ens heu dit / Hem fet” →</Link>
       </div>
     </Modal>
   )

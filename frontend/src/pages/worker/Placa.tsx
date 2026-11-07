@@ -16,7 +16,7 @@ export default function WorkerPlaca() {
   const goSurvey = () => (next ? nav(`/e/${next.id}`) : toast('No tens cap enquesta pendent. Gràcies!'))
 
   return (
-    <div className="relative h-[calc(100dvh-84px)]">
+    <div className="relative h-[calc(100dvh-65px-76px-env(safe-area-inset-bottom,0px))] md:h-[calc(100dvh-73px)]">
       <Scene3D ref={scene} kind="plaza" avatar={avatar} className="absolute inset-0" ariaLabel="La Plaça en 3D: font, terrassa, parada de l’enquesta i persones conversant"
         surveyTag={next ? `Enquesta nova · ${next.questions.reduce((a, q) => a + q.secs, 0)} s` : undefined}
         onAction={a => (a === 'survey' ? goSurvey() : a === 'idea' ? setModal('idea') : toast('El concert s’obre quan la plaça arribi al 60% de participació'))} />
