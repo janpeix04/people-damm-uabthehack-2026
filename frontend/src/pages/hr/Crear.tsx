@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowDown, ArrowUp, Clock, Info, Pencil, RefreshCw, Sparkles, Trash2 } from 'lucide-react'
 import { CHANNELS, MIN_SAMPLE, SURVEY_ZONES } from '../../data/mock'
 import type { ChannelKey, Question, Survey, ZoneKey } from '../../data/types'
-import { DEPARTAMENTS, generateSurvey, publishSurvey, toN8nQuestion, toQuestion, type N8nSurvey } from '../../api/n8n'
+import { DEPARTAMENTS, generateSurvey, toQuestion, type N8nSurvey } from '../../api/n8n'
 import { useApp } from '../../store/AppContext'
 import { cn, PathIcon, PrivacyNote } from '../../components/ui'
 import { SurveyRunner } from '../../components/SurveyRunner'
@@ -196,7 +196,10 @@ function generateAlternativeQuestion(existingCount: number, lang: LangKey, goal:
 
 export default function Crear() {
   const nav = useNavigate()
-  const { addSurvey, toast } = useApp()
+  const { addSurvey, hrSurveys, hrLoading, hrError, toast } = useApp()
+  const [params] = useSearchParams()
+  const editId = params.get('editar') || undefined
+  const [loadedId, setLoadedId] = useState<string>()
 
   const [step, setStep] = useState(0)
   // Control de fases acceptades per impedir avançar sense acceptar la fase prèvia
@@ -222,6 +225,17 @@ export default function Crear() {
   const [opens, setOpens] = useState(today())
   const [closes, setCloses] = useState(plusDays(14))
   const [approved, setApproved] = useState(false)
+  useEffect(() => {
+    if (!editId || loadedId === editId) return
+    const saved = hrSurveys.find(s => s.id === editId)
+    if (!saved || saved.status !== 'draft') return
+    setTitle(saved.title); setGoal(saved.goal); setZones(saved.zones); setChannels(saved.channels)
+    setOpens((saved.opensAt || today()).slice(0, 10)); setCloses((saved.closesAt || plusDays(14)).slice(0, 10))
+    setLang(saved.locale === 'en' ? 'ENGLISH' : saved.locale === 'es' ? 'CASTELLANO' : LANG_OPTIONS[1].key)
+    setPool(saved.questions); setSel(saved.questions.map(q => q.id))
+    setDraft({ id: 'manual', survey: { titulo: saved.title, preguntas: [], introduccion_transparencia: saved.intro }, warnings: [] })
+    setLoadedId(editId); setStep(1)
+  }, [editId, loadedId, hrSurveys])
 
   const currentLangObj = LANG_OPTIONS.find(l => l.key === lang) ?? LANG_OPTIONS[0]
   const collectiveStr = departments.length > 0 ? departments.join(', ') : 'Planta'
@@ -230,7 +244,7 @@ export default function Crear() {
   const byId = useMemo(() => Object.fromEntries(pool.map(q => [q.id, q])), [pool])
   const chosen = sel.map(id => byId[id]).filter(Boolean)
   const secs = chosen.reduce((a, q) => a + q.secs, 0)
-  const valid = chosen.length >= 3
+  const valid = chosen.length >= 3 && chosen.length <= 12
   const people = SURVEY_ZONES.filter(z => zones.includes(z.key)).reduce((a, z) => a + z.headcount, 0)
 
   // Sincronitza públic i canals derivats dels departaments de la Fase 1
@@ -316,6 +330,14 @@ export default function Crear() {
     setStep(3)
   }
 
+  const startManual = () => {
+    const questions = Array.from({ length: 3 }, (_, i) => generateAlternativeQuestion(i, lang, goal))
+    setDraft({ id: 'manual', survey: { titulo: title, preguntas: [] }, warnings: [] })
+    setPool(questions)
+    setSel(questions.map(q => q.id))
+    setStep(1)
+  }
+
   const toggle = <T,>(arr: T[], v: T, set: (x: T[]) => void) =>
     set(arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v])
 
@@ -372,23 +394,11 @@ export default function Crear() {
     }
   }
 
-  /** WF-02: Publicació amb signatura humana de RRHH */
-  const publish = async () => {
-    if (!approved || !valid || !draft || publishing) return
+  /** Persistència local a PostgreSQL amb aprovació humana per publicar. */
+  const publish = async (asDraft = false) => {
+    if ((!asDraft && !approved) || !valid || !draft || publishing) return
     setPublishing(true)
     try {
-      const r = await publishSurvey({
-        approved_by_human: approved,
-        approved_by: 'RRHH',
-        survey_id: draft.id,
-        survey: {
-          ...draft.survey,
-          titulo: title || draft.survey.titulo,
-          colectivo: collectiveStr,
-          idioma: currentLangObj.apiVal,
-          preguntas: chosen.map(toN8nQuestion),
-        },
-      })
       const id =
         (title || 'enquesta')
           .toLowerCase()
@@ -404,7 +414,7 @@ export default function Crear() {
         id,
         title: title || draft.survey.titulo || 'Nova enquesta',
         goal,
-        status: opens <= today() ? 'open' : 'scheduled',
+        status: asDraft ? 'draft' : opens <= today() ? 'open' : 'scheduled',
         zones,
         questions: chosen,
         channels,
@@ -413,14 +423,12 @@ export default function Crear() {
         responses: 0,
         target: people,
         createdAt: today(),
-        n8nId: r.survey_id ?? draft.id,
+        locale: lang === 'ENGLISH' ? 'en' : lang === 'CASTELLANO' ? 'es' : 'ca',
         intro: draft.survey.introduccion_transparencia,
-        formUrl: r.publicacion?.form_url,
-        qrUrl: r.publicacion?.qr_code_url,
       }
-      addSurvey(s)
-      toast(s.status === 'open' ? 'Enquesta publicada i oberta' : 'Enquesta programada')
-      nav(`/rrhh/enquestes/${id}?nova=1`)
+      const saved = await addSurvey(s, !asDraft && approved, editId)
+      toast(asDraft ? 'Esborrany desat' : s.status === 'open' ? 'Enquesta publicada i oberta' : 'Enquesta programada')
+      nav(`/rrhh/enquestes/${saved.id}?nova=1`)
     } catch (e) {
       toast(`No s’ha pogut publicar: ${errMsg(e)}`)
     } finally {
@@ -430,6 +438,9 @@ export default function Crear() {
 
   // La barra lateral de resum només es mostra a la Fase 2 (Preguntes) i a la Fase 3 (Públic i canals)
   const showSummarySidebar = step === 1 || step === 2
+
+  if (editId && hrLoading) return <p role="status">Carregant esborrany…</p>
+  if (editId && (hrError || !hrSurveys.some(s => s.id === editId && s.status === 'draft'))) return <p role="alert">{hrError || 'No es pot editar aquesta enquesta.'}</p>
 
   return (
     <div className="flex flex-col gap-5">
@@ -613,6 +624,7 @@ export default function Crear() {
                 </p>
               </div>
 
+              <button className="btn-line" disabled={!title.trim() || !goal.trim()} onClick={startManual}>Començar amb preguntes de plantilla</button>
               {genError && (
                 <div role="alert" className="text-[13px] font-semibold rounded-[12px] px-3.5 py-2.5 bg-warn-bg text-warn-ink">
                   No s’han pogut generar les preguntes: {genError}. Comprova que el workflow WF-01 estigui actiu i torna-ho a provar.
@@ -1071,7 +1083,7 @@ export default function Crear() {
                     ← Enrere
                   </button>
                   <button
-                    onClick={publish}
+                    onClick={() => void publish()}
                     disabled={!approved || !valid || !draft || publishing}
                     className="btn-red flex-1 !h-[52px] !text-base font-bold shadow-md"
                   >
@@ -1082,6 +1094,7 @@ export default function Crear() {
                       : 'Programar enquesta'}
                   </button>
                 </div>
+                <button className="btn-line" disabled={!valid || !draft || publishing} onClick={() => void publish(true)}>Desar esborrany</button>
                 <p className="text-xs text-ink-muted text-center">
                   La IA no publica res sola: cal la teva aprovació humana de RRHH.
                 </p>

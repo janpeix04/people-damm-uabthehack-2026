@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { BASE_RESPONSES, FESTA_GOAL, INITIATIVES, REWARDS, SURVEYS, TOTAL_HEADCOUNT } from '../data/mock'
-import type { ActionStatus, Avatar, Idea, Initiative, Reward, Survey } from '../data/types'
+import { BASE_RESPONSES, DAILY_QUESTIONS, FESTA_GOAL, INITIATIVES, MIN_SAMPLE, PLAZA_LAST_WEEK, PLAZA_MILESTONES, PLAZA_WEEK_BASE, REWARDS, SURVEYS, TOTAL_HEADCOUNT } from '../data/mock'
+import type { ActionStatus, Avatar, DailyQuestion, Idea, Initiative, Reward, Survey } from '../data/types'
 import { AppApiError, openWallet, redeemReward, submitSurvey as submitSurveyApi, type WalletState } from '../api/app'
+import { listHrSurveys, saveHrSurvey, updateHrStatus } from '../api/hr'
 
 export const POINTS_PER_SURVEY = 50
 
@@ -14,6 +15,41 @@ interface Persisted {
   avatar: Avatar
   points: number
   redeemed: { id: string; name: string; code: string }[]
+  /** La Plaça: la teva participació d'aquesta setmana (compta un cop per persona i setmana). */
+  plaza: PlazaMine
+}
+
+interface PlazaMine {
+  week: string
+  joined: boolean
+  reacted: number[]
+  daily: { day: string; answer: string } | null
+}
+
+// ---------- La Plaça: setmana i pregunta del dia ----------
+const dayKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+/** Clau de la setmana: el dilluns. La Festa es reinicia cada dilluns. */
+const weekKey = (d = new Date()) => { const m = new Date(d); m.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return dayKey(m) }
+const todaysQuestion = (d = new Date()): DailyQuestion => DAILY_QUESTIONS[Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000) % DAILY_QUESTIONS.length]
+const freshPlaza = (): PlazaMine => ({ week: weekKey(), joined: false, reacted: [], daily: null })
+
+export interface PlazaWeek {
+  participants: number
+  headcount: number
+  pct: number
+  goal: number
+  joined: boolean
+  lastWeek: number
+  /** Propera fita encara no aconseguida (o null si ja s'han aconseguit totes). */
+  next: { at: number; label: string; missing: number } | null
+  /** Dies que falten perquè es reiniciï (dilluns). */
+  resetsIn: number
+  reacted: number[]
+  question: DailyQuestion
+  myAnswer: string | null
+  /** Resultat agregat d'avui; null si encara no hi ha prou respostes per mostrar-lo. */
+  results: { key: string; label: string; emoji: string; n: number; pct: number }[] | null
+  todayTotal: number
 }
 
 const KEY = 'damm-pulse-demo-v2'
@@ -26,6 +62,7 @@ const DEFAULTS: Persisted = {
   avatar: { skin: 1, hair: 0, shirt: 0, style: 0, logo: true },
   points: 420,
   redeemed: [],
+  plaza: freshPlaza(),
 }
 
 function sanitizeSurvey(s: Survey): Survey {
@@ -50,6 +87,8 @@ function load(): Persisted {
         ...DEFAULTS,
         ...data,
         surveys: Array.isArray(data.surveys) ? data.surveys.map(sanitizeSurvey) : DEFAULTS.surveys,
+        // setmana nova: la Festa torna a començar
+        plaza: data.plaza && data.plaza.week === weekKey() ? { ...freshPlaza(), ...data.plaza } : freshPlaza(),
       }
     }
   } catch { /* emmagatzematge no disponible */ }
@@ -77,8 +116,18 @@ interface Ctx extends Persisted {
   /** Bescanvia una recompensa i retorna el codi. Llança AppApiError si no es pot. */
   redeemReward: (r: Reward) => Promise<string>
   refreshWallet: () => Promise<void>
-  addSurvey: (s: Survey) => void
-  setSurveyStatus: (id: string, status: Survey['status']) => void
+  hrSurveys: Survey[]
+  hrLoading: boolean
+  hrError: string | null
+  refreshHr: () => Promise<void>
+  addSurvey: (s: Survey, approved?: boolean, editId?: string) => Promise<Survey>
+  setSurveyStatus: (id: string, status: Survey['status'], approved?: boolean) => Promise<void>
+  /** La Plaça d'aquesta setmana (participació única, fites i pregunta del dia). */
+  plazaWeek: PlazaWeek
+  /** Respon la pregunta del dia (un cop al dia). */
+  answerDaily: (key: string) => void
+  /** "+1 Jo també" en una bafarada de la Plaça. */
+  reactTopic: (index: number, on: boolean) => void
   addIdea: (category: string, text: string) => void
   setInitiativeStatus: (id: string, status: ActionStatus) => void
   setAvatar: (a: Avatar) => void
@@ -93,6 +142,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<{ id: number; msg: string }[]>([])
   const [remote, setRemote] = useState<Remote | null>(null)
   const [backend, setBackend] = useState<Ctx['backend']>('loading')
+  const [hrSurveys, setHrSurveys] = useState<Survey[]>([])
+  const [hrLoading, setHrLoading] = useState(true)
+  const [hrError, setHrError] = useState<string | null>(null)
+  const refreshHr = useCallback(async () => {
+    setHrLoading(true)
+    try { setHrSurveys(await listHrSurveys()); setHrError(null) }
+    catch (e) { setHrError(e instanceof Error ? e.message : 'Error carregant enquestes') }
+    finally { setHrLoading(false) }
+  }, [])
+  useEffect(() => { void refreshHr() }, [refreshHr])
 
   const refreshWallet = useCallback(async () => {
     try {
@@ -120,8 +179,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value = useMemo<Ctx>(() => {
     const responses = BASE_RESPONSES + st.extra
     const target = Math.ceil(TOTAL_HEADCOUNT * FESTA_GOAL)
+
+    // ---- La Plaça d'aquesta setmana ----
+    const mine = st.plaza && st.plaza.week === weekKey() ? st.plaza : freshPlaza()
+    const participants = PLAZA_WEEK_BASE + (mine.joined ? 1 : 0)
+    const ppct = (participants / TOTAL_HEADCOUNT) * 100
+    const nx = PLAZA_MILESTONES.find(m => ppct < m.at)
+    const question = todaysQuestion()
+    const myAnswer = mine.daily && mine.daily.day === dayKey() ? mine.daily.answer : null
+    const qOpts = question.options.map(o => ({ ...o, n: o.n + (myAnswer === o.key ? 1 : 0) }))
+    const todayTotal = qOpts.reduce((a, o) => a + o.n, 0)
+    const plazaWeek: PlazaWeek = {
+      participants, headcount: TOTAL_HEADCOUNT, pct: ppct, goal: 60, joined: mine.joined, lastWeek: PLAZA_LAST_WEEK,
+      next: nx ? { at: nx.at, label: nx.label, missing: Math.ceil((TOTAL_HEADCOUNT * nx.at) / 100) - participants } : null,
+      resetsIn: (8 - new Date().getDay()) % 7 || 7,
+      reacted: mine.reacted, question, myAnswer, todayTotal,
+      // mínim de respostes abans de mostrar cap resultat
+      results: todayTotal >= MIN_SAMPLE ? qOpts.map(o => ({ key: o.key, label: o.label, emoji: o.emoji, n: o.n, pct: (o.n / todayTotal) * 100 })) : null,
+    }
+    /** Primera participació de la setmana: compta un cop a la Festa (i avisa si desbloqueja una fita). */
+    const joinPlaza = (patch: Partial<PlazaMine>) => {
+      if (!mine.joined) {
+        const after = ((participants + 1) / TOTAL_HEADCOUNT) * 100
+        const hit = PLAZA_MILESTONES.find(m => ppct < m.at && after >= m.at)
+        toast(hit ? `Has desbloquejat: ${hit.label}! Gràcies per sumar-t’hi.` : 'Has sumat a la Festa de la setmana. Gràcies!')
+      }
+      setSt(p => ({ ...p, plaza: { ...(p.plaza && p.plaza.week === weekKey() ? p.plaza : freshPlaza()), ...patch, joined: true } }))
+    }
+
     return {
       ...st,
+      hrSurveys, hrLoading, hrError, refreshHr,
       festa: { responses, pct: (responses / TOTAL_HEADCOUNT) * 100, goal: FESTA_GOAL * 100, missing: Math.max(0, target - responses) },
       backend,
       // Amb base de dades, només les enquestes que aquesta persona encara no ha contestat.
@@ -164,10 +252,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return code
       },
       refreshWallet,
-      addSurvey: s => setSt(p => ({ ...p, surveys: [s, ...p.surveys] })),
-      setSurveyStatus: (id, status) => setSt(p => ({ ...p, surveys: p.surveys.map(s => (s.id === id ? { ...s, status } : s)) })),
+      addSurvey: async (s, approved = false, editId) => {
+        const saved = await saveHrSurvey(s, approved, editId)
+        setHrSurveys(p => [saved, ...p.filter(x => x.id !== saved.id)])
+        return saved
+      },
+      setSurveyStatus: async (id, status, approved = false) => {
+        const saved = await updateHrStatus(id, status, approved)
+        setHrSurveys(p => p.map(s => s.id === id ? saved : s))
+        void refreshWallet()
+      },
+      plazaWeek,
+      answerDaily: key => { if (!myAnswer) joinPlaza({ daily: { day: dayKey(), answer: key } }) },
+      reactTopic: (index, on) => {
+        const reacted = on ? Array.from(new Set([...mine.reacted, index])) : mine.reacted.filter(i => i !== index)
+        if (on) joinPlaza({ reacted })
+        else setSt(p => ({ ...p, plaza: { ...mine, reacted } }))
+      },
       addIdea: (category, text) => {
         const id = `idea-${Date.now()}`
+        joinPlaza({})
         setSt(p => ({ ...p, ideas: [{ id, category, text, status: 'moderant', at: Date.now() }, ...p.ideas] }))
         setTimeout(() => setSt(p => ({ ...p, ideas: p.ideas.map(i => (i.id === id ? { ...i, status: 'publicada' } : i)) })), 6000)
       },
@@ -176,7 +280,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       resetDemo: () => setSt(DEFAULTS),
       toast,
     }
-  }, [st, toast, remote, backend, refreshWallet])
+  }, [st, toast, remote, backend, refreshWallet, hrSurveys, hrLoading, hrError, refreshHr])
 
   return (
     <AppCtx.Provider value={value}>

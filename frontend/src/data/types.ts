@@ -2,7 +2,8 @@
   | 'malta' | 'coccio' | 'fermentacio' | 'envasat' | 'logistica'
   | 'oficines' | 'comercial' | 'manteniment' | 'jardi'
 
-export type Weather = 'sun' | 'part' | 'rain' | 'fog' | 'lock'
+/** Emoció predominant d'un equip (sempre agregada, mai individual). */
+export type Mood = 'happy' | 'uneasy' | 'stressed' | 'nodata' | 'lock'
 
 export interface Zone {
   key: ZoneKey
@@ -13,8 +14,8 @@ export interface Zone {
   score: number | null
   delta: number
   participation: number
-  weather: Weather
-  weatherLabel: string
+  mood: Mood
+  moodLabel: string
   story: string
   topics: { label: string; tone: 'pos' | 'neg' | 'neu' }[]
   doing: string
@@ -67,6 +68,7 @@ export interface Survey {
   qrUrl?: string
   /** Enquesta servida per PostgreSQL a l'app del treballador (WF-05) */
   source?: 'db'
+  locale?: 'ca' | 'es' | 'en'
   /** Token d'un sol ús per enviar la resposta */
   accessToken?: string
 }
@@ -110,4 +112,11 @@ export interface Reward {
   tint: string
   ink: string
   icon: string
+}
+
+/** Pregunta del dia de La Plaça: es respon amb un sol toc. Els resultats només es mostren agregats (mínim 10). */
+export interface DailyQuestion {
+  id: string
+  text: string
+  options: { key: string; label: string; emoji: string; n: number }[]
 }

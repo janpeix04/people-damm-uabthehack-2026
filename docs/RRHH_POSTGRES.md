@@ -1,0 +1,25 @@
+# Enquestes RRHH sobre PostgreSQL
+
+Arrencada: `docker compose up -d --build`. Obre http://localhost:8080/#/rrhh/enquestes.
+
+La llista RRHH consulta PostgreSQL, sense recuperar enquestes antigues de localStorage. Permet crear amb IA o preguntes de plantilla, desar i editar esborranys, duplicar, aprovar/publicar, programar, obrir ara i tancar. Les operacions mostren èxit només després del commit; els errors no es converteixen en canvis locals.
+
+El servei intern `hr-api` serveix `/api/hr/surveys` a través de nginx. No publica cap port al host. Per desenvolupament amb Vite, executa l'API amb `PORT=3001`, `POSTGRES_HOST=127.0.0.1`, `POSTGRES_PORT=54322` i les credencials locals; el proxy de Vite ja està configurat. El servidor no carrega `.env` automàticament: pots fer servir `node --env-file=.env server/index.js` i sobreescriure host/port a l'entorn.
+
+## Persistència
+
+S'utilitzen `campaigns`, `questionnaire_versions`, `questionnaire_translations`, `questions`, `question_translations`, `audience_assignments` i `audit_events`. No cal crear taules ni reinicialitzar el volum.
+
+Les zones es tradueixen als codis de departament del seed; logística, comercial i oficines inclouen els departaments relacionats. El nombre de destinataris es calcula amb les assignacions SQL. Zones, canals i idioma de l'editor es guarden a `campaigns.target_filter.hr`. Les preguntes i respostes continuen normalitzades a les taules existents.
+
+Crear o editar és una transacció única. Editar conserva la campanya i substitueix el contingut de l'esborrany; les enquestes publicades no es poden editar. Duplicar crea una campanya i preguntes noves, sense heretar respostes ni aprovacions. Publicar requereix `approved_by_human: true`. Les escales de cares es desen com 1–5, les escales numèriques conserven límits i «Sí / No / No ho sé» es conserva com a selecció única. Límit de 3–12 preguntes, coherent amb la funció SQL d'enviament existent.
+
+## Proves
+
+`node --test tests/05_hr_surveys.test.js` comprova persistència relacional, aprovació, validacions, duplicació, edició, programació i tancament amb l'esquema i seed reals en PGlite temporal. La compilació i una prova HTTP pel proxy Docker comproven la integració amb PostgreSQL real.
+
+## Abast local i pendents
+
+L'API està preparada per a la demo local, sense SSO ni verificació de rol RRHH. L'aprovador queda identificat com «RRHH local». Abans d'exposar el frontend a la xarxa cal afegir autenticació, autorització i un usuari SQL amb permisos limitats. La comprovació d'origen bloqueja peticions del navegador des d'altres orígens, però no substitueix l'autenticació.
+
+La generació amb IA continua usant WF-01; publicar a PostgreSQL ja no depèn de Typeform ni envia missatges externs. El recorregut de resposta del treballador continua requerint WF-05, que no es desplega amb aquest canvi. Les campanyes publicades ja tenen les assignacions que aquest workflow necessita.
