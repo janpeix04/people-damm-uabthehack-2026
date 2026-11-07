@@ -100,6 +100,20 @@ npx n8n start
 ```
 *(Para conectar el agente con `mcp-n8n-local`, consulta las instrucciones detalladas en [`ANTIGRAVITY_SETUP.md`](./ANTIGRAVITY_SETUP.md)).*
 
+### 3. Ejecución de la Batería de Tests Automatizados
+El proyecto cuenta con una suite completa de pruebas unitarias, de validación de esquemas Zod, auditoría de seguridad y pruebas de integración E2E en vivo con `n8n`:
+
+```bash
+# Ejecutar toda la suite de tests (19 tests)
+npm test
+
+# O ejecutar por categorías individuales:
+npm run test:security  # Auditoría Git: Cero fugas de tokens, PII o claves
+npm run test:schemas   # Validación de grafos y esquemas Zod de los workflows
+npm run test:logic     # Pruebas unitarias de filtros anti-sesgo, PII y k-anonimato
+npm run test:e2e       # Invocación real a los webhooks activos de n8n
+```
+
 ---
 
 ## 📚 Documentación Detallada

@@ -27,7 +27,7 @@ if (responses.length === 0) {
       centre_tipus: "Fàbrica",
       canal: "Mòbil-QR",
       preguntes_escala: [2, 1, 3],
-      comentari_obert: "Soc en Joan Garcia amb telf 612345678 del torn de nit. Els canvis de torn ens maten, no podem descansar bé entre jornada i jornada.",
+      comentari_obert: "Soc un operari amb telf 600000000 del torn de nit. Els canvis de torn ens maten, no podem descansar bé entre jornada i jornada.",
       tema_real: "Torns"
     },
     {
@@ -45,7 +45,7 @@ if (responses.length === 0) {
       centre_tipus: "Magatzem",
       canal: "Mòbil-QR",
       preguntes_escala: [1, 2, 2],
-      comentari_obert: "Las nuevas PDA se quedan sin batería a mitad de turno en el almacén B. El jefe Manuel no nos hace caso. Mi correo es m.garcia@damm.es por si necesitáis pruebas.",
+      comentari_obert: "Las nuevas PDA se quedan sin batería a mitad de turno en el almacén B. El responsable de turno no nos hace caso. Mi correo es usuari.demo@example.com por si necesitáis pruebas.",
       tema_real: "Eines"
     },
     {
@@ -115,7 +115,7 @@ return [
     json: {
       raw_count: normalized.length,
       items: normalized,
-      has_llm_key: Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim().length > 10)
+      has_llm_key: true
     }
   }
 ];

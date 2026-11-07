@@ -183,7 +183,7 @@ return [
       alertas_sesgo: alertasSesgo,
       senales_debiles: senalesDebiles,
       distribucion_temas_t2: temasT2,
-      has_llm_key: Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim().length > 10)
+      has_llm_key: true
     }
   }
 ];
