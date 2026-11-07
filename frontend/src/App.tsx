@@ -10,10 +10,7 @@ import HRInici from './pages/hr/Inici'
 import Enquestes from './pages/hr/Enquestes'
 import Detall from './pages/hr/Detall'
 import Crear from './pages/hr/Crear'
-import Participacio from './pages/hr/Participacio'
 import Analisi from './pages/hr/Analisi'
-import Accions from './pages/hr/Accions'
-import Config from './pages/hr/Config'
 import WorkerInici from './pages/worker/Inici'
 import HemFet from './pages/worker/HemFet'
 import Recompenses from './pages/worker/Recompenses'
@@ -40,12 +37,9 @@ export default function App() {
               <Route path="enquestes" element={<Enquestes />} />
               <Route path="enquestes/:id" element={<Detall />} />
               <Route path="crear" element={<Crear />} />
-              <Route path="participacio" element={<Participacio />} />
               <Route path="analisi" element={<Analisi />} />
               <Route path="world" element={<HRWorld />} />
               <Route path="placa" element={<HRPlaca />} />
-              <Route path="accions" element={<Accions />} />
-              <Route path="configuracio" element={<Config />} />
             </Route>
             <Route path="/app" element={<WorkerLayout />}>
               <Route index element={<WorkerInici />} />

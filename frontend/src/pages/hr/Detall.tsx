@@ -11,6 +11,7 @@ export const surveyUrl = (id: string) => `${window.location.origin}${window.loca
 function message(c: ChannelKey, title: string, url: string, secs: number) {
   const t = `${Math.max(30, secs)} segons`
   switch (c) {
+    case 'teams': return `Canal Teams · Participació a l’enquesta interna: "${title}". Resposta anònima en només ${t}: ${url}`
     case 'whatsapp': case 'telegram': return `Equip, ${t} per dir com va: “${title}”. És anònim i no cal instal·lar res: ${url}`
     case 'email': return `Assumpte: ${t} per millorar el dia a dia\n\nHola! Volem saber la teva opinió sobre “${title}”. És anònima i es respon des del mòbil o l’ordinador:\n${url}\n\nGràcies,\nPersones · Damm`
     case 'app': return `Damm Pulse · Tens una enquesta de ${t}: “${title}”. És anònima.`
@@ -80,7 +81,7 @@ export default function Detall() {
           <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
             {CHANNELS.filter(c => s.channels.includes(c.key)).map(c => {
               const msg = message(c.key, s.title, url, secs)
-              const copyable = ['whatsapp', 'telegram', 'email', 'app'].includes(c.key)
+              const copyable = ['teams', 'whatsapp', 'telegram', 'email', 'app'].includes(c.key)
               return (
                 <article key={c.key} className="card p-4 flex flex-col gap-2.5">
                   <div className="flex gap-2.5 items-center"><span className="w-9 h-9 rounded-[11px] bg-red grid place-items-center"><PathIcon d={c.icon} size={18} color="#fff" /></span><strong className="text-[15px]">{c.label}</strong></div>

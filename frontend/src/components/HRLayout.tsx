@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom'
-import { BarChart3, ClipboardList, Factory, Home, ListChecks, Menu, MessageCircle, Settings2, Sparkles, Users, X } from 'lucide-react'
+import { BarChart3, ClipboardList, Factory, Home, Menu, MessageCircle, Sparkles, X } from 'lucide-react'
 import { Brand, cn } from './ui'
 import { useApp } from '../store/AppContext'
 
@@ -8,12 +8,9 @@ const NAV = [
   { to: '/rrhh', label: 'Inici', icon: Home, end: true },
   { to: '/rrhh/enquestes', label: 'Enquestes', icon: ClipboardList },
   { to: '/rrhh/crear', label: 'Crear enquesta', icon: Sparkles, tag: 'IA' },
-  { to: '/rrhh/participacio', label: 'Participació', icon: Users },
   { to: '/rrhh/analisi', label: 'Anàlisi i insights', icon: BarChart3 },
   { to: '/rrhh/world', label: 'Damm World', icon: Factory, tag: '3D' },
   { to: '/rrhh/placa', label: 'La Plaça', icon: MessageCircle, tag: '3D' },
-  { to: '/rrhh/accions', label: 'Accions i millores', icon: ListChecks },
-  { to: '/rrhh/configuracio', label: 'Configuració', icon: Settings2 },
 ]
 
 export default function HRLayout() {
@@ -41,9 +38,6 @@ export default function HRLayout() {
   const footer = (
     <div className="mt-auto flex flex-col gap-3">
       <Link to="/app" className="flex items-center justify-between px-3.5 py-3 rounded-[14px] bg-cream text-[13.5px] font-bold">Veure com a treballador <span aria-hidden>→</span></Link>
-      <div className="flex gap-2.5 items-start bg-ok-bg rounded-[14px] p-3 text-xs leading-snug text-ok-ink">
-        <span aria-hidden>✓</span><span>Només resultats agregats. Cap segment es mostra amb menys de 10 respostes.</span>
-      </div>
     </div>
   )
 

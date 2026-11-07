@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Search, Sparkles } from 'lucide-react'
-import { AI_RECS, CHANNELS, WEATHER, ZONES, zoneByKey } from '../../data/mock'
+import { AI_RECS, channelLabel, WEATHER, ZONES, zoneByKey } from '../../data/mock'
 import { useApp } from '../../store/AppContext'
 import { FestaCard, fmt, Meter, PathIcon, WeatherBadge } from '../../components/ui'
 
@@ -99,7 +99,7 @@ export default function HRInici() {
                   <tr key={s.id} className="border-t border-cream-dk">
                     <td className="py-3 px-2 font-bold"><Link to={`/rrhh/enquestes/${s.id}`} className="hover:text-red-dk">{s.title}</Link></td>
                     <td className="py-3 px-2 text-ink-muted">{s.zones.length >= 8 ? 'Tota la planta' : s.zones.map(k => zoneByKey(k).name).join(', ')}</td>
-                    <td className="py-3 px-2"><span className="flex flex-wrap gap-1">{s.channels.map(c => <span key={c} className="text-[11px] font-bold bg-cream rounded-md px-1.5 py-0.5">{CHANNELS.find(x => x.key === c)!.label.split(' ')[0]}</span>)}</span></td>
+                    <td className="py-3 px-2"><span className="flex flex-wrap gap-1">{s.channels.map(c => <span key={c} className="text-[11px] font-bold bg-cream rounded-md px-1.5 py-0.5">{channelLabel(c).split(' ')[0]}</span>)}</span></td>
                     <td className="py-3 px-2"><div className="flex items-center gap-2"><Meter value={pct} goal={60} thin className="flex-1" /><span className="text-xs font-bold tabular-nums">{pct}%</span></div></td>
                     <td className="py-3 px-2 text-ink-muted">{new Date(s.closesAt).toLocaleDateString('ca-ES', { day: 'numeric', month: 'short' })}</td>
                   </tr>

@@ -1,4 +1,4 @@
-export type ZoneKey =
+﻿export type ZoneKey =
   | 'malta' | 'coccio' | 'fermentacio' | 'envasat' | 'logistica'
   | 'oficines' | 'comercial' | 'manteniment' | 'jardi'
 
@@ -37,7 +37,7 @@ export interface Question {
 
 export type SurveyStatus = 'draft' | 'scheduled' | 'open' | 'closed'
 
-export type ChannelKey = 'qr' | 'app' | 'whatsapp' | 'telegram' | 'email' | 'tablet' | 'placa' | 'world'
+export type ChannelKey = 'qr' | 'app' | 'teams' | 'email' | 'placa' | 'world' | 'whatsapp' | 'telegram' | 'tablet'
 
 export interface Survey {
   id: string
@@ -53,6 +53,11 @@ export interface Survey {
   target: number
   createdAt: string
   fromAction?: string
+  /** Dades de la publicació via n8n (WF-01 / WF-02) */
+  n8nId?: string
+  intro?: string
+  formUrl?: string
+  qrUrl?: string
 }
 
 export interface Idea {

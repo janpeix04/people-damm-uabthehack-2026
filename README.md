@@ -119,7 +119,10 @@ Edita `.env` y rellena:
 ```bash
 npm run build:mcp      # instala y compila mcp-n8n-local (lo usan scripts y tests)
 npm run n8n:up         # levanta n8n + task runner → http://localhost:5678
+                       # y el frontend → http://localhost:8080
 ```
+
+> El frontend se sirve como build estático (se reconstruye en cada `npm run n8n:up`). Para desarrollo con hot-reload: `npm --prefix frontend install && npm --prefix frontend run dev`.
 
 ### 3. Crear la API key de n8n (solo la primera vez)
 
@@ -139,7 +142,7 @@ Webhooks disponibles en `http://localhost:5678/webhook/{generate-survey,publish-
 | Acción | Comando |
 |---|---|
 | Parar | `npm run n8n:down` (los datos persisten en el volumen `n8n_data`) |
-| Ver logs | `npm run n8n:logs` |
+| Ver logs | `npm run n8n:logs` (frontend: `npm run frontend:logs`) |
 | Estado | `docker compose ps` |
 | Borrar todo (cuenta, workflows, ejecuciones) | `docker compose down -v` |
 
