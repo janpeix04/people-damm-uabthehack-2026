@@ -332,7 +332,7 @@ export default function Crear() {
   }
 
   const startManual = () => {
-    const questions = Array.from({ length: 3 }, (_, i) => generateAlternativeQuestion(i, lang, goal))
+    const questions = Array.from({ length: 3 }, (_, i) => generateAlternativeQuestion(i, lang, goal, departments))
     setDraft({ id: 'manual', survey: { titulo: title, preguntas: [] }, warnings: [] })
     setPool(questions)
     setSel(questions.map(q => q.id))
