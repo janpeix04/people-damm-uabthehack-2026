@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { X } from 'lucide-react'
-import { WEATHER } from '../data/mock'
-import type { Weather } from '../data/types'
+import { MOODS } from '../data/mock'
+import type { Mood } from '../data/types'
 import { useApp } from '../store/AppContext'
 
 export const cn = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
@@ -43,8 +43,8 @@ export function PathIcon({ d, size = 20, color = 'currentColor', stroke = 2, cla
   )
 }
 
-export function WeatherBadge({ w, size = 46, icon = 24 }: { w: Weather; size?: number; icon?: number }) {
-  const m = WEATHER[w]
+export function MoodBadge({ w, size = 46, icon = 24 }: { w: Mood; size?: number; icon?: number }) {
+  const m = MOODS[w]
   return (
     <span className="grid place-items-center rounded-[14px] shrink-0" style={{ width: size, height: size, background: m.bg }}>
       <PathIcon d={m.path} size={icon} color={m.ink} />

@@ -5,7 +5,7 @@ import { HAIRS, SHIRTS, SKINS, ZONES } from '../../data/mock'
 import { useApp } from '../../store/AppContext'
 import { FestaCard, LogoSlot, PathIcon } from '../../components/ui'
 import { AvatarModal } from '../../components/Panels'
-import { WEATHER } from '../../data/mock'
+import { MOODS } from '../../data/mock'
 
 export default function WorkerInici() {
   const { pending, avatar, points } = useApp()
@@ -44,7 +44,7 @@ export default function WorkerInici() {
         </Link>
         <Link to="/app/world" className="card overflow-hidden flex flex-col">
           <svg viewBox="0 0 170 92" className="w-full block" aria-hidden><rect width="170" height="92" fill="#9FC6DA" /><path d="M85 30 L160 58 L85 86 L10 58z" fill="#8FC66B" /><path d="M85 86 L160 58 L160 64 L85 92z" fill="#8A6644" /><path d="M85 86 L10 58 L10 64 L85 92z" fill="#A57A50" /><rect x="40" y="26" width="7" height="30" fill="#D3D8DE" /><rect x="49" y="24" width="7" height="32" fill="#D3D8DE" /><rect x="58" y="26" width="7" height="30" fill="#D3D8DE" /><rect x="96" y="34" width="34" height="26" fill="#D9232B" /><rect x="74" y="44" width="16" height="16" fill="#F3E7C8" /><rect x="80" y="30" width="6" height="16" fill="#F3E7C8" /><path d="M83 22 l1.5 4 4 .3 -3 2.6 1 4 -3.5-2.2 -3.5 2.2 1-4 -3-2.6 4-.3z" fill="#E6B422" /><ellipse cx="120" cy="18" rx="14" ry="7" fill="#8E99A8" /><path d="M112 26 l-2 5 M120 26 l-2 5 M128 26 l-2 5" stroke="#2D5C9E" strokeWidth="1.6" strokeLinecap="round" /></svg>
-          <span className="px-3 pt-2.5 pb-3 flex flex-col gap-0.5"><strong className="text-[15px]">Damm World</strong><span className="text-xs text-ink-muted flex items-center gap-1"><PathIcon d={WEATHER[env.weather].path} size={13} color={WEATHER[env.weather].ink} />{env.name}: {env.weatherLabel.toLowerCase()}</span></span>
+          <span className="px-3 pt-2.5 pb-3 flex flex-col gap-0.5"><strong className="text-[15px]">Damm World</strong><span className="text-xs text-ink-muted flex items-center gap-1"><PathIcon d={MOODS[env.mood].path} size={13} color={MOODS[env.mood].ink} />{env.name}: {env.moodLabel.toLowerCase()}</span></span>
         </Link>
       </div>
 

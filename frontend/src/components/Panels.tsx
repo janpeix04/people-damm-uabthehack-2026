@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Check, Mail } from 'lucide-react'
-import { HAIR_STYLES, HAIRS, IDEA_CATEGORIES, PLAZA_TOPICS, SHIRTS, SKINS, WEATHER, zoneByKey } from '../data/mock'
+import { HAIR_STYLES, HAIRS, IDEA_CATEGORIES, PLAZA_TOPICS, SHIRTS, SKINS, MOODS, zoneByKey } from '../data/mock'
 import type { Avatar, ZoneKey } from '../data/types'
 import { useApp } from '../store/AppContext'
-import { cn, fmt, Meter, Modal, PrivacyNote, toneBg, WeatherBadge } from './ui'
+import { cn, fmt, Meter, Modal, PrivacyNote, toneBg, MoodBadge } from './ui'
 
 /** Fites col·lectives de la Festa de la plaça. */
 export function FestaMilestones() {
@@ -31,8 +31,8 @@ export function MissionsPanel({ onSurvey, className }: { onSurvey: () => void; c
   const { festa } = useApp()
   const env = zoneByKey('envasat'), log = zoneByKey('logistica'), man = zoneByKey('manteniment')
   const items = [
-    { w: 'rain' as const, title: 'Que surti el sol a Envasat i Logística', pct: ((env.participation + log.participation) / 2 / 60) * 100, left: `Envasat ${env.participation}% · Logística ${log.participation}%`, right: 'Objectiu 60%' },
-    { w: 'fog' as const, title: 'Aixeca la boira de Manteniment', pct: man.responses * 10, left: `${man.responses} de 10 respostes`, right: `Falten ${10 - man.responses}` },
+    { w: 'stressed' as const, title: 'Que Envasat i Logística passin d’estressats a contents', pct: ((env.participation + log.participation) / 2 / 60) * 100, left: `Envasat ${env.participation}% · Logística ${log.participation}%`, right: 'Objectiu 60%' },
+    { w: 'nodata' as const, title: 'Fes visible l’emoció de Manteniment', pct: man.responses * 10, left: `${man.responses} de 10 respostes`, right: `Falten ${10 - man.responses}` },
     { w: 'lock' as const, title: 'Obre el Jardí de la cervesa', pct: (festa.pct / 60) * 100, left: `Planta al ${Math.round(festa.pct)}%`, right: 'Objectiu 60%' },
   ]
   return (
@@ -40,7 +40,7 @@ export function MissionsPanel({ onSurvey, className }: { onSurvey: () => void; c
       <h2 className="serif text-[24px]">Missions de l’equip</h2>
       {items.map(m => (
         <div key={m.title} className="rounded-[14px] bg-cream p-3 flex flex-col gap-2">
-          <div className="flex gap-2.5 items-center text-sm font-bold leading-snug"><WeatherBadge w={m.w} size={34} icon={19} />{m.title}</div>
+          <div className="flex gap-2.5 items-center text-sm font-bold leading-snug"><MoodBadge w={m.w} size={34} icon={19} />{m.title}</div>
           <div className="h-2.5 rounded-full bg-[#E9E0D3] overflow-hidden"><div className="h-full rounded-full bg-red" style={{ width: `${Math.min(100, m.pct)}%` }} /></div>
           <div className="flex justify-between text-xs text-ink-muted"><span>{m.left}</span><b className="text-ink">{m.right}</b></div>
         </div>
@@ -54,16 +54,17 @@ export function MissionsPanel({ onSurvey, className }: { onSurvey: () => void; c
 /** Fitxa d’una zona de Damm World. `hr` afegeix alertes i enllaços de gestió. */
 export function ZonePanel({ zone, hr, className }: { zone: ZoneKey; hr?: boolean; className?: string }) {
   const z = zoneByKey(zone)
-  const w = WEATHER[z.weather]
+  const w = MOODS[z.mood]
   const hidden = z.score == null
   return (
     <section aria-live="polite" className={cn('bg-paper/95 backdrop-blur border border-line rounded-[22px] shadow-lift p-4 sm:p-5 flex flex-col gap-2.5', className)}>
       <div className="flex gap-3 items-center">
-        <WeatherBadge w={z.weather} size={52} icon={28} />
+        <MoodBadge w={z.mood} size={52} icon={28} />
         <div className="min-w-0 flex-1"><div className="text-xs font-semibold text-ink-muted">{z.area}{z.headcount ? ` · ${z.headcount} persones` : ''}</div><h2 className="serif text-[24px] leading-tight">{z.name}</h2></div>
-        <div className="text-right"><div className="serif text-[30px] leading-none">{z.score != null ? fmt(z.score) : z.key === 'jardi' ? '60%' : '?'}</div><span className="text-xs font-bold" style={{ color: w.ink }}>{z.weatherLabel}</span></div>
+        <div className="text-right"><div className="serif text-[30px] leading-none">{z.score != null ? fmt(z.score) : z.key === 'jardi' ? '60%' : '?'}</div><span className="text-xs font-bold" style={{ color: w.ink }}>{z.moodLabel}</span></div>
       </div>
       <p className="text-[13px] sm:text-sm leading-relaxed">{z.story}</p>
+      {z.key !== 'jardi' && <p className="hidden sm:block text-[11.5px] text-ink-muted -mt-1">Emoció predominant de l’equip, a partir de respostes anònimes agregades (mínim 10). Mai individual.</p>}
       {!hidden && (
         <>
           <div className="hidden sm:flex flex-wrap gap-1.5">{z.topics.map(t => <span key={t.label} className="chip" style={{ background: toneBg(t.tone) }}>{t.label}</span>)}</div>
@@ -71,7 +72,7 @@ export function ZonePanel({ zone, hr, className }: { zone: ZoneKey; hr?: boolean
           <div className="flex justify-between text-xs text-ink-muted"><span>Participació {z.participation}% · {z.responses} respostes</span><span>{z.delta < 0 ? '▼' : '▲'} {fmt(Math.abs(z.delta))} vs mes anterior</span></div>
         </>
       )}
-      {hidden && z.key === 'manteniment' && <><Meter value={70} thin /><span className="text-[13px] font-semibold">{z.responses} de 10 respostes · falten {10 - z.responses} perquè s’aixequi la boira</span></>}
+      {hidden && z.key === 'manteniment' && <><Meter value={70} thin /><span className="text-[13px] font-semibold">{z.responses} de 10 respostes · falten {10 - z.responses} perquè es pugui mostrar l’emoció de l’equip</span></>}
       {z.key === 'jardi' && <span className="text-[13px] font-semibold">Depèn de la participació de tota la planta (Festa de la plaça).</span>}
       {hr && z.alerts.length > 0 && <div className="flex flex-col gap-1.5">{z.alerts.map(a => <div key={a} className="text-[13px] leading-snug bg-warn-bg text-[#5A3A10] rounded-[12px] px-3 py-2">⚠ {a}</div>)}</div>}
       {hr && z.survey && <div className="flex gap-2 flex-wrap"><Link to="/rrhh/crear" className="btn-ink !h-9 !text-[13px]">Microenquesta per a {z.name}</Link></div>}
