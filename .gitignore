@@ -51,3 +51,7 @@ start-*.sh
 local-*.bat
 local-*.ps1
 local-*.sh
+
+
+*.local
+.DS_Store
