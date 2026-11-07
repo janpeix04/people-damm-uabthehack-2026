@@ -25,6 +25,21 @@ export interface N8nQuestion {
   obligatoria?: boolean
 }
 
+export interface N8nQualityAnalysis {
+  objetivo_correcto: boolean
+  evaluacion_objetivo: string
+  tematicas_detectadas?: string[]
+  idioma_correcto: boolean
+  idioma_verificado: string
+  tiempo_estimado_segundos: number
+  tiempo_estimado_evaluacion: string
+  tono_verificado: boolean
+  tono_evaluacion: string
+  total_preguntas?: number
+  cumple_minimo_3?: boolean
+  sin_limite_maximo?: boolean
+}
+
 export interface N8nSurvey {
   titulo: string
   introduccion_transparencia?: string
@@ -35,6 +50,7 @@ export interface N8nSurvey {
   estimacion_segundos?: number
   preguntas: N8nQuestion[]
   logica_condicional?: unknown[]
+  analisis_ia?: N8nQualityAnalysis
 }
 
 export interface GenerateInput {
@@ -44,6 +60,7 @@ export interface GenerateInput {
   durada_max: number
   restriccions?: string
   idioma: string
+  tono?: string
 }
 
 export interface GenerateResponse {
@@ -52,7 +69,12 @@ export interface GenerateResponse {
   estado: string
   approved_by_human: boolean
   survey: N8nSurvey
-  control_calidad?: { anti_sesgo_warnings?: string[] }
+  control_calidad?: {
+    anti_sesgo_warnings?: string[]
+    analisis_ia?: N8nQualityAnalysis
+    cumple_restricciones_rrhh?: boolean
+    k_anonimato_compromiso?: string
+  }
 }
 
 export interface PublishInput {

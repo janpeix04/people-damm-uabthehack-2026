@@ -30,6 +30,9 @@ secrets/
 # Archivos de base de datos y n8n local
 n8n-server/
 .n8n/
+.pgdata/
+postgres_data/
+supabase/.temp/
 *.sqlite
 *.sqlite-*
 

@@ -8,6 +8,9 @@
     "n8n:down": "docker compose down",
     "n8n:logs": "docker compose logs -f n8n",
     "frontend:logs": "docker compose logs -f frontend",
+    "postgres:logs": "docker compose logs -f postgres",
+    "db:init": "node scripts/init_postgres_db.js --reset",
+    "db:status": "node scripts/init_postgres_db.js",
     "build:mcp": "npm --prefix mcp-n8n-local ci && npm --prefix mcp-n8n-local run build",
     "setup:workflows": "node scripts/setup_local.js",
     "test": "node --test tests/**/*.test.js",
@@ -24,5 +27,9 @@
     "estrella-damm"
   ],
   "author": "The Hack! UAB Team",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.15",
+    "pg": "^8.23.1"
+  }
 }

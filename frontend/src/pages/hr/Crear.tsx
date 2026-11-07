@@ -128,7 +128,7 @@ export default function Crear() {
   const byId = useMemo(() => Object.fromEntries(pool.map(q => [q.id, q])), [pool])
   const chosen = sel.map(id => byId[id]).filter(Boolean)
   const secs = chosen.reduce((a, q) => a + q.secs, 0)
-  const valid = chosen.length >= 3 && chosen.length <= 6
+  const valid = chosen.length >= 3
   const people = SURVEY_ZONES.filter(z => zones.includes(z.key)).reduce((a, z) => a + z.headcount, 0)
 
   /** WF-01: Crida a la IA d'n8n amb l'idioma seleccionat i el missatge/objectiu */
@@ -152,7 +152,7 @@ export default function Crear() {
       setDraft({ id: r.survey_id, survey: r.survey, warnings: r.control_calidad?.anti_sesgo_warnings ?? [] })
       if (!title.trim() && r.survey.titulo) setTitle(r.survey.titulo)
       setPool(qs)
-      setSel(qs.slice(0, 6).map(q => q.id))
+      setSel(qs.map(q => q.id))
       setStep(1)
     } catch (e) {
       setGenError(errMsg(e))
@@ -367,6 +367,27 @@ export default function Crear() {
                   value={goal}
                   onChange={e => setGoal(e.target.value)}
                 />
+              </div>
+
+              {/* Configuració de To de la IA per defecte i Requisits */}
+              <div className="bg-[#FAF7F2] rounded-[16px] p-4 border border-[#E8DEC8] flex flex-col gap-2.5">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={16} className="text-red" />
+                    <span className="text-[13.5px] font-bold text-ink">To de la IA (Per defecte)</span>
+                  </div>
+                  <span className="chip bg-ok-bg text-ok-ink text-xs font-bold">✓ Proper, entenedor i inclusiu</span>
+                </div>
+                <p className="text-xs text-ink-muted leading-relaxed">
+                  Per defecte, la IA redacta les preguntes amb un <strong>to proper, entenedor i empàtic</strong>, aplicant un <strong>llenguatge neutre i inclusiu</strong> (sense biaixos de gènere ni fórmules excloents) per facilitar la comprensió de qualsevol persona treballadora.
+                </p>
+                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-[#E8DEC8]/60 text-[11.5px] font-semibold text-ink-muted">
+                  <span className="flex items-center gap-1"><span className="text-ok font-bold">✓</span> Mínim 3 preguntes requerides</span>
+                  <span>·</span>
+                  <span className="flex items-center gap-1"><span className="text-ok font-bold">✓</span> Sense límit màxim de preguntes</span>
+                  <span>·</span>
+                  <span className="flex items-center gap-1"><span className="text-ok font-bold">✓</span> Anàlisi de conformitat, idioma i temps</span>
+                </div>
               </div>
 
               <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -739,7 +760,7 @@ export default function Crear() {
                     <div className="bg-white rounded-[12px] p-2.5 border border-[#E8DEC8]">
                       <span className="text-xs text-ink-muted block font-semibold">Preguntes</span>
                       <strong className="text-xl font-extrabold text-ink tabular-nums">{chosen.length}</strong>
-                      <span className="text-[11px] text-ink-muted block">/ 3–6</span>
+                      <span className="text-[11px] text-ink-muted block">mín. 3</span>
                     </div>
                     <div className="bg-white rounded-[12px] p-2.5 border border-[#E8DEC8]">
                       <span className="text-xs text-ink-muted block font-semibold">Temps</span>
@@ -861,7 +882,7 @@ export default function Crear() {
                   'Preguntes',
                   <>
                     {chosen.length}
-                    <span className="text-xs font-semibold text-ink-muted"> / 3–6</span>
+                    <span className="text-xs font-semibold text-ink-muted"> / mín. 3</span>
                   </>,
                 ],
                 ['Temps', `${secs} s`],
@@ -882,7 +903,7 @@ export default function Crear() {
                   valid ? 'bg-ok-bg text-ok-ink' : 'bg-warn-bg text-warn-ink'
                 )}
               >
-                {valid ? '✓ Llargada adequada per respondre en pocs segons' : 'Tria entre 3 i 6 preguntes'}
+                {valid ? `✓ Compleix el requisit: ${chosen.length} seleccionades (mín. 3, sense límit màxim)` : `Cal seleccionar almenys 3 preguntes (en portes ${chosen.length})`}
               </div>
             )}
 
