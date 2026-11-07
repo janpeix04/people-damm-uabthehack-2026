@@ -121,7 +121,7 @@ export default function WorkerInici() {
           <h2 className="serif text-[26px] md:text-[30px]">Recompenses</h2>
           <Link to="/app/recompenses" className="text-sm font-bold text-red-dk">Veure-les totes →</Link>
         </div>
-        <RewardsCatalog limit={3} className="[&>*:nth-child(3)]:hidden lg:[&>*:nth-child(3)]:flex" />
+        <RewardsCatalog limit={2} />
       </section>
 
       <div className="md:hidden flex justify-center gap-4 text-xs font-semibold text-ink-muted">

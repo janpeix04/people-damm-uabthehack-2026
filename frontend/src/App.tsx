@@ -11,6 +11,7 @@ import Enquestes from './pages/hr/Enquestes'
 import Detall from './pages/hr/Detall'
 import Crear from './pages/hr/Crear'
 import Analisi from './pages/hr/Analisi'
+import Teams from './pages/hr/Teams'
 import WorkerInici from './pages/worker/Inici'
 import WorkerEnquestes from './pages/worker/Enquestes'
 import Recompenses from './pages/worker/Recompenses'
@@ -46,6 +47,7 @@ export default function App() {
               <Route path="enquestes/:id" element={<Detall />} />
               <Route path="crear" element={<Crear />} />
               <Route path="analisi" element={<Analisi />} />
+              <Route path="teams" element={<Teams />} />
               <Route path="world" element={<HRWorld />} />
               <Route path="placa" element={<HRPlaca />} />
             </Route>

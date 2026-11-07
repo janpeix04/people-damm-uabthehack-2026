@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom'
-import { BarChart3, ClipboardList, Factory, Home, Menu, MessageCircle, PanelLeftClose, PanelLeftOpen, Sparkles, X } from 'lucide-react'
+import { BarChart3, ClipboardList, Factory, Home, Menu, MessageCircle, MessagesSquare, PanelLeftClose, PanelLeftOpen, Sparkles, X } from 'lucide-react'
 import { Brand, Logo, cn } from './ui'
 import { useApp } from '../store/AppContext'
 
@@ -9,6 +9,7 @@ const NAV = [
   { to: '/rrhh/enquestes', label: 'Enquestes', icon: ClipboardList },
   { to: '/rrhh/crear', label: 'Crear enquesta', icon: Sparkles, tag: 'IA' },
   { to: '/rrhh/analisi', label: 'Anàlisi i insights', icon: BarChart3 },
+  { to: '/rrhh/teams', label: 'Microsoft Teams', icon: MessagesSquare },
   { to: '/rrhh/world', label: 'Damm World', icon: Factory, tag: '3D' },
   { to: '/rrhh/placa', label: 'La Plaça', icon: MessageCircle, tag: '3D' },
 ]

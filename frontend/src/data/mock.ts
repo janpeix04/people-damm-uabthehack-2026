@@ -170,12 +170,12 @@ export const HEARD_DID = [
 ]
 
 export const REWARDS: Reward[] = [
-  { id: 'cafe', name: 'Cafè gratuït', description: 'Cafè o infusió a la cafeteria de la teva planta.', cost: 50, tint: '#FEF0DC', ink: '#B45309', icon: 'M17 8h1a4 4 0 0 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4zM6 2v3M10 2v3M14 2v3' },
-  { id: 'snack', name: 'Snack saludable', description: 'Fruita seca, barreta o fruita de temporada.', cost: 60, tint: '#EEF6DD', ink: '#4D7C0F', icon: 'M12 7c-3-3-8-1-8 4 0 6 4 10 6 10 1 0 1.5-.5 2-.5s1 .5 2 .5c2 0 6-4 6-10 0-5-5-7-8-4zM12 7c0-2 1-4 3-5' },
-  { id: 'beguda', name: 'Beguda sense alcohol', description: 'Refresc, aigua amb gas o cervesa 0,0.', cost: 80, tint: '#E0F0FB', ink: '#1D4ED8', icon: 'M10 2h4v4l2 3v12a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V9l2-3zM8 13h8' },
-  { id: 'esmorzar', name: 'Esmorzar complet', description: 'Entrepà i beguda a la cafeteria.', cost: 150, tint: '#E6F6EE', ink: '#15803D', icon: 'M3 11a9 5 0 0 1 18 0zM3 11h18l-1 3H4zM5 14v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3' },
-  { id: 'visita', name: 'Visita a l’antiga fàbrica', description: 'Visita guiada per a tu i un acompanyant.', cost: 300, tint: '#FDE3E6', ink: '#A50D26', icon: 'M2 20V9l6 4V9l6 4V5h4l2 15zM2 20h20' },
-  { id: 'solidari', name: 'Donació solidària', description: 'Convertim punts en una donació a una entitat local.', cost: 100, tint: '#E3F4F1', ink: '#0F766E', icon: 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21.2l8.8-8.8a5.5 5.5 0 0 0 0-7.8z' },
+  { id: 'cafe', name: 'Cafè gratuït', description: 'Cafè o infusió a la cafeteria de la teva planta.', cost: 50, image: '/images/rewards/cafe.jpg', imageAlt: 'Cafè acabat de servir en una cafeteria lluminosa', tint: '#FEF0DC', ink: '#B45309', icon: 'M17 8h1a4 4 0 0 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4zM6 2v3M10 2v3M14 2v3' },
+  { id: 'snack', name: 'Snack saludable', description: 'Fruita seca, barreta o fruita de temporada.', cost: 60, image: '/images/rewards/snack.jpg', imageAlt: 'Fruita fresca, ametlles i una barreta de cereals', tint: '#EEF6DD', ink: '#4D7C0F', icon: 'M12 7c-3-3-8-1-8 4 0 6 4 10 6 10 1 0 1.5-.5 2-.5s1 .5 2 .5c2 0 6-4 6-10 0-5-5-7-8-4zM12 7c0-2 1-4 3-5' },
+  { id: 'beguda', name: 'Beguda sense alcohol', description: 'Refresc, aigua amb gas o cervesa 0,0.', cost: 80, image: '/images/rewards/beguda.jpg', imageAlt: 'Cervesa sense alcohol i aigua amb gas ben fredes', tint: '#E0F0FB', ink: '#1D4ED8', icon: 'M10 2h4v4l2 3v12a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V9l2-3zM8 13h8' },
+  { id: 'esmorzar', name: 'Esmorzar complet', description: 'Entrepà i beguda a la cafeteria.', cost: 150, image: '/images/rewards/esmorzar.jpg', imageAlt: 'Entrepà amb tomàquet, cafè i aigua amb gas', tint: '#E6F6EE', ink: '#15803D', icon: 'M3 11a9 5 0 0 1 18 0zM3 11h18l-1 3H4zM5 14v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3' },
+  { id: 'visita', name: 'Visita a l’antiga fàbrica', description: 'Visita guiada per a tu i un acompanyant.', cost: 300, image: '/images/rewards/visita.jpg', imageAlt: 'Visita guiada a una antiga fàbrica de cervesa', tint: '#FDE3E6', ink: '#A50D26', icon: 'M2 20V9l6 4V9l6 4V5h4l2 15zM2 20h20' },
+  { id: 'solidari', name: 'Donació solidària', description: 'Convertim punts en una donació a una entitat local.', cost: 100, image: '/images/rewards/solidari.jpg', imageAlt: 'Mans dipositant una fitxa vermella en una caixa solidària', tint: '#E3F4F1', ink: '#0F766E', icon: 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21.2l8.8-8.8a5.5 5.5 0 0 0 0-7.8z' },
 ]
 
 export const AI_SUMMARIES = [

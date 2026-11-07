@@ -1,0 +1,76 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "${eyebrow}",
+      "size": "Small",
+      "weight": "Bolder",
+      "color": "Accent",
+      "wrap": true
+    },
+    {
+      "type": "TextBlock",
+      "text": "${title}",
+      "size": "Large",
+      "weight": "Bolder",
+      "wrap": true,
+      "spacing": "Small"
+    },
+    {
+      "type": "TextBlock",
+      "text": "${summary}",
+      "wrap": true
+    },
+    {
+      "type": "FactSet",
+      "facts": [
+        { "title": "${scopeLabel}", "value": "${scopeValue}" },
+        { "title": "${ownerLabel}", "value": "${ownerValue}" },
+        { "title": "${dueDateLabel}", "value": "${dueDateValue}" },
+        { "title": "${evidenceLabel}", "value": "${evidenceValue}" }
+      ]
+    },
+    {
+      "type": "Input.Text",
+      "id": "reviewNote",
+      "label": "${noteLabel}",
+      "placeholder": "${notePlaceholder}",
+      "isMultiline": true,
+      "maxLength": 500
+    },
+    {
+      "type": "TextBlock",
+      "text": "${humanReviewNote}",
+      "size": "Small",
+      "isSubtle": true,
+      "wrap": true
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.Submit",
+      "title": "${approveLabel}",
+      "style": "positive",
+      "data": {
+        "intent": "approve_action",
+        "actionId": "${actionId}"
+      }
+    },
+    {
+      "type": "Action.OpenUrl",
+      "title": "${editLabel}",
+      "url": "${editUrl}"
+    },
+    {
+      "type": "Action.Submit",
+      "title": "${rejectLabel}",
+      "data": {
+        "intent": "reject_action",
+        "actionId": "${actionId}"
+      }
+    }
+  ]
+}

@@ -109,6 +109,8 @@ export interface Reward {
   name: string
   description: string
   cost: number
+  image?: string
+  imageAlt?: string
   tint: string
   ink: string
   icon: string

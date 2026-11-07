@@ -6,6 +6,7 @@ import type { ChannelKey, Question, Survey, ZoneKey } from '../../data/types'
 import { DEPARTAMENTS, generateSurvey, toQuestion, type N8nSurvey } from '../../api/n8n'
 import { useApp } from '../../store/AppContext'
 import { cn, PathIcon, PrivacyNote } from '../../components/ui'
+import TeamsDeliveryPreview from '../../components/TeamsDeliveryPreview'
 import { SurveyRunner } from '../../components/SurveyRunner'
 
 const STEPS = ['Objectiu', 'Preguntes', 'Públic i canals', 'Revisió i publicació']
@@ -903,7 +904,15 @@ export default function Crear() {
                 </div>
               </div>
 
-              {/* Secció: Obertura i tancament d'enquesta */}
+              <TeamsDeliveryPreview
+                selected={channels.includes('teams')}
+                title={title || draft?.survey.titulo || 'Nova enquesta'}
+                questions={chosen.length}
+                closesAt={closes}
+                onToggle={() => toggle(channels, 'teams', setChannels)}
+              />
+
+              {/* Obertura i tancament d'enquesta */}
               <div className="pt-4 border-t border-[#F1EAE0] flex flex-col gap-3">
                 <h2 className="serif text-2xl">Obertura i tancament de l’enquesta</h2>
                 <p className="text-[13px] text-ink-muted">

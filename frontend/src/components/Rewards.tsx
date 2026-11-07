@@ -52,20 +52,26 @@ export function RewardsCatalog({ limit, className }: { limit?: number; className
   }
   return (
     <>
-      <div className={cn('grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4', className)}>
+      <div className={cn('grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5', className)}>
         {list.map(r => {
           const ok = points >= r.cost
           return (
-            <article key={r.id} className="card overflow-hidden flex flex-col">
-              <div className="h-24 sm:h-28 grid place-items-center" style={{ background: r.tint }}><PathIcon d={r.icon} size={44} color={r.ink} stroke={1.7} /></div>
-              <div className="p-3 sm:p-4 flex flex-col gap-1.5 flex-1">
-                <h3 className="text-sm sm:text-[15px] font-bold leading-snug">{r.name}</h3>
-                <p className="text-xs sm:text-[13px] leading-snug text-ink-muted flex-1">{r.description}</p>
-                <div className="text-[13px] font-extrabold text-red-dk">{r.cost} punts</div>
+            <article key={r.id} className="group card overflow-hidden flex flex-col shadow-[0_12px_34px_rgba(71,42,31,.08)]">
+              <div className="aspect-[16/10] overflow-hidden bg-cream-dk">
+                {r.image
+                  ? <img src={r.image} alt={r.imageAlt || ''} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.025]" />
+                  : <div className="h-full grid place-items-center" style={{ background: r.tint }}><PathIcon d={r.icon} size={44} color={r.ink} stroke={1.7} /></div>}
+              </div>
+              <div className="p-4 sm:p-5 flex flex-col gap-2 flex-1">
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="serif text-[21px] sm:text-[23px] font-bold leading-tight">{r.name}</h3>
+                  <div className="text-sm font-extrabold text-red-dk whitespace-nowrap pt-1">{r.cost} punts</div>
+                </div>
+                <p className="text-[13.5px] leading-relaxed text-ink-muted flex-1">{r.description}</p>
                 <button
                   disabled={!ok || busy !== null}
                   onClick={() => redeem(r)}
-                  className={ok ? 'btn-red !h-10 !text-[13px]' : 'btn !h-10 !text-[13px] bg-cream-dk text-ink-muted !opacity-100'}
+                  className={ok ? 'btn-red !h-11 !text-sm mt-1' : 'btn !h-11 !text-sm mt-1 bg-cream-dk text-ink-muted !opacity-100'}
                 >
                   {busy === r.id ? 'Bescanviant…' : ok ? 'Bescanviar' : `Et falten ${r.cost - points}`}
                 </button>

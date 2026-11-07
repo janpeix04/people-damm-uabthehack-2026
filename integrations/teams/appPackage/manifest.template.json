@@ -1,0 +1,48 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "0.1.0",
+  "id": "${TEAMS_APP_ID}",
+  "developer": {
+    "name": "Damm People & Culture",
+    "websiteUrl": "https://${APP_HOST}",
+    "privacyUrl": "https://${APP_HOST}/privacy",
+    "termsOfUseUrl": "https://${APP_HOST}/terms"
+  },
+  "name": {
+    "short": "Escolta Damm",
+    "full": "Escolta Damm - Experiencia de las personas"
+  },
+  "description": {
+    "short": "Escucha activa y acciones de experiencia de empleado.",
+    "full": "Canal interno para responder pulsos de experiencia, consultar el progreso y convertir hallazgos agregados en acciones responsables."
+  },
+  "icons": {
+    "outline": "outline.png",
+    "color": "color.png"
+  },
+  "accentColor": "#D71920",
+  "staticTabs": [
+    {
+      "entityId": "escolta-home",
+      "name": "Escolta",
+      "contentUrl": "https://${APP_HOST}/teams",
+      "websiteUrl": "https://${APP_HOST}",
+      "scopes": ["personal"]
+    }
+  ],
+  "bots": [
+    {
+      "botId": "${BOT_APP_ID}",
+      "scopes": ["personal"],
+      "supportsFiles": false,
+      "isNotificationOnly": false
+    }
+  ],
+  "permissions": ["identity"],
+  "validDomains": ["${APP_HOST}"],
+  "webApplicationInfo": {
+    "id": "${ENTRA_APP_ID}",
+    "resource": "api://${APP_HOST}/${ENTRA_APP_ID}"
+  }
+}

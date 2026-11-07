@@ -1,0 +1,48 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "0.1.0",
+  "id": "d61af8bb-c9fe-4af6-9ed4-f6b14135d0c4",
+  "developer": {
+    "name": "Damm People & Culture - Demo",
+    "websiteUrl": "https://localhost:5173",
+    "privacyUrl": "https://localhost:5173/privacy",
+    "termsOfUseUrl": "https://localhost:5173/terms"
+  },
+  "name": {
+    "short": "Escolta Damm",
+    "full": "Escolta Damm - Demo de experiencia de las personas"
+  },
+  "description": {
+    "short": "Demo de escucha activa para la experiencia de empleado.",
+    "full": "Aplicacion de demostracion con datos sinteticos para responder pulsos, revisar hallazgos agregados y gestionar acciones. No esta conectada al directorio real de Damm."
+  },
+  "icons": {
+    "outline": "outline.png",
+    "color": "color.png"
+  },
+  "accentColor": "#D71920",
+  "staticTabs": [
+    {
+      "entityId": "escolta-home",
+      "name": "Escolta",
+      "contentUrl": "https://localhost:5173/teams",
+      "websiteUrl": "https://localhost:5173",
+      "scopes": ["personal"]
+    }
+  ],
+  "bots": [
+    {
+      "botId": "4b9c8491-8306-4dd4-a02c-f8fc8cd63070",
+      "scopes": ["personal"],
+      "supportsFiles": false,
+      "isNotificationOnly": false
+    }
+  ],
+  "permissions": ["identity"],
+  "validDomains": ["localhost"],
+  "webApplicationInfo": {
+    "id": "b167fc8a-4be5-498d-89e1-7e70b9c17f88",
+    "resource": "api://localhost:5173/b167fc8a-4be5-498d-89e1-7e70b9c17f88"
+  }
+}

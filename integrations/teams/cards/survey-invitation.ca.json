@@ -1,0 +1,61 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "Container",
+      "style": "emphasis",
+      "items": [
+        {
+          "type": "TextBlock",
+          "text": "${eyebrow}",
+          "size": "Small",
+          "weight": "Bolder",
+          "color": "Accent",
+          "wrap": true
+        },
+        {
+          "type": "TextBlock",
+          "text": "${title}",
+          "size": "Large",
+          "weight": "Bolder",
+          "wrap": true,
+          "spacing": "Small"
+        }
+      ]
+    },
+    {
+      "type": "TextBlock",
+      "text": "${intro}",
+      "wrap": true
+    },
+    {
+      "type": "FactSet",
+      "facts": [
+        { "title": "${timeLabel}", "value": "${timeValue}" },
+        { "title": "${deadlineLabel}", "value": "${deadlineValue}" },
+        { "title": "${privacyLabel}", "value": "${privacyValue}" }
+      ]
+    },
+    {
+      "type": "TextBlock",
+      "text": "${privacyNote}",
+      "size": "Small",
+      "isSubtle": true,
+      "wrap": true
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.OpenUrl",
+      "title": "${primaryActionLabel}",
+      "url": "${surveyUrl}"
+    },
+    {
+      "type": "Action.OpenUrl",
+      "title": "${secondaryActionLabel}",
+      "url": "${privacyUrl}"
+    }
+  ]
+}
