@@ -4,10 +4,14 @@
 // Els personatges són il·lustratius: no representen cap persona real.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 var RM = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var renderer = null;
 var MAXANI = 8;
+// densitat de píxel màxima: per sobre d'1,5 la diferència gairebé no es veu i el cost es dispara (2× = 4 vegades més píxels)
+var MAXPR = 1.5;
+var SMALL = typeof window !== 'undefined' && Math.min(window.innerWidth, window.innerHeight) < 700;
 var pmrem = null;
 
 // ---------- utilitats ----------
@@ -327,7 +331,7 @@ function buildPlaza(){
   skyDome(S, '#6FAEDC', '#F4E4C8');
   S.environment = envFrom('#8FC0E6', '#E9D8BC');
   S.fog = new THREE.Fog('#EFE0C8', 55, 150);
-  sunLight(S, [20, 32, 16], 30, 1.9);
+  sunLight(S, [20, 32, 16], 30, 1.9, SMALL ? 1024 : 2048);
   var anims = [], people = [], pickables = [];
 
   var ground = mesh(new THREE.PlaneGeometry(300, 300), new THREE.MeshStandardMaterial({ map: rep(T.grass, 60, 60), roughness: 1 }), 0, -.02, 0, S, false); ground.rotation.x = -Math.PI / 2;
@@ -882,7 +886,7 @@ function buildWorld(){
   skyDome(S, '#5FA6E0', '#EAF0EE');
   S.environment = envFrom('#9CC8E6', '#DCE6E2');
   S.fog = new THREE.Fog('#DCE7EA', 280, 650);
-  sunLight(S, [70, 95, 50], 78, 2.05, window.innerWidth < 800 ? 2048 : 4096);
+  sunLight(S, [70, 95, 50], 78, 2.05, SMALL ? 1024 : 2048);
   var anims = [], people = [], pickables = [], zones = {};
   var IX = 58, IZ = 43, m4 = new THREE.Matrix4();
   function zone(name){ var g = new THREE.Group(); g.userData.zone = name; S.add(g); pickables.push(g); zones[name] = g; return g; }
@@ -912,7 +916,7 @@ function buildWorld(){
   var redPanel = makeTex(256, 256, function(g, w, h){ g.fillStyle = '#B3121C'; g.fillRect(0, 0, w, h); for (var y = 0; y < h; y += 32) for (var x = 0; x < w; x += 64) { var gr = g.createLinearGradient(x, y, x, y + 32); gr.addColorStop(0, '#C8161F'); gr.addColorStop(1, '#A90F18'); g.fillStyle = gr; g.fillRect(x + 1, y + 1, 62, 30); } speckle(g, w, h, 1500, ['#000', '#fff'], .05); }, 1, 1);
 
   // ---------- aigua i illa ----------
-  var wgeo = new THREE.PlaneGeometry(640, 640, 80, 80);
+  var wgeo = new THREE.PlaneGeometry(640, 640, 40, 40);
   var water = mesh(wgeo, new THREE.MeshStandardMaterial({ color: '#4F8EA3', roughness: .16, metalness: .25 }), 0, -2.6, 0, S, false, true); water.rotation.x = -Math.PI / 2;
   var wp = wgeo.attributes.position, fN = 0;
   anims.push(function(dt, t){ if (RM) return; for (var i = 0; i < wp.count; i++) { var x = wp.getX(i), y = wp.getY(i); wp.setZ(i, Math.sin(x * .1 + t * 1.1) * .25 + Math.cos(y * .09 + t * .8) * .25); } wp.needsUpdate = true; if ((fN++ & 3) === 0) wgeo.computeVertexNormals(); });
@@ -1289,6 +1293,62 @@ function buildWorld(){
 
 
 // =====================================================
+//  OPTIMITZACIÓ: fusió de la geometria estàtica
+// =====================================================
+// Cada finestra, merlet o cadira és una malla pròpia i costa una crida de dibuix (i una altra per a les ombres).
+// Abans del primer dibuix, provem les animacions uns instants: tot el que no es mou es fusiona en una sola malla
+// per material, dins del mateix grup clicable (perquè la selecció de zones i objectes continuï funcionant).
+function freezeStatic(W){
+  var S = W.scene;
+  S.updateMatrixWorld(true);
+  var meshes = [];
+  S.traverse(function(o){ if (o.isMesh && !o.isInstancedMesh && !Array.isArray(o.material) && o.geometry && o.geometry.attributes.position) meshes.push(o); });
+  var before = meshes.map(function(m){ return { mw: m.matrixWorld.clone(), ml: m.matrix.clone(), v: m.geometry.attributes.position.version, vis: m.visible }; });
+  [[.016, 1.3], [.016, 2.9], [.016, 4.7], [.016, 7.1]].forEach(function(a){
+    for (var i = 0; i < W.anims.length; i++) W.anims[i](a[0], a[1]);
+    S.updateMatrixWorld(true);
+    meshes.forEach(function(m, k){
+      var b = before[k];
+      if (m.geometry.attributes.position.version !== b.v || !m.matrix.equals(b.ml)) b.moved = b.local = true;   // es mou respecte al seu grup
+      else if (!m.matrixWorld.equals(b.mw)) b.moved = true;                                                       // es mou amb el seu grup
+    });
+  });
+  var buckets = {}, inv = new THREE.Matrix4(), rel = new THREE.Matrix4();
+  meshes.forEach(function(m, k){
+    if (before[k].local || !before[k].vis || m.userData.keep) return;
+    var root = m.parent, hidden = false;
+    for (var p = m.parent; p; p = p.parent) { if (!p.visible) hidden = true; }
+    if (hidden) return;
+    // si el grup es mou (p. ex. un personatge), fusionem dins del mateix grup; si no, dins del grup clicable més proper
+    if (!before[k].moved) { while (root && root !== S && !root.userData.action && !root.userData.zone) root = root.parent; root = root || S; }
+    var key = root.uuid + '|' + m.material.uuid + '|' + (m.castShadow ? 1 : 0) + (m.receiveShadow ? 1 : 0);
+    (buckets[key] = buckets[key] || { root: root, mat: m.material, cast: m.castShadow, recv: m.receiveShadow, list: [] }).list.push(m);
+  });
+  var merged = 0, removed = 0;
+  Object.keys(buckets).forEach(function(key){
+    var b = buckets[key]; if (b.list.length < 2) return;
+    inv.copy(b.root.matrixWorld).invert();
+    var geos = b.list.map(function(m){
+      var g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone();
+      Object.keys(g.attributes).forEach(function(n){ if (n !== 'position' && n !== 'normal' && n !== 'uv') g.deleteAttribute(n); });
+      if (!g.attributes.normal) g.computeVertexNormals();
+      if (!g.attributes.uv) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
+      g.clearGroups(); g.morphAttributes = {};
+      g.applyMatrix4(rel.multiplyMatrices(inv, m.matrixWorld));
+      return g;
+    });
+    var mg = BufferGeometryUtils.mergeBufferGeometries(geos, false);
+    geos.forEach(function(g){ g.dispose(); });
+    if (!mg) return;
+    var mm = new THREE.Mesh(mg, b.mat); mm.castShadow = b.cast; mm.receiveShadow = b.recv; mm.matrixAutoUpdate = false;
+    b.root.add(mm); mm.updateMatrix();
+    b.list.forEach(function(m){ m.parent.remove(m); removed++; });
+    merged++;
+  });
+  return { merged: merged, removed: removed };
+}
+
+// =====================================================
 //  MUNTATGE
 // =====================================================
 var cache = {};
@@ -1297,13 +1357,16 @@ var texturesBuilt = false;
 function ensureRenderer() {
   if (renderer) return;
   renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAXPR));
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.shadowMap.autoUpdate = false;
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.02;
   MAXANI = renderer.capabilities.getMaxAnisotropy();
+  // només en desenvolupament: estadístiques per mesurar el rendiment (crides de dibuix, triangles, fps)
+  if (import.meta.env && import.meta.env.DEV) window.__damm3d = { renderer: renderer, fps: 0 };
   pmrem = new THREE.PMREMGenerator(renderer);
 }
 
@@ -1316,7 +1379,7 @@ export function mountScene(container, kind, opts) {
   opts = opts || {};
   ensureRenderer();
   if (!texturesBuilt) { buildTextures(); texturesBuilt = true; }
-  if (!cache[kind]) cache[kind] = kind === 'plaza' ? buildPlaza() : buildWorld();
+  if (!cache[kind]) { cache[kind] = kind === 'plaza' ? buildPlaza() : buildWorld(); var fz = freezeStatic(cache[kind]); if (window.__damm3d) window.__damm3d.freeze = fz; }
   var W = cache[kind];
   if (kind === 'plaza') { if (opts.avatar) W.rebuildMe(opts.avatar); W.showMe(!!opts.avatar); }
 
@@ -1412,33 +1475,54 @@ export function mountScene(container, kind, opts) {
   }
   window.addEventListener('keydown', onKey);
 
+  var cw = container.clientWidth, ch = container.clientHeight;
   function resize() {
     var w = container.clientWidth, h = container.clientHeight; if (!w || !h) return;
+    cw = w; ch = h; lastInput = performance.now();
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = w < 700 ? 54 : 42; camera.updateProjectionMatrix();
   }
   var ro = new ResizeObserver(resize); ro.observe(container); resize();
 
+  // Bucle de dibuix optimitzat:
+  //  · mentre interactues: tants fotogrames com doni la pantalla; en repòs, 30 fps (les animacions són suaus)
+  //  · les ombres es recalculen un fotograma sí i un no
+  //  · si l'equip no arriba a ~35 fps, baixem la densitat de píxel (fins a 1)
   var clock = new THREE.Clock(), raf = 0, alive = true, tmp = new THREE.Vector3();
+  var lastInput = performance.now(), lastDraw = 0, nDraw = 0, perfN = 0, perfT = 0;
+  function poke() { lastInput = performance.now(); }
+  ['pointerdown', 'pointermove', 'wheel', 'touchstart'].forEach(function (ev) { canvas.addEventListener(ev, poke, { passive: true }); });
+  window.addEventListener('keydown', poke);
+  controls.addEventListener('change', poke);
+  renderer.shadowMap.needsUpdate = true;
   function frame() {
     if (!alive) return;
-    var dt = Math.min(clock.getDelta(), .05), t = performance.now() / 1000;
+    raf = requestAnimationFrame(frame);
+    var now = performance.now(), fp = W.follow && W.follow();
+    var idle = !fp && now - lastInput > 2500;
+    if (idle && now - lastDraw < (RM ? 95 : 32)) return;
+    var dt = Math.min(clock.getDelta(), .05), t = now / 1000;
+    if (!idle) { perfN++; perfT += dt; if (perfT > 2) { var pr = renderer.getPixelRatio(); if (perfN / perfT < 35 && pr > 1) { renderer.setPixelRatio(Math.max(1, pr - .25)); resize(); } perfN = 0; perfT = 0; } }
+    else { perfN = 0; perfT = 0; }
+    lastDraw = now;
     for (var i = 0; i < W.anims.length; i++) W.anims[i](dt, t);
-    var fp = W.follow && W.follow();
     if (fp) { var kf = Math.min(1, dt * 1.8); shift((fp.x - controls.target.x) * kf, (fp.z - 6 - controls.target.z) * kf); }
-    controls.update(); renderer.render(W.scene, camera);
-    var w = container.clientWidth, h = container.clientHeight;
+    controls.update();
+    if ((nDraw++ & 1) === 0) renderer.shadowMap.needsUpdate = true;
+    renderer.render(W.scene, camera);
+    if (window.__damm3d) { var d3 = window.__damm3d; d3.n = (d3.n || 0) + 1; if (!d3.t0) d3.t0 = t; if (t - d3.t0 >= 2) { d3.fps = d3.n / (t - d3.t0); d3.n = 0; d3.t0 = t; d3.calls = renderer.info.render.calls; d3.tris = renderer.info.render.triangles; d3.geos = renderer.info.memory.geometries; d3.tex = renderer.info.memory.textures; d3.pr = renderer.getPixelRatio(); } }
+    var w = cw, h = ch;
     for (var j = 0; j < labels.length; j++) {
       var it = labels[j]; tmp.copy(it.a).project(camera);
       var vis = tmp.z < 1 && Math.abs(tmp.x) < 1.15 && Math.abs(tmp.y) < 1.2;
-      it.el.style.display = vis ? '' : 'none';
+      if (vis !== it.vis) { it.el.style.display = vis ? '' : 'none'; it.vis = vis; }
       if (vis) {
         // mantenim l'etiqueta dins del requadre perquè no quedi tallada pels costats
         var half = (it.w || (it.w = it.el.offsetWidth)) / 2 + 6;
         var px = Math.min(Math.max((tmp.x + 1) / 2 * w, half), Math.max(half, w - half));
-        it.el.style.transform = 'translate(' + px.toFixed(1) + 'px,' + ((1 - tmp.y) / 2 * h).toFixed(1) + 'px) translate(-50%,-100%)';
+        var tr = 'translate(' + px.toFixed(0) + 'px,' + ((1 - tmp.y) / 2 * h).toFixed(0) + 'px) translate(-50%,-100%)';
+        if (tr !== it.tr) { it.el.style.transform = tr; it.tr = tr; }
       }
     }
-    raf = requestAnimationFrame(frame);
   }
   frame();
 
@@ -1449,6 +1533,8 @@ export function mountScene(container, kind, opts) {
     dispose: function () {
       alive = false; cancelAnimationFrame(raf); ro.disconnect(); controls.dispose();
       canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointerup', pu); window.removeEventListener('keydown', onKey);
+      ['pointerdown', 'pointermove', 'wheel', 'touchstart'].forEach(function (ev) { canvas.removeEventListener(ev, poke); });
+      window.removeEventListener('keydown', poke); controls.removeEventListener('change', poke);
       controls.removeEventListener('change', clampTarget);
       overlay.remove(); if (canvas.parentNode === container) container.removeChild(canvas);
     }
