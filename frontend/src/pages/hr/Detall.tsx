@@ -47,7 +47,7 @@ export default function Detall() {
         </div>
         <div className="flex gap-2 flex-wrap">
           <Link to={`/e/${s.id}`} className="btn-line"><ExternalLink size={16} aria-hidden />Provar com a treballador</Link>
-          <Link to="/rrhh/analisi" className="btn-ink">Veure resultats</Link>
+          <Link to={`/rrhh/analisi?form=${s.id}`} className="btn-ink">Veure resultats</Link>
         </div>
       </header>
 
