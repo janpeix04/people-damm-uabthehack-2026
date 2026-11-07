@@ -4,9 +4,10 @@
   "description": "Sistema de Escucha Activa y People Analytics para Damm en n8n - The Hack! UAB 2026",
   "type": "module",
   "scripts": {
-    "n8n:up": "docker compose up -d",
+    "n8n:up": "docker compose up -d --build",
     "n8n:down": "docker compose down",
     "n8n:logs": "docker compose logs -f n8n",
+    "frontend:logs": "docker compose logs -f frontend",
     "build:mcp": "npm --prefix mcp-n8n-local ci && npm --prefix mcp-n8n-local run build",
     "setup:workflows": "node scripts/setup_local.js",
     "test": "node --test tests/**/*.test.js",
