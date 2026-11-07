@@ -202,11 +202,11 @@
 .people-options-header {
   display: flex;
   justify-content: center;
-  margin-bottom: clamp(18px, 3vh, 30px);
+  margin-bottom: clamp(10px, 2vh, 16px);
 }
 
 .people-options-header img {
-  width: clamp(116px, 11vw, 156px);
+  width: clamp(90px, 9vw, 116px);
   height: auto;
   filter: drop-shadow(0 10px 18px rgba(108, 8, 25, .08));
   user-select: none;
@@ -215,7 +215,7 @@
 .people-options-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(18px, 2.4vw, 32px);
+  gap: clamp(10px, 1.6vw, 18px);
 }
 
 .people-role-card {
@@ -225,7 +225,7 @@
   flex-direction: column;
   overflow: hidden;
   border: 1.5px solid rgba(184, 30, 49, .92);
-  border-radius: 30px;
+  border-radius: 22px;
   background: rgba(252, 249, 243, .9);
   box-shadow: 0 22px 54px rgba(70, 38, 28, .08);
   visibility: hidden;
@@ -249,7 +249,7 @@
 .people-role-visual {
   position: relative;
   display: flex;
-  height: clamp(270px, 43vh, 410px);
+  height: clamp(190px, 34vh, 260px);
   align-items: flex-end;
   justify-content: center;
   overflow: hidden;
@@ -270,8 +270,8 @@
 .people-role-visual img {
   position: relative;
   z-index: 1;
-  width: min(88%, 410px);
-  height: 108%;
+  width: min(100%, 300px);
+  height: 100%;
   object-fit: contain;
   object-position: center bottom;
   transform-origin: 50% 100%;
@@ -284,10 +284,10 @@
   position: relative;
   z-index: 2;
   display: flex;
-  min-height: 210px;
+  min-height: 126px;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 8px clamp(22px, 3.4vw, 46px) clamp(26px, 3.3vw, 42px);
+  padding: 4px clamp(16px, 2.2vw, 24px) clamp(16px, 2vw, 22px);
   background: linear-gradient(180deg, rgba(252, 249, 243, 0), rgba(252, 249, 243, .94) 18%, #fcf9f3 55%);
 }
 
@@ -296,32 +296,34 @@
   flex-direction: column;
   color: #b82135;
   font-family: 'Bottles Titles', Arial, sans-serif;
-  font-size: clamp(46px, 5.5vw, 76px);
+  font-size: clamp(34px, 3.8vw, 48px);
   font-weight: 900;
   letter-spacing: -.055em;
   line-height: .82;
   text-transform: uppercase;
   -webkit-text-fill-color: transparent;
-  -webkit-text-stroke: 1.5px #b82135;
+  -webkit-text-stroke: 1.2px #b82135;
 }
 
 .people-role-title--worker {
-  font-size: clamp(38px, 4.3vw, 62px);
+  font-size: clamp(28px, 3.15vw, 40px);
   letter-spacing: -.045em;
 }
 
 .people-role-action {
   display: flex;
   align-items: center;
-  gap: 9px;
-  margin-top: clamp(20px, 2.2vw, 30px);
+  gap: 7px;
+  margin-top: clamp(12px, 1.5vw, 18px);
   color: #675f5b;
-  font-size: clamp(14px, 1.35vw, 18px);
+  font-size: clamp(12px, 1.15vw, 14px);
   font-weight: 750;
   line-height: 1.35;
 }
 
 .people-role-arrow {
+  width: 18px;
+  height: 18px;
   flex: 0 0 auto;
   color: #b82135;
   transition: transform 260ms var(--people-ease-out);
@@ -399,26 +401,27 @@
 
 @media (max-width: 767px) {
   .people-logo-stage { width: clamp(255px, 76vw, 390px); }
-  .people-options { justify-content: flex-start; }
-  .people-options-header { margin-bottom: 20px; }
-  .people-options-header img { width: 124px; }
-  .people-options-grid { grid-template-columns: minmax(0, 1fr); }
-  .people-role-card { border-radius: 24px; }
-  .people-role-visual { height: clamp(248px, 43vh, 350px); }
-  .people-role-visual img { width: min(88%, 340px); height: 108%; }
-  .people-role-copy { min-height: 180px; padding: 4px 24px 26px; }
-  .people-role-title { font-size: clamp(46px, 15.5vw, 70px); }
-  .people-role-title--worker { font-size: clamp(38px, 12.4vw, 57px); }
+  .people-options-header { margin-bottom: 12px; }
+  .people-options-header img { width: 92px; }
+  .people-options-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(8px, 2.8vw, 12px); }
+  .people-role-card { border-radius: 18px; }
+  .people-role-visual { height: clamp(155px, 30vh, 210px); }
+  .people-role-visual img { width: min(100%, 210px); height: 100%; }
+  .people-role-copy { min-height: 116px; padding: 2px clamp(10px, 3.2vw, 16px) 15px; }
+  .people-role-title { font-size: clamp(22px, 6.6vw, 32px); -webkit-text-stroke-width: 1px; }
+  .people-role-title--worker { font-size: clamp(17px, 5.2vw, 25px); }
+  .people-role-action { gap: 4px; margin-top: 11px; font-size: clamp(10px, 3vw, 12px); }
+  .people-role-arrow { width: 15px; height: 15px; }
 }
 
 @media (min-width: 768px) and (max-height: 820px) {
-  .people-options-header { margin-bottom: 16px; }
-  .people-options-header img { width: 118px; }
-  .people-role-visual { height: 300px; }
-  .people-role-copy { min-height: 184px; padding-bottom: 26px; }
-  .people-role-title { font-size: clamp(44px, 5vw, 64px); }
-  .people-role-title--worker { font-size: clamp(37px, 4vw, 53px); }
-  .people-role-action { margin-top: 18px; }
+  .people-options-header { margin-bottom: 10px; }
+  .people-options-header img { width: 92px; }
+  .people-role-visual { height: clamp(180px, 33vh, 240px); }
+  .people-role-copy { min-height: 116px; padding-bottom: 16px; }
+  .people-role-title { font-size: clamp(32px, 3.6vw, 44px); }
+  .people-role-title--worker { font-size: clamp(27px, 3vw, 37px); }
+  .people-role-action { margin-top: 12px; }
 }
 
 .scroll-thin::-webkit-scrollbar { width: 6px; height: 6px; }

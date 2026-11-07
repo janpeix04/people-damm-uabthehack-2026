@@ -50,7 +50,7 @@ export default function Landing() {
         <AnimatedPeopleLogo />
       </div>
 
-      <section className="people-options mx-auto flex min-h-[100dvh] w-full max-w-[1380px] flex-col justify-center px-4 py-7 sm:px-7 sm:py-10 lg:px-10" aria-labelledby="people-damm-title">
+      <section className="people-options mx-auto flex min-h-[100dvh] w-full max-w-[980px] flex-col justify-center px-3 py-4 sm:px-6 sm:py-6 lg:px-8" aria-labelledby="people-damm-title">
         <header className="people-options-header">
           <h1 id="people-damm-title" className="sr-only">People Damm</h1>
           <img src="/logo-people-damm.png" alt="People Damm" width="1665" height="944" draggable={false} />
