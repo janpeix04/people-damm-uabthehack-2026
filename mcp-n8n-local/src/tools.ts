@@ -327,7 +327,6 @@ export async function executeToolCall(
           nodes: validation.data.nodes,
           connections: validation.data.connections,
           settings: validation.data.settings ?? {},
-          active: false,
         };
 
         const created = await client.request<Record<string, unknown>>(
