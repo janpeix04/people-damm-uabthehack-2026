@@ -1,3 +1,7 @@
+node_modules
+dist
+*.local
+.DS_Store
 # Dependencias y compilados
 node_modules/
 dist/
@@ -51,3 +55,7 @@ start-*.sh
 local-*.bat
 local-*.ps1
 local-*.sh
+
+
+*.local
+.DS_Store

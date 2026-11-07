@@ -1,0 +1,185 @@
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Check, Mail } from 'lucide-react'
+import { HAIR_STYLES, HAIRS, IDEA_CATEGORIES, PLAZA_TOPICS, SHIRTS, SKINS, WEATHER, zoneByKey } from '../data/mock'
+import type { Avatar, ZoneKey } from '../data/types'
+import { useApp } from '../store/AppContext'
+import { cn, fmt, Meter, Modal, PrivacyNote, toneBg, WeatherBadge } from './ui'
+
+/** Fites col·lectives de la Festa de la plaça. */
+export function FestaMilestones() {
+  const { festa } = useApp()
+  const miles = [{ at: 25, label: 'Guirnaldes', mark: '✓' }, { at: 40, label: 'Bancs nous', mark: '✓' }, { at: 60, label: 'Concert', mark: '♪' }, { at: 75, label: 'Focs', mark: '★' }]
+  const next = miles.find(m => festa.pct < m.at)
+  return (
+    <div className="grid grid-cols-4 gap-1.5 mt-3">
+      {miles.map(m => {
+        const done = festa.pct >= m.at, isNext = m === next
+        return (
+          <div key={m.label} className={cn('flex flex-col items-center gap-1 text-center text-[11px] font-semibold', done || isNext ? 'text-ink' : 'text-ink-muted')}>
+            <span className={cn('w-[30px] h-[30px] rounded-full grid place-items-center', done ? 'bg-ok text-white' : isNext ? 'bg-gold text-white ring-4 ring-gold/20' : 'bg-[#EFE9E1] text-[#8A7F78]')}>{done ? '✓' : m.mark}</span>
+            {m.label}<br />{m.at}%
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+/** Missions col·lectives de Damm World (sense punts individuals). */
+export function MissionsPanel({ onSurvey, className }: { onSurvey: () => void; className?: string }) {
+  const { festa } = useApp()
+  const env = zoneByKey('envasat'), log = zoneByKey('logistica'), man = zoneByKey('manteniment')
+  const items = [
+    { w: 'rain' as const, title: 'Que surti el sol a Envasat i Logística', pct: ((env.participation + log.participation) / 2 / 60) * 100, left: `Envasat ${env.participation}% · Logística ${log.participation}%`, right: 'Objectiu 60%' },
+    { w: 'fog' as const, title: 'Aixeca la boira de Manteniment', pct: man.responses * 10, left: `${man.responses} de 10 respostes`, right: `Falten ${10 - man.responses}` },
+    { w: 'lock' as const, title: 'Obre el Jardí de la cervesa', pct: (festa.pct / 60) * 100, left: `Planta al ${Math.round(festa.pct)}%`, right: 'Objectiu 60%' },
+  ]
+  return (
+    <aside aria-label="Missions de l’equip" className={cn('bg-paper/95 backdrop-blur border border-line rounded-[22px] shadow-lift p-4 flex flex-col gap-3', className)}>
+      <h2 className="serif text-[24px]">Missions de l’equip</h2>
+      {items.map(m => (
+        <div key={m.title} className="rounded-[14px] bg-cream p-3 flex flex-col gap-2">
+          <div className="flex gap-2.5 items-center text-sm font-bold leading-snug"><WeatherBadge w={m.w} size={34} icon={19} />{m.title}</div>
+          <div className="h-2.5 rounded-full bg-[#E9E0D3] overflow-hidden"><div className="h-full rounded-full bg-red" style={{ width: `${Math.min(100, m.pct)}%` }} /></div>
+          <div className="flex justify-between text-xs text-ink-muted"><span>{m.left}</span><b className="text-ink">{m.right}</b></div>
+        </div>
+      ))}
+      <button onClick={onSurvey} className="btn-red !h-[50px]">Ajuda l’equip · enquesta de 45 s</button>
+      <p className="text-[11.5px] leading-snug text-ink-muted">Missions col·lectives. No hi ha punts per resposta ni rànquings de persones.</p>
+    </aside>
+  )
+}
+
+/** Fitxa d’una zona de Damm World. `hr` afegeix alertes i enllaços de gestió. */
+export function ZonePanel({ zone, hr, className }: { zone: ZoneKey; hr?: boolean; className?: string }) {
+  const z = zoneByKey(zone)
+  const w = WEATHER[z.weather]
+  const hidden = z.score == null
+  return (
+    <section aria-live="polite" className={cn('bg-paper/95 backdrop-blur border border-line rounded-[22px] shadow-lift p-4 sm:p-5 flex flex-col gap-2.5', className)}>
+      <div className="flex gap-3 items-center">
+        <WeatherBadge w={z.weather} size={52} icon={28} />
+        <div className="min-w-0 flex-1"><div className="text-xs font-semibold text-ink-muted">{z.area}{z.headcount ? ` · ${z.headcount} persones` : ''}</div><h2 className="serif text-[24px] leading-tight">{z.name}</h2></div>
+        <div className="text-right"><div className="serif text-[30px] leading-none">{z.score != null ? fmt(z.score) : z.key === 'jardi' ? '60%' : '?'}</div><span className="text-xs font-bold" style={{ color: w.ink }}>{z.weatherLabel}</span></div>
+      </div>
+      <p className="text-[13px] sm:text-sm leading-relaxed">{z.story}</p>
+      {!hidden && (
+        <>
+          <div className="hidden sm:flex flex-wrap gap-1.5">{z.topics.map(t => <span key={t.label} className="chip" style={{ background: toneBg(t.tone) }}>{t.label}</span>)}</div>
+          <div className="flex gap-2 items-start text-[13px] leading-snug bg-ok-bg rounded-[12px] px-3 py-2.5"><Check size={16} className="text-ok shrink-0 mt-px" aria-hidden /><span><strong>Què estem fent:</strong> {z.doing}</span></div>
+          <div className="flex justify-between text-xs text-ink-muted"><span>Participació {z.participation}% · {z.responses} respostes</span><span>{z.delta < 0 ? '▼' : '▲'} {fmt(Math.abs(z.delta))} vs mes anterior</span></div>
+        </>
+      )}
+      {hidden && z.key === 'manteniment' && <><Meter value={70} thin /><span className="text-[13px] font-semibold">{z.responses} de 10 respostes · falten {10 - z.responses} perquè s’aixequi la boira</span></>}
+      {z.key === 'jardi' && <span className="text-[13px] font-semibold">Depèn de la participació de tota la planta (Festa de la plaça).</span>}
+      {hr && z.alerts.length > 0 && <div className="flex flex-col gap-1.5">{z.alerts.map(a => <div key={a} className="text-[13px] leading-snug bg-warn-bg text-[#5A3A10] rounded-[12px] px-3 py-2">⚠ {a}</div>)}</div>}
+      {hr && z.survey && <div className="flex gap-2 flex-wrap"><Link to="/rrhh/crear" className="btn-ink !h-9 !text-[13px]">Microenquesta per a {z.name}</Link></div>}
+    </section>
+  )
+}
+
+export function IdeaModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { addIdea } = useApp()
+  const [cat, setCat] = useState(0)
+  const [text, setText] = useState('')
+  const [step, setStep] = useState<'form' | number | 'done'>('form')
+  const close = () => { onClose(); setTimeout(() => { setStep('form'); setText('') }, 200) }
+  const send = () => {
+    if (text.trim().length < 3) return
+    addIdea(IDEA_CATEGORIES[cat], text.trim())
+    setStep(0);
+    [1, 2, 3].forEach(n => setTimeout(() => setStep(n), n * 800))
+    setTimeout(() => setStep('done'), 3100)
+  }
+  const steps = ['Traiem noms i dades personals', 'Revisem el to i el contingut', 'L’afegim al tema, sense el teu nom']
+  return (
+    <Modal open={open} onClose={close} title={step === 'done' ? 'Ja és a la plaça' : typeof step === 'number' ? 'Revisant la teva idea…' : 'Bústia d’idees'}>
+      {step === 'form' && (
+        <>
+          <p className="text-sm text-ink-muted">Sense iniciar sessió. Ningú sabrà que l’has escrit tu.</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">{IDEA_CATEGORIES.map((c, i) => <button key={c} aria-pressed={cat === i} onClick={() => setCat(i)} className="toggle p-3 text-[13px] font-bold text-center">{c}</button>)}</div>
+          <label htmlFor="idea" className="text-[13px] font-bold">La teva idea o opinió</label>
+          <textarea id="idea" rows={4} className="input !text-[15px] !rounded-[16px]" value={text} onChange={e => setText(e.target.value)} placeholder="Per exemple: estaria bé tenir el calendari de torns visible al menjador." />
+          <p className="text-xs text-ink-muted">Si hi poses noms o dades personals, els traurem automàticament.</p>
+          <button className="btn-red !h-[52px] !text-base" disabled={text.trim().length < 3} onClick={send}>Deixar-la a la bústia</button>
+        </>
+      )}
+      {typeof step === 'number' && (
+        <div className="flex flex-col gap-3 py-1">
+          {steps.map((s, i) => <div key={s} className={cn('flex gap-3 items-center text-[15px] font-semibold', i < step ? 'text-ink' : 'text-ink-muted')}><span className={cn('w-[30px] h-[30px] rounded-full grid place-items-center text-white text-sm', i < step ? 'bg-ok' : 'bg-line')}>{i < step ? '✓' : i + 1}</span>{s}</div>)}
+        </div>
+      )}
+      {step === 'done' && (
+        <div className="flex flex-col items-center text-center gap-3">
+          <div className="w-20 h-20 rounded-[26px] bg-red grid place-items-center shadow-red"><Mail size={38} color="#fff" aria-hidden /></div>
+          <p className="text-[15px] leading-relaxed text-ink-muted">S’ha afegit al tema <strong className="text-ink">{IDEA_CATEGORIES[cat]}</strong>, sense el teu nom. RRHH en veurà el resum agregat.</p>
+          <button className="btn-ink w-full" onClick={close}>Tornar a la plaça</button>
+        </div>
+      )}
+    </Modal>
+  )
+}
+
+export function TopicsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <Modal open={open} onClose={onClose} title="Temes de la setmana">
+      <div className="flex flex-col gap-2">
+        {PLAZA_TOPICS.map(t => (
+          <div key={t.label} className="flex items-center gap-3 rounded-[14px] p-3" style={{ background: toneBg(t.tone) }}>
+            <div className="flex-1"><strong className="block">{t.label}</strong><small className="text-ink-muted">{t.n} opinions · {t.trend}</small></div>
+            <span className="w-28 h-2 rounded-full bg-white overflow-hidden"><span className="block h-full bg-ink" style={{ width: `${(t.n / 64) * 100}%` }} /></span>
+          </div>
+        ))}
+        <p className="text-xs text-ink-muted mt-1">Opinions agrupades i moderades. Mai es mostren comentaris individuals.</p>
+        <Link to="/app/hem-fet" className="text-sm font-bold text-red-dk">Veure “Ens heu dit / Hem fet” →</Link>
+      </div>
+    </Modal>
+  )
+}
+
+function AvatarPreview({ a }: { a: Avatar }) {
+  const light = ['#F4EFE6', '#B08A45'].includes(SHIRTS[a.shirt])
+  return (
+    <svg viewBox="0 0 120 150" className="w-[140px] h-[175px] rounded-[20px] bg-gradient-to-b from-[#DCEBF3] to-[#F6FAFC] shrink-0" aria-hidden>
+      <ellipse cx="60" cy="142" rx="26" ry="5" fill="rgba(0,0,0,.12)" />
+      <rect x="47" y="112" width="11" height="28" rx="5" fill="#2B3346" /><rect x="62" y="112" width="11" height="28" rx="5" fill="#2B3346" />
+      <rect x="40" y="76" width="40" height="44" rx="18" fill={SHIRTS[a.shirt]} stroke={light ? '#E3DCD0' : 'none'} />
+      {a.logo && <text x="60" y="100" textAnchor="middle" fontFamily="Figtree, sans-serif" fontWeight="800" fontSize="9" fill={light ? '#C8102E' : '#FFFFFF'}>DAMM</text>}
+      <circle cx="60" cy="48" r="28" fill={SKINS[a.skin]} />
+      {a.style === 2 ? [32, 42, 54, 66, 78, 88].map(x => <circle key={x} cx={x} cy={30 + Math.abs(60 - x) * .25} r="9" fill={HAIRS[a.hair]} />)
+        : <path d={a.style === 1 ? 'M30 60 C26 22 94 22 90 60 L84 48 C80 34 40 34 36 48Z' : 'M32 46 C32 22 50 18 60 18 C74 18 88 24 88 46 C82 34 72 30 60 30 C48 30 38 34 32 46Z'} fill={HAIRS[a.hair]} />}
+      {a.style === 3 && <circle cx="60" cy="16" r="10" fill={HAIRS[a.hair]} />}
+      <ellipse cx="50" cy="50" rx="3" ry="4" fill="#1E1A26" /><ellipse cx="70" cy="50" rx="3" ry="4" fill="#1E1A26" />
+      <ellipse cx="42" cy="59" rx="4" ry="2.4" fill="#FF8C9C" opacity=".4" /><ellipse cx="78" cy="59" rx="4" ry="2.4" fill="#FF8C9C" opacity=".4" />
+      <path d="M53 62 Q60 69 67 62" stroke="#7A2B35" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function AvatarModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { avatar, setAvatar, toast } = useApp()
+  const [a, setA] = useState<Avatar>(avatar)
+  const sw = (key: 'skin' | 'hair' | 'shirt', list: string[], label: string) => (
+    <div>
+      <div className="text-[13px] font-bold mb-1.5">{label}</div>
+      <div className="flex flex-wrap gap-1.5">{list.map((c, i) => <button key={c} aria-label={`${label} ${i + 1}`} aria-pressed={a[key] === i} onClick={() => setA({ ...a, [key]: i })} className={cn('w-9 h-9 rounded-full border-[3px] border-white', a[key] === i ? 'ring-2 ring-ink' : 'ring-1 ring-line')} style={{ background: c }} />)}</div>
+    </div>
+  )
+  return (
+    <Modal open={open} onClose={onClose} title="El teu personatge">
+      <div className="flex flex-wrap gap-5 items-start">
+        <AvatarPreview a={a} />
+        <div className="flex-1 min-w-[200px] flex flex-col gap-3">
+          {sw('skin', SKINS, 'Pell')}
+          {sw('hair', HAIRS, 'Cabell')}
+          <div><div className="text-[13px] font-bold mb-1.5">Pentinat</div><div className="flex flex-wrap gap-1.5">{HAIR_STYLES.map((s, i) => <button key={s} aria-pressed={a.style === i} onClick={() => setA({ ...a, style: i })} className="toggle h-9 px-3 text-[13px] font-bold">{s}</button>)}</div></div>
+          {sw('shirt', SHIRTS, 'Samarreta')}
+          <div className="flex gap-1.5">{['Llisa', 'Amb DAMM'].map((s, i) => <button key={s} aria-pressed={a.logo === (i === 1)} onClick={() => setA({ ...a, logo: i === 1 })} className="toggle h-9 px-3 text-[13px] font-bold">{s}</button>)}</div>
+        </div>
+      </div>
+      <PrivacyNote>El teu personatge només es guarda en aquest dispositiu. No es vincula a les teves respostes i ningú més el veu.</PrivacyNote>
+      <button className="btn-red !h-[52px]" onClick={() => { setAvatar(a); onClose(); toast('El teu personatge ja és a la plaça') }}>Fet</button>
+    </Modal>
+  )
+}
