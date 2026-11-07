@@ -37,9 +37,7 @@ Agrega la clave `mcp-n8n-local` dentro de `mcpServers`:
 
 1. **Ejecutar n8n localmente en el puerto 5678:**
    ```bash
-   npx n8n start
-   # o vía Docker:
-   docker run -it --rm --name n8n -p 5678:5678 -v ~/.n8n:/home/node/.n8n n8nio/n8n
+   npm run n8n:up   # docker compose: n8n + task runner (ver README)
    ```
 2. **Obtener la API Key:**
    - Abre `http://localhost:5678` en tu navegador.

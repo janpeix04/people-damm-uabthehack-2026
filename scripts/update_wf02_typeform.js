@@ -1,8 +1,9 @@
 import { N8nClient } from '../mcp-n8n-local/dist/client.js';
 import { validateWorkflowPayload } from '../mcp-n8n-local/dist/validator.js';
+import { findWorkflowIdByPrefix } from './lib/find_workflow.js';
 
 const client = new N8nClient();
-const WF02_ID = "hGcT9TgBCPtTAB5F";
+const WF02_ID = await findWorkflowIdByPrefix(client, "WF-02");
 const TYPEFORM_AUTH_HEADER = '={{ "Bearer " + ($env.TYPEFORM_TOKEN || "") }}';
 
 const codeExtractPayload = `

@@ -1,0 +1,64 @@
+# n8n local para Damm Pulse IA — http://localhost:5678
+# Las variables ${...} se leen del archivo .env de esta carpeta (ver .env.example).
+# Solo se pasan al contenedor las variables que usan los workflows: con
+# N8N_BLOCK_ENV_ACCESS_IN_NODE=false cualquier workflow puede leer el entorno del contenedor.
+
+services:
+  n8n:
+    image: n8nio/n8n:2.46.6
+    container_name: damm-n8n
+    restart: unless-stopped
+    ports:
+      # Por defecto solo accesible desde este equipo. N8N_BIND=0.0.0.0 lo abre a la red local.
+      - "${N8N_BIND:-127.0.0.1}:5678:5678"
+    environment:
+      # Secretos usados por los workflows vía $env.*
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      TYPEFORM_TOKEN: ${TYPEFORM_TOKEN:-}
+      TEAMS_WEBHOOK_URL: ${TEAMS_WEBHOOK_URL:-}
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      # Task runner externo (contenedor "runners") para ejecutar los nodos Code aislados
+      N8N_RUNNERS_MODE: external
+      N8N_RUNNERS_BROKER_LISTEN_ADDRESS: 0.0.0.0
+      N8N_RUNNERS_AUTH_TOKEN: ${N8N_RUNNERS_AUTH_TOKEN:?Define N8N_RUNNERS_AUTH_TOKEN en .env (ver README)}
+      N8N_RUNNERS_TASK_TIMEOUT: "60"
+      # URLs y zona horaria
+      N8N_WEBHOOK_URL: ${N8N_PUBLIC_URL:-http://localhost:5678/}
+      N8N_SECURE_COOKIE: "false"
+      GENERIC_TIMEZONE: Europe/Madrid
+      TZ: Europe/Madrid
+      # Privacidad: los datos de ejecución contienen comentarios antes de anonimizar → se purgan a las 72 h
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: "72"
+      # Sin telemetría ni llamadas externas innecesarias
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
+      N8N_TEMPLATES_ENABLED: "false"
+      # Endurecimiento: sin paquetes comunitarios no verificados y límites seguros de descompresión
+      N8N_UNVERIFIED_PACKAGES_ENABLED: "false"
+      N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES: "268435456"
+      N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES: "1000"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  runners:
+    image: n8nio/runners:2.46.6
+    container_name: damm-n8n-runners
+    restart: unless-stopped
+    environment:
+      N8N_RUNNERS_TASK_BROKER_URI: http://n8n:5679
+      N8N_RUNNERS_AUTH_TOKEN: ${N8N_RUNNERS_AUTH_TOKEN:?Define N8N_RUNNERS_AUTH_TOKEN en .env (ver README)}
+      GENERIC_TIMEZONE: Europe/Madrid
+      TZ: Europe/Madrid
+    depends_on:
+      n8n:
+        condition: service_healthy
+
+volumes:
+  n8n_data:

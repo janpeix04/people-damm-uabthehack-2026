@@ -1,12 +1,13 @@
 import { N8nClient } from '../mcp-n8n-local/dist/client.js';
 import { validateWorkflowPayload } from '../mcp-n8n-local/dist/validator.js';
+import { findWorkflowIdByPrefix } from './lib/find_workflow.js';
 
 const client = new N8nClient();
 
-// IDs existentes en n8n
-const WF01_ID = "OAJWOvABgkyeYxci";
-const WF03_ID = "9NpeloiEHScX3Tdl";
-const WF04_ID = "OVBwDpImN3IQ1jdp";
+// IDs resueltos dinámicamente en la instancia n8n local
+const WF01_ID = await findWorkflowIdByPrefix(client, "WF-01");
+const WF03_ID = await findWorkflowIdByPrefix(client, "WF-03");
+const WF04_ID = await findWorkflowIdByPrefix(client, "WF-04");
 
 const UAB_LLM_URL = "https://dcc-llm-gw.uab.cat/uabthehack/v1/chat/completions";
 const UAB_AUTH_HEADER = '={{ "Bearer " + ($env.LLM_API_KEY || "") }}';
