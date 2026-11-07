@@ -76,6 +76,7 @@ export function SurveyRunner({ questions, onExit, onDone, preview }: Props) {
       <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-5 flex flex-col gap-4">
         <div className="eyebrow !text-red">{q.dim}</div>
         <h1 className="serif text-[26px] sm:text-[28px] leading-[1.15] -mt-1 text-ink">{q.text}</h1>
+        {q.help && <p className="text-sm text-ink-muted -mt-2">{q.help}</p>}
 
         {q.type === 'faces' && (
           <div className="flex flex-col gap-2">
@@ -101,29 +102,34 @@ export function SurveyRunner({ questions, onExit, onDone, preview }: Props) {
             ))}
           </div>
         )}
-        {q.type === 'scale' && (
-          <div className="flex flex-col gap-2">
-            <div className="grid grid-cols-6 gap-1.5">
-              {Array.from({ length: 11 }, (_, n) => (
-                <button
-                  key={n}
-                  aria-pressed={cur === n}
-                  onClick={() => set(n)}
-                  className={cn(
-                    'h-[52px] rounded-[14px] border-2 font-extrabold text-[17px]',
-                    cur === n ? 'border-red bg-red text-white' : 'border-line bg-white'
-                  )}
-                >
-                  {n}
-                </button>
-              ))}
+        {q.type === 'scale' && (() => {
+          const min = q.min ?? 0
+          const max = q.max ?? 10
+          const values = Array.from({ length: max - min + 1 }, (_, i) => min + i)
+          return (
+            <div className="flex flex-col gap-2">
+              <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${Math.min(values.length, 6)}, minmax(0,1fr))` }}>
+                {values.map(n => (
+                  <button
+                    key={n}
+                    aria-pressed={cur === n}
+                    onClick={() => set(n)}
+                    className={cn(
+                      'h-[52px] rounded-[14px] border-2 font-extrabold text-[17px]',
+                      cur === n ? 'border-red bg-red text-white' : 'border-line bg-white'
+                    )}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-between text-xs text-ink-muted">
+                <span>{min} · {max - min <= 4 ? 'molt baix' : 'gens'}</span>
+                <span>{max} · {max - min <= 4 ? 'molt alt' : 'molt'}</span>
+              </div>
             </div>
-            <div className="flex justify-between text-xs text-ink-muted">
-              <span>0 · gens</span>
-              <span>10 · molt</span>
-            </div>
-          </div>
-        )}
+          )
+        })()}
         {q.type === 'text' && (
           <div className="flex flex-col gap-2">
             <label htmlFor={`t-${q.id}`} className="text-[13px] font-bold">

@@ -14,7 +14,7 @@ function message(c: ChannelKey, title: string, url: string, secs: number) {
     case 'teams': return `Canal Teams · Participació a l’enquesta interna: "${title}". Resposta anònima en només ${t}: ${url}`
     case 'whatsapp': case 'telegram': return `Equip, ${t} per dir com va: “${title}”. És anònim i no cal instal·lar res: ${url}`
     case 'email': return `Assumpte: ${t} per millorar el dia a dia\n\nHola! Volem saber la teva opinió sobre “${title}”. És anònima i es respon des del mòbil o l’ordinador:\n${url}\n\nGràcies,\nPersones · Damm`
-    case 'app': return `Damm Pulse · Tens una enquesta de ${t}: “${title}”. És anònima.`
+    case 'app': return `People Damm · Tens una enquesta de ${t}: “${title}”. És anònima.`
     case 'tablet': return 'La tauleta del menjador mostrarà aquesta enquesta en mode quiosc. Es reinicia després de cada resposta i no guarda res de qui respon.'
     case 'placa': return 'La parada de l’enquesta de La Plaça mostrarà l’avís “Enquesta nova” i el botó fix portarà a aquest enllaç.'
     case 'world': return 'Apareixerà com a missió col·lectiva a les zones seleccionades de Damm World.'
