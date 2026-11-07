@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body { @apply bg-cream text-ink font-sans antialiased; -webkit-tap-highlight-color: transparent; }
+  h1, h2, h3 { text-wrap: balance; }
+  :focus-visible { outline: 3px solid #C8102E; outline-offset: 2px; }
+}
+
+@layer components {
+  .card { @apply bg-paper border border-line rounded-[20px]; }
+  .serif { @apply font-display font-normal; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-[14px] font-bold text-sm h-11 px-4 transition active:scale-[.98] disabled:opacity-50 disabled:pointer-events-none; }
+  .btn-red { @apply btn bg-red text-white shadow-red hover:bg-red-dk; }
+  .btn-ink { @apply btn bg-ink text-white hover:bg-ink-soft; }
+  .btn-line { @apply btn bg-white border border-line text-ink hover:bg-cream; }
+  .btn-ghost { @apply btn text-ink-muted hover:bg-cream; }
+  .chip { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold; }
+  .input { @apply w-full rounded-[12px] border-[1.5px] border-line bg-white px-3 py-2.5 text-sm font-medium text-ink outline-none focus:border-red; }
+  .eyebrow { @apply text-[11px] font-extrabold uppercase tracking-[.12em] text-ink-muted; }
+  .toggle { @apply rounded-[14px] border-[1.5px] border-line bg-white text-left transition; }
+  .toggle[aria-pressed='true'] { @apply border-red bg-red-soft; }
+}
+
+.scroll-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: #D9CFC2; border-radius: 99px; }
+
+/* Etiquetes projectades de l'escena 3D */
+.scene-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
+.scene-labels .lab { position: absolute; left: 0; top: 0; will-change: transform; pointer-events: auto; }
+.lab .bubble { width: 206px; padding: 10px 13px; border-radius: 18px; background: #FFFDF9; box-shadow: 0 12px 30px rgba(30,20,10,.22); position: relative; font-family: Figtree, sans-serif; color: #1F1A18; }
+.lab .bubble::after { content: ""; position: absolute; left: 50%; bottom: -8px; width: 16px; height: 16px; background: #FFFDF9; transform: translateX(-50%) rotate(45deg); border-radius: 3px; }
+.lab .bubble p { margin: 0; font-size: 13.5px; font-weight: 600; line-height: 1.3; position: relative; z-index: 1; }
+.lab .bubble .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; position: relative; z-index: 1; font-size: 12px; color: #5C534E; }
+.lab .react { height: 30px; padding: 0 11px; border-radius: 99px; border: 0; background: #FBE9EC; color: #9E0C24; font: 700 12.5px Figtree, sans-serif; cursor: pointer; }
+.lab .react[aria-pressed="true"] { background: #C8102E; color: #fff; }
+.lab .tag { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 99px; border: 0; background: #1F1A18; color: #fff; font: 700 13px Figtree, sans-serif; white-space: nowrap; box-shadow: 0 8px 20px rgba(0,0,0,.25); cursor: pointer; }
+.lab .tag.red { background: #C8102E; }
+.lab .tag.light { background: #FFFDF9; color: #1F1A18; border: 1px solid #E6DCCF; }
+.lab .me-tag { padding: 4px 12px; border-radius: 99px; background: #FFFDF9; font: 800 12px Figtree, sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+.lab .pin { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px 0 5px; border-radius: 99px; border: 2px solid transparent; background: #FFFDF9; font: 700 13.5px Figtree, sans-serif; color: #1F1A18; white-space: nowrap; box-shadow: 0 8px 20px rgba(10,30,40,.28); cursor: pointer; }
+.lab .pin .w { width: 30px; height: 30px; border-radius: 99px; display: grid; place-items: center; }
+.lab .pin em { font-style: normal; color: #5C534E; }
+.lab .pin[aria-pressed="true"] { border-color: #1F1A18; }
+@media (max-width: 760px) {
+  .lab .bubble { width: 160px; padding: 8px 10px; }
+  .lab .bubble p { font-size: 12px; }
+  .lab .pin { height: 34px; font-size: 12px; }
+  .lab .pin em { display: none; }
+}
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; }
+}
