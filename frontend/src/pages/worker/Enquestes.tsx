@@ -27,9 +27,9 @@ export function SurveyCard({ s }: { s: Survey }) {
 }
 
 export default function Enquestes() {
-  const { surveys, pending, answeredList, backend } = useApp()
+  const { pending, answeredList, backend } = useApp()
   // Les programades de demo només tenen sentit sense base de dades.
-  const soon = backend === 'db' ? [] : surveys.filter(s => s.status === 'scheduled')
+  const soon: Survey[] = []
 
   return (
     <div className="max-w-3xl mx-auto px-4 md:px-6 pt-5 md:pt-10 pb-8 flex flex-col gap-6">
@@ -42,7 +42,7 @@ export default function Enquestes() {
         <h2 id="pend" className="eyebrow">Pendents · {pending.length}</h2>
         {backend === 'loading'
           ? <p className="card p-4 text-sm text-ink-muted">Carregant…</p>
-          : pending.length
+          : backend === 'local' ? <p role="alert" className="card p-4">No s’ha pogut connectar amb el servidor. Torna-ho a provar.</p> : pending.length
           ? pending.map(s => <SurveyCard key={s.id} s={s} />)
           : <p className="card p-4 text-sm text-ink-muted">Estàs al dia. Gràcies per participar!</p>}
       </section>

@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { BASE_RESPONSES, DAILY_QUESTIONS, FESTA_GOAL, INITIATIVES, MIN_SAMPLE, PLAZA_LAST_WEEK, PLAZA_MILESTONES, PLAZA_WEEK_BASE, REWARDS, SURVEYS, TOTAL_HEADCOUNT } from '../data/mock'
+import { BASE_RESPONSES, FESTA_GOAL, INITIATIVES, PLAZA_MILESTONES, SURVEYS, TOTAL_HEADCOUNT } from '../data/mock'
 import type { ActionStatus, Avatar, DailyQuestion, Idea, Initiative, Reward, Survey } from '../data/types'
 import { AppApiError, openWallet, redeemReward, submitSurvey as submitSurveyApi, type WalletState } from '../api/app'
+import { plazaCall, type PlazaState } from '../api/plaza'
 import { listHrSurveys, saveHrSurvey, updateHrStatus } from '../api/hr'
 
 export const POINTS_PER_SURVEY = 50
@@ -30,7 +31,6 @@ interface PlazaMine {
 const dayKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 /** Clau de la setmana: el dilluns. La Festa es reinicia cada dilluns. */
 const weekKey = (d = new Date()) => { const m = new Date(d); m.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return dayKey(m) }
-const todaysQuestion = (d = new Date()): DailyQuestion => DAILY_QUESTIONS[Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000) % DAILY_QUESTIONS.length]
 const freshPlaza = (): PlazaMine => ({ week: weekKey(), joined: false, reacted: [], daily: null })
 
 export interface PlazaWeek {
@@ -45,7 +45,7 @@ export interface PlazaWeek {
   /** Dies que falten perquè es reiniciï (dilluns). */
   resetsIn: number
   reacted: number[]
-  question: DailyQuestion
+  question: DailyQuestion | null
   myAnswer: string | null
   /** Resultat agregat d'avui; null si encara no hi ha prou respostes per mostrar-lo. */
   results: { key: string; label: string; emoji: string; n: number; pct: number }[] | null
@@ -100,7 +100,7 @@ interface Remote extends WalletState {
   surveys: Survey[]
 }
 
-type Redeemed = Persisted['redeemed']
+
 
 interface Ctx extends Persisted {
   festa: { responses: number; pct: number; goal: number; missing: number }
@@ -123,14 +123,17 @@ interface Ctx extends Persisted {
   addSurvey: (s: Survey, approved?: boolean, editId?: string) => Promise<Survey>
   setSurveyStatus: (id: string, status: Survey['status'], approved?: boolean) => Promise<void>
   /** La Plaça d'aquesta setmana (participació única, fites i pregunta del dia). */
+  plazaError: string | null
+  plazaLoading: boolean
+  refreshPlaza: () => Promise<void>
   plazaWeek: PlazaWeek
   /** Respon la pregunta del dia (un cop al dia). */
-  answerDaily: (key: string) => void
+  answerDaily: (key: string) => Promise<void>
   /** "+1 Jo també" en una bafarada de la Plaça. */
   reactTopic: (index: number, on: boolean) => void
-  addIdea: (category: string, text: string) => void
+  addIdea: (category: string, text: string) => Promise<void>
   setInitiativeStatus: (id: string, status: ActionStatus) => void
-  setAvatar: (a: Avatar) => void
+  setAvatar: (a: Avatar) => Promise<void>
   resetDemo: () => void
   toast: (msg: string) => void
 }
@@ -142,6 +145,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<{ id: number; msg: string }[]>([])
   const [remote, setRemote] = useState<Remote | null>(null)
   const [backend, setBackend] = useState<Ctx['backend']>('loading')
+  const [plazaRemote, setPlazaRemote] = useState<PlazaState | null>(null)
+  const [plazaError, setPlazaError] = useState<string | null>(null)
+  const [plazaLoading, setPlazaLoading] = useState(true)
+  const refreshPlaza = useCallback(async () => {
+    try { setPlazaRemote(await plazaCall('state')); setPlazaError(null) }
+    catch (e) { setPlazaError(e instanceof Error ? e.message : 'Error de connexio') }
+    finally { setPlazaLoading(false) }
+  }, [])
+  useEffect(() => { void refreshPlaza(); const timer = setInterval(() => void refreshPlaza(), 30000); return () => clearInterval(timer) }, [refreshPlaza])
   const [hrSurveys, setHrSurveys] = useState<Survey[]>([])
   const [hrLoading, setHrLoading] = useState(true)
   const [hrError, setHrError] = useState<string | null>(null)
@@ -180,48 +192,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const responses = BASE_RESPONSES + st.extra
     const target = Math.ceil(TOTAL_HEADCOUNT * FESTA_GOAL)
 
-    // ---- La Plaça d'aquesta setmana ----
-    const mine = st.plaza && st.plaza.week === weekKey() ? st.plaza : freshPlaza()
-    const participants = PLAZA_WEEK_BASE + (mine.joined ? 1 : 0)
-    const ppct = (participants / TOTAL_HEADCOUNT) * 100
-    const nx = PLAZA_MILESTONES.find(m => ppct < m.at)
-    const question = todaysQuestion()
-    const myAnswer = mine.daily && mine.daily.day === dayKey() ? mine.daily.answer : null
-    const qOpts = question.options.map(o => ({ ...o, n: o.n + (myAnswer === o.key ? 1 : 0) }))
-    const todayTotal = qOpts.reduce((a, o) => a + o.n, 0)
+    const data = plazaRemote?.plaza
+    const participants = data?.participants ?? 0
+    const headcount = data?.headcount ?? 0
+    const pct = headcount ? participants / headcount * 100 : 0
+    const nx = PLAZA_MILESTONES.find(m => pct < m.at)
     const plazaWeek: PlazaWeek = {
-      participants, headcount: TOTAL_HEADCOUNT, pct: ppct, goal: 60, joined: mine.joined, lastWeek: PLAZA_LAST_WEEK,
-      next: nx ? { at: nx.at, label: nx.label, missing: Math.ceil((TOTAL_HEADCOUNT * nx.at) / 100) - participants } : null,
-      resetsIn: (8 - new Date().getDay()) % 7 || 7,
-      reacted: mine.reacted, question, myAnswer, todayTotal,
-      // mínim de respostes abans de mostrar cap resultat
-      results: todayTotal >= MIN_SAMPLE ? qOpts.map(o => ({ key: o.key, label: o.label, emoji: o.emoji, n: o.n, pct: (o.n / todayTotal) * 100 })) : null,
+      participants, headcount, pct, goal: 60, joined: data?.joined ?? false, lastWeek: data?.lastWeek ?? 0,
+      next: nx ? { at: nx.at, label: nx.label, missing: Math.max(0, Math.ceil(headcount * nx.at / 100) - participants) } : null,
+      resetsIn: data?.resetsIn ?? 7, reacted: data?.reacted ?? [], question: data?.question ?? null,
+      myAnswer: data?.myAnswer ?? null, results: data?.results ?? null, todayTotal: data?.todayTotal ?? 0,
     }
-    /** Primera participació de la setmana: compta un cop a la Festa (i avisa si desbloqueja una fita). */
-    const joinPlaza = (patch: Partial<PlazaMine>) => {
-      if (!mine.joined) {
-        const after = ((participants + 1) / TOTAL_HEADCOUNT) * 100
-        const hit = PLAZA_MILESTONES.find(m => ppct < m.at && after >= m.at)
-        toast(hit ? `Has desbloquejat: ${hit.label}! Gràcies per sumar-t’hi.` : 'Has sumat a la Festa de la setmana. Gràcies!')
-      }
-      setSt(p => ({ ...p, plaza: { ...(p.plaza && p.plaza.week === weekKey() ? p.plaza : freshPlaza()), ...patch, joined: true } }))
+    const mutatePlaza = async (action: string, payload: object) => {
+      try { setPlazaRemote(await plazaCall(action, payload)); setPlazaError(null) }
+      catch (e) { setPlazaError(e instanceof Error ? e.message : 'Error de connexio'); throw e }
     }
 
     return {
       ...st,
+      avatar: plazaRemote?.avatar ?? DEFAULTS.avatar,
+      ideas: plazaRemote?.ideas ?? [],
+      plazaLoading, plazaError, refreshPlaza,
       hrSurveys, hrLoading, hrError, refreshHr,
       festa: { responses, pct: (responses / TOTAL_HEADCOUNT) * 100, goal: FESTA_GOAL * 100, missing: Math.max(0, target - responses) },
       backend,
       // Amb base de dades, només les enquestes que aquesta persona encara no ha contestat.
-      pending: remote ? remote.surveys : st.surveys.filter(s => s.status === 'open' && !st.answered.includes(s.id)),
-      points: remote ? remote.points : st.points,
-      redeemed: remote ? remote.redeemed : st.redeemed,
-      rewards: remote ? remote.rewards : REWARDS,
-      answeredList: remote
-        ? remote.answered
-        : st.surveys.filter(s => st.answered.includes(s.id)).map(s => ({ id: s.id, title: s.title })),
-      findSurvey: id => remote?.surveys.find(s => s.id === id) ?? st.surveys.find(s => s.id === id),
-      isAnswered: id => (remote ? remote.answered.some(a => a.id === id) : st.answered.includes(id)),
+      pending: remote?.surveys ?? [],
+      points: remote?.points ?? 0,
+      redeemed: remote?.redeemed ?? [],
+      rewards: remote?.rewards ?? [],
+      answeredList: remote?.answered ?? [],
+      findSurvey: id => remote?.surveys.find(s => s.id === id),
+      isAnswered: id => remote?.answered.some(a => a.id === id) ?? false,
       submitSurvey: async (s, answers, durationSeconds) => {
         if (s.source === 'db') {
           const res = await submitSurveyApi(s, answers, durationSeconds)
@@ -229,27 +231,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setSt(p => ({ ...p, extra: p.extra + 1 }))
           return res.earned
         }
-        const first = !st.answered.includes(s.id)
-        setSt(p => ({
-          ...p,
-          extra: p.extra + 1,
-          // Els punts premien participar (un cop per enquesta), mai el contingut.
-          points: p.answered.includes(s.id) ? p.points : p.points + POINTS_PER_SURVEY,
-          answered: p.answered.includes(s.id) ? p.answered : [...p.answered, s.id],
-          surveys: p.surveys.map(x => (x.id === s.id ? { ...x, responses: x.responses + 1 } : x)),
-        }))
-        return first ? POINTS_PER_SURVEY : 0
+        throw new AppApiError('network_error')
       },
-      redeemReward: async r => {
-        if (remote) {
-          const res = await redeemReward(r.id)
-          setRemote(prev => (prev ? { ...res, surveys: prev.surveys } : prev))
-          return res.code
-        }
-        if (st.points < r.cost) throw new AppApiError('insufficient_points')
-        const code = `DP-${Math.random().toString(36).slice(2, 6).toUpperCase()}`
-        setSt(p => ({ ...p, points: p.points - r.cost, redeemed: [{ id: r.id, name: r.name, code }, ...p.redeemed] as Redeemed }))
-        return code
+      redeemReward: async reward => {
+        if (!remote) throw new AppApiError('network_error')
+        const result = await redeemReward(reward.id)
+        setRemote(r => r ? { ...result, surveys: r.surveys } : r)
+        return result.code
       },
       refreshWallet,
       addSurvey: async (s, approved = false, editId) => {
@@ -263,37 +251,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         void refreshWallet()
       },
       plazaWeek,
-      answerDaily: key => { if (!myAnswer) joinPlaza({ daily: { day: dayKey(), answer: key } }) },
-      reactTopic: (index, on) => {
-        const reacted = on ? Array.from(new Set([...mine.reacted, index])) : mine.reacted.filter(i => i !== index)
-        if (on) joinPlaza({ reacted })
-        else setSt(p => ({ ...p, plaza: { ...mine, reacted } }))
-      },
-      addIdea: (category, text) => {
-        const id = `idea-${Date.now()}`
-        joinPlaza({})
-        setSt(p => ({ ...p, ideas: [{ id, category, text, status: 'moderant', at: Date.now() }, ...p.ideas] }))
-        setTimeout(() => setSt(p => ({ ...p, ideas: p.ideas.map(i => (i.id === id ? { ...i, status: 'publicada' } : i)) })), 6000)
-      },
-      setInitiativeStatus: (id, status) => setSt(p => ({ ...p, initiatives: p.initiatives.map(i => (i.id === id ? { ...i, status } : i)) })),
-      setAvatar: avatar => setSt(p => ({ ...p, avatar })),
+      answerDaily: async key => { if (!plazaWeek.question) throw new Error('No hi ha pregunta publicada.'); await mutatePlaza('daily', { question: plazaWeek.question.id, option: key }) },
+      reactTopic: (index, on) => { void mutatePlaza('reaction', { index, on }).catch(e => toast(e instanceof Error ? e.message : 'Error')) },
+      addIdea: async (category, text) => { await mutatePlaza('idea', { category, text }) },
+
+      setInitiativeStatus: (id, status) => setSt(p => ({ ...p, initiatives: p.initiatives.map(i => i.id === id ? { ...i, status } : i) })),
+      setAvatar: async avatar => { await mutatePlaza('avatar', { avatar }) },
       resetDemo: () => setSt(DEFAULTS),
       toast,
     }
-  }, [st, toast, remote, backend, refreshWallet, hrSurveys, hrLoading, hrError, refreshHr])
+  }, [st, toast, remote, backend, refreshWallet, hrSurveys, hrLoading, hrError, refreshHr, plazaRemote, plazaError, plazaLoading, refreshPlaza])
 
-  return (
-    <AppCtx.Provider value={value}>
-      {children}
-      <div className="fixed left-1/2 -translate-x-1/2 bottom-28 md:bottom-8 z-[100] flex flex-col items-center gap-2 pointer-events-none" aria-live="polite">
-        {toasts.map(t => (
-          <div key={t.id} className="rounded-[14px] bg-ink text-white px-4 py-3 text-sm font-semibold shadow-lift max-w-[90vw]">{t.msg}</div>
-        ))}
-      </div>
-    </AppCtx.Provider>
-  )
+  return <AppCtx.Provider value={value}>{children}<div className="fixed left-1/2 -translate-x-1/2 bottom-28 md:bottom-8 z-[100] flex flex-col items-center gap-2 pointer-events-none" aria-live="polite">{toasts.map(t => <div key={t.id} className="rounded-[14px] bg-ink text-white px-4 py-3 text-sm font-semibold shadow-lift max-w-[90vw]">{t.msg}</div>)}</div></AppCtx.Provider>
 }
-
 export function useApp() {
   const c = useContext(AppCtx)
   if (!c) throw new Error('useApp ha de ser dins d’AppProvider')

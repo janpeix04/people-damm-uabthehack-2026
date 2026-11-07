@@ -29,7 +29,7 @@ El script usa `.env`, bloqueja execucions simultànies i consulta `app_private.s
 
 Els lectors anònims només veuen idees publicades, categories actives i preguntes publicades/tancades. La resta requereix backend autoritzat; no es concedeix lectura pública de vots, moneders ni preferències. La redacció de PII reutilitza la funció SQL bàsica existent (correu, telèfon i identificadors); no equival a anonimització semàntica de noms o detalls del relat.
 
-Encara falta connectar els endpoints/workflows i la UI. En particular, el backend ha d'inserir rebut i vot en una transacció, validar que la pregunta està oberta i retornar només agregats amb mostra >= `min_sample_size`. Les taules per si soles no implementen aquests endpoints ni un dashboard. La participació setmanal també s'ha de registrar a la mateixa transacció de l'activitat corresponent.
+La connexió posterior ja està implementada a l'API i la UI; vegeu [APP_POSTGRES.md](APP_POSTGRES.md). El backend insereix rebut i vot en una transacció, valida que la pregunta està oberta i retorna només distribucions amb mostra >= `min_sample_size`. La participació setmanal es registra a la mateixa transacció de l'activitat corresponent. La migració següent afegeix la persistència privada de reaccions als temes fixos de la demo.
 
 No es dupliquen les taules existents d'iniciatives, anàlisi IA o integracions. Les respostes d'enquesta continuen sense cap FK cap a moneders o persones.
 

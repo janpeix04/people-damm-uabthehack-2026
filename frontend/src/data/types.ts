@@ -77,7 +77,7 @@ export interface Idea {
   id: string
   category: string
   text: string
-  status: 'moderant' | 'publicada'
+  status: 'moderant' | 'publicada' | 'rebutjada' | 'arxivada'
   at: number
 }
 

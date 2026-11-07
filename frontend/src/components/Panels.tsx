@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Check, Mail } from 'lucide-react'
 import { HAIR_STYLES, HAIRS, IDEA_CATEGORIES, PLAZA_MILESTONES, PLAZA_TOPICS, SHIRTS, SKINS, MOODS, zoneByKey } from '../data/mock'
@@ -48,9 +48,13 @@ export function FestaWeekPanel({ hr, className }: { hr?: boolean; className?: st
 
 /** Pregunta del dia: un toc per respondre; el resultat agregat només es veu un cop respost (i amb un mínim de respostes). */
 export function DailyQuestion({ hr, className }: { hr?: boolean; className?: string }) {
-  const { plazaWeek: w, answerDaily } = useApp()
+  const { plazaWeek: w, answerDaily, plazaError, plazaLoading, refreshPlaza, toast } = useApp()
+  const [busy, setBusy] = useState(false)
   const q = w.question
   const showResults = hr || !!w.myAnswer
+  if (plazaLoading) return <p role="status">Carregant La Plaça…</p>
+  if (plazaError) return <p role="alert">{plazaError} <button className="btn-line" onClick={() => void refreshPlaza()}>Reintentar</button></p>
+  if (!q) return <p className="text-sm text-ink-muted">Encara no s’ha publicat la pregunta d’avui.</p>
   return (
     <section aria-label="Pregunta del dia" className={cn('flex flex-col gap-2.5', className)}>
       <div className="flex items-center justify-between gap-2"><span className="eyebrow !text-red">Pregunta del dia</span><span className="text-[11px] text-ink-muted">Anònima · un toc</span></div>
@@ -58,7 +62,7 @@ export function DailyQuestion({ hr, className }: { hr?: boolean; className?: str
       {!showResults && (
         <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${q.options.length > 3 ? 2 : q.options.length}, minmax(0, 1fr))` }}>
           {q.options.map(o => (
-            <button key={o.key} onClick={() => answerDaily(o.key)} className="rounded-[14px] border border-line bg-cream hover:bg-cream-dk transition px-2 py-2.5 flex flex-col items-center gap-1 text-[13px] font-bold">
+            <button key={o.key} disabled={busy} onClick={async () => { setBusy(true); try { await answerDaily(o.key) } catch (e) { toast(e instanceof Error ? e.message : 'Error') } finally { setBusy(false) } }} className="rounded-[14px] border border-line bg-cream hover:bg-cream-dk transition px-2 py-2.5 flex flex-col items-center gap-1 text-[13px] font-bold">
               <span className="text-[24px] leading-none" aria-hidden>{o.emoji}</span>{o.label}
             </button>
           ))}
@@ -141,25 +145,28 @@ export function IdeaModal({ open, onClose }: { open: boolean; onClose: () => voi
   const [cat, setCat] = useState(0)
   const [text, setText] = useState('')
   const [step, setStep] = useState<'form' | number | 'done'>('form')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const close = () => { onClose(); setTimeout(() => { setStep('form'); setText('') }, 200) }
-  const send = () => {
+  const send = async () => {
     if (text.trim().length < 3) return
-    addIdea(IDEA_CATEGORIES[cat], text.trim())
-    setStep(0);
-    [1, 2, 3].forEach(n => setTimeout(() => setStep(n), n * 800))
-    setTimeout(() => setStep('done'), 3100)
+    setBusy(true); setError(null)
+    try { await addIdea(IDEA_CATEGORIES[cat], text.trim()); setStep('done') }
+    catch (e) { setError(e instanceof Error ? e.message : 'No s’ha pogut desar') }
+    finally { setBusy(false) }
   }
   const steps = ['Traiem noms i dades personals', 'Revisem el to i el contingut', 'L’afegim al tema, sense el teu nom']
   return (
-    <Modal open={open} onClose={close} title={step === 'done' ? 'Ja és a la plaça' : typeof step === 'number' ? 'Revisant la teva idea…' : 'Bústia d’idees'}>
+    <Modal open={open} onClose={close} title={step === 'done' ? 'Idea rebuda' : typeof step === 'number' ? 'Desant…' : 'Bústia d’idees'}>
       {step === 'form' && (
         <>
           <p className="text-sm text-ink-muted">Sense iniciar sessió. Ningú sabrà que l’has escrit tu.</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">{IDEA_CATEGORIES.map((c, i) => <button key={c} aria-pressed={cat === i} onClick={() => setCat(i)} className="toggle p-3 text-[13px] font-bold text-center">{c}</button>)}</div>
           <label htmlFor="idea" className="text-[13px] font-bold">La teva idea o opinió</label>
           <textarea id="idea" rows={4} className="input !text-[15px] !rounded-[16px]" value={text} onChange={e => setText(e.target.value)} placeholder="Per exemple: estaria bé tenir el calendari de torns visible al menjador." />
-          <p className="text-xs text-ink-muted">Si hi poses noms o dades personals, els traurem automàticament.</p>
-          <button className="btn-red !h-[52px] !text-base" disabled={text.trim().length < 3} onClick={send}>Deixar-la a la bústia</button>
+          <p className="text-xs text-ink-muted">No hi incloguis noms. Els correus i telèfons es redacten; RRHH revisa el contingut abans de publicar.</p>
+          {error && <p role="alert">{error}</p>}
+          <button className="btn-red !h-[52px] !text-base" disabled={busy || text.trim().length < 3} onClick={() => void send()}>{busy ? 'Desant…' : 'Deixar-la a la bústia'}</button>
         </>
       )}
       {typeof step === 'number' && (
@@ -170,7 +177,7 @@ export function IdeaModal({ open, onClose }: { open: boolean; onClose: () => voi
       {step === 'done' && (
         <div className="flex flex-col items-center text-center gap-3">
           <div className="w-20 h-20 rounded-[26px] bg-red grid place-items-center shadow-red"><Mail size={38} color="#fff" aria-hidden /></div>
-          <p className="text-[15px] leading-relaxed text-ink-muted">S’ha afegit al tema <strong className="text-ink">{IDEA_CATEGORIES[cat]}</strong>, sense el teu nom. RRHH en veurà el resum agregat.</p>
+          <p className="text-[15px] leading-relaxed text-ink-muted">S’ha desat a la bústia de <strong className="text-ink">{IDEA_CATEGORIES[cat]}</strong>, sense vincular-la al teu moneder. Queda pendent de moderació.</p>
           <button className="btn-ink w-full" onClick={close}>Tornar a la plaça</button>
         </div>
       )}
@@ -216,6 +223,8 @@ function AvatarPreview({ a }: { a: Avatar }) {
 export function AvatarModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { avatar, setAvatar, toast } = useApp()
   const [a, setA] = useState<Avatar>(avatar)
+  const [saving, setSaving] = useState(false)
+  useEffect(() => { if (open) setA(avatar) }, [open])
   const sw = (key: 'skin' | 'hair' | 'shirt', list: string[], label: string) => (
     <div>
       <div className="text-[13px] font-bold mb-1.5">{label}</div>
@@ -234,8 +243,8 @@ export function AvatarModal({ open, onClose }: { open: boolean; onClose: () => v
           <div className="flex gap-1.5">{['Llisa', 'Amb DAMM'].map((s, i) => <button key={s} aria-pressed={a.logo === (i === 1)} onClick={() => setA({ ...a, logo: i === 1 })} className="toggle h-9 px-3 text-[13px] font-bold">{s}</button>)}</div>
         </div>
       </div>
-      <PrivacyNote>El teu personatge només es guarda en aquest dispositiu. No es vincula a les teves respostes i ningú més el veu.</PrivacyNote>
-      <button className="btn-red !h-[52px]" onClick={() => { setAvatar(a); onClose(); toast('El teu personatge ja és a la plaça') }}>Fet</button>
+      <PrivacyNote>El personatge es desa al servidor amb el moneder d’aquest dispositiu. No es vincula a les respostes anònimes.</PrivacyNote>
+      <button className="btn-red !h-[52px]" disabled={saving} onClick={async () => { setSaving(true); try { await setAvatar(a); onClose(); toast('Personatge desat') } catch (e) { toast(e instanceof Error ? e.message : 'No s’ha pogut desar') } finally { setSaving(false) } }}>{saving ? 'Desant…' : 'Fet'}</button>
     </Modal>
   )
 }

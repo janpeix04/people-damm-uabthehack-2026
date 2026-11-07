@@ -9,13 +9,14 @@
  */
 import type { Question, QType, Reward, Survey } from '../data/types'
 
-const BASE = (import.meta.env.VITE_N8N_WEBHOOK_BASE ?? '/webhook').replace(/\/$/, '')
+const BASE = '/api'
 const WALLET_KEY = 'damm-pulse-wallet'
 const TIMEOUT_MS = 15_000
 
 export type AppErrorCode =
   | 'invalid_wallet' | 'unknown_wallet' | 'no_people_available' | 'not_invited'
   | 'already_answered' | 'invalid_token' | 'unknown_reward' | 'insufficient_points'
+  | 'reward_out_of_stock' | 'reward_unavailable'
   | 'server_error' | 'network_error'
 
 export class AppApiError extends Error {
@@ -83,7 +84,7 @@ async function post<T>(path: string, body: Record<string, unknown>): Promise<T> 
     clearTimeout(timer)
   }
   const data = await res.json().catch(() => null)
-  if (!res.ok || !data) throw new AppApiError((data?.error as AppErrorCode) ?? (res.status === 404 ? 'network_error' : 'server_error'))
+  if (!res.ok || !data) throw new AppApiError(data?.error && Object.prototype.hasOwnProperty.call(ERROR_MESSAGES, data.error) ? data.error as AppErrorCode : res.status === 404 ? 'network_error' : 'server_error')
   return data as T
 }
 
@@ -167,6 +168,8 @@ export async function redeemReward(rewardId: string) {
 }
 
 export const ERROR_MESSAGES: Record<AppErrorCode, string> = {
+  reward_out_of_stock: 'Aquesta recompensa s’ha esgotat.',
+  reward_unavailable: 'Aquesta recompensa ja no està disponible.',
   invalid_wallet: 'No hem pogut identificar aquest dispositiu.',
   unknown_wallet: 'No hem pogut identificar aquest dispositiu.',
   no_people_available: 'Ara mateix no hi ha places disponibles a la demo.',

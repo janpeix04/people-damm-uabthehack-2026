@@ -22,4 +22,4 @@ Crear o editar és una transacció única. Editar conserva la campanya i substit
 
 L'API està preparada per a la demo local, sense SSO ni verificació de rol RRHH. L'aprovador queda identificat com «RRHH local». Abans d'exposar el frontend a la xarxa cal afegir autenticació, autorització i un usuari SQL amb permisos limitats. La comprovació d'origen bloqueja peticions del navegador des d'altres orígens, però no substitueix l'autenticació.
 
-La generació amb IA continua usant WF-01; publicar a PostgreSQL ja no depèn de Typeform ni envia missatges externs. El recorregut de resposta del treballador continua requerint WF-05, que no es desplega amb aquest canvi. Les campanyes publicades ja tenen les assignacions que aquest workflow necessita.
+La generació amb IA continua usant WF-01; publicar a PostgreSQL no depèn de Typeform ni envia missatges externs. Ara el moneder, l'enviament i els bescanvis del treballador usen `/api/app/*` amb les funcions SQL existents, sense requerir WF-05. n8n queda per als processos d'IA, notificacions i altres automatitzacions.

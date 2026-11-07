@@ -107,6 +107,7 @@ services:
       - ./supabase/tests/database/001_privacy_invariants.sql:/docker-entrypoint-initdb.d/03-verify-invariants.sql:ro
       - ./supabase/migrations/20261108090000_worker_app_wallet_rewards.sql:/docker-entrypoint-initdb.d/04-worker-app.sql:ro
       - ./supabase/migrations/20261108100000_plaza_preferences_reward_operations.sql:/docker-entrypoint-initdb.d/05-plaza-preferences-rewards.sql:ro
+      - ./supabase/migrations/20261108110000_plaza_topic_reactions.sql:/docker-entrypoint-initdb.d/06-plaza-reactions.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-damm_pulse}"]
       interval: 10s
