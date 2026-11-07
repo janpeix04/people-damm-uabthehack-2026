@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, BarChart3, Smartphone } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 
 const BUBBLES = [
   ['8%', '8px', '1.8s', '-.4s', '-8px'],
@@ -22,55 +22,77 @@ const bubbleStyle = ([x, size, duration, delay, drift]: (typeof BUBBLES)[number]
   '--bubble-drift': drift,
 }) as CSSProperties
 
+function AnimatedPeopleLogo() {
+  return (
+    <div className="people-logo-stage people-logo-stage--intro">
+      <img className="people-logo-final" src="/logo-people-damm.png" alt="" width="1665" height="944" draggable={false} />
+
+      <div className="people-logo-liquid-mask" aria-hidden>
+        <div className="people-logo-beer">
+          <div className="people-logo-foam" />
+          {BUBBLES.map((bubble, index) => <span key={index} className="people-logo-bubble" style={bubbleStyle(bubble)} />)}
+        </div>
+      </div>
+
+      <div className="people-logo-shine-mask" aria-hidden>
+        <div className="people-logo-shine" />
+      </div>
+    </div>
+  )
+}
+
 /** Selector de rol de la demo (no hi ha autenticació real). */
 export default function Landing() {
   return (
-    <main className="people-access min-h-[100dvh] overflow-hidden bg-cream text-ink">
-      <section className="relative mx-auto flex min-h-[100dvh] w-full max-w-6xl flex-col items-center justify-center px-4 py-8 sm:px-6 sm:py-12" aria-labelledby="people-damm-title">
-        <div className="people-access-glow" aria-hidden />
+    <main className="people-access min-h-[100dvh] overflow-x-hidden bg-cream text-ink">
+      <div className="people-intro" aria-hidden="true">
+        <div className="people-intro-glow" />
+        <AnimatedPeopleLogo />
+      </div>
 
-        <div className="relative z-[1] flex w-full flex-col items-center">
+      <section className="people-options mx-auto flex min-h-[100dvh] w-full max-w-[1380px] flex-col justify-center px-4 py-7 sm:px-7 sm:py-10 lg:px-10" aria-labelledby="people-damm-title">
+        <header className="people-options-header">
           <h1 id="people-damm-title" className="sr-only">People Damm</h1>
+          <img src="/logo-people-damm.png" alt="People Damm" width="1665" height="944" draggable={false} />
+        </header>
 
-          <div className="people-logo-stage" role="img" aria-label="El logotip de People Damm es revela quan la cervesa baixa">
-            <img className="people-logo-final" src="/logo-people-damm.png" alt="" width="1665" height="944" draggable={false} />
+        <nav className="people-options-grid" aria-label="Accessos de People Damm">
+          <Link to="/rrhh" className="people-role-card people-role-card--rrhh" style={{ '--card-delay': '2.68s' } as CSSProperties}>
+            <span className="people-role-visual" aria-hidden="true">
+              <span className="people-role-halo" />
+              <img src="/images/landing/portal-rrhh.png" alt="" width="1254" height="1254" draggable={false} />
+            </span>
 
-            <div className="people-logo-liquid-mask" aria-hidden>
-              <div className="people-logo-beer">
-                <div className="people-logo-foam" />
-                {BUBBLES.map((bubble, index) => <span key={index} className="people-logo-bubble" style={bubbleStyle(bubble)} />)}
-              </div>
-            </div>
-
-            <div className="people-logo-shine-mask" aria-hidden>
-              <div className="people-logo-shine" />
-            </div>
-          </div>
-
-          <p className="people-access-copy mt-3 max-w-xl text-center text-[15px] leading-relaxed text-ink-muted sm:mt-4 sm:text-base">
-            El clima laboral de Damm, de forma àgil, contínua i anònima. Prototip amb dades sintètiques.
-          </p>
-
-          <nav className="mt-8 grid w-full max-w-[820px] gap-4 sm:mt-10 sm:grid-cols-2" aria-label="Accessos de People Damm">
-            <Link to="/rrhh" className="people-access-card group" style={{ '--card-delay': '2.62s' } as CSSProperties}>
-              <span className="people-access-icon bg-red text-white"><BarChart3 size={23} strokeWidth={2} aria-hidden /></span>
-              <span className="min-w-0 flex-1">
-                <strong className="serif block text-[22px] leading-tight text-ink sm:text-[25px]">Portal RRHH</strong>
-                <span className="mt-2 block text-[13.5px] leading-relaxed text-ink-muted">Crear enquestes, analitzar resultats i gestionar accions.</span>
+            <span className="people-role-copy">
+              <strong className="people-role-title" aria-label="Portal RRHH">
+                <span>Portal</span>
+                <span>RRHH</span>
+              </strong>
+              <span className="people-role-action">
+                Gestionar persones i equips
+                <ArrowRight className="people-role-arrow" size={22} strokeWidth={2} aria-hidden="true" />
               </span>
-              <ArrowRight className="people-access-arrow text-red" size={21} aria-hidden />
-            </Link>
+            </span>
+          </Link>
 
-            <Link to="/app" className="people-access-card group" style={{ '--card-delay': '2.69s' } as CSSProperties}>
-              <span className="people-access-icon bg-ink text-white"><Smartphone size={23} strokeWidth={2} aria-hidden /></span>
-              <span className="min-w-0 flex-1">
-                <strong className="serif block text-[22px] leading-tight text-ink sm:text-[25px]">App del treballador</strong>
-                <span className="mt-2 block text-[13.5px] leading-relaxed text-ink-muted">Enquestes, La Plaça i recompenses, des de qualsevol dispositiu.</span>
+          <Link to="/app" className="people-role-card people-role-card--worker" style={{ '--card-delay': '2.76s' } as CSSProperties}>
+            <span className="people-role-visual" aria-hidden="true">
+              <span className="people-role-halo" />
+              <img src="/images/landing/app-treballador.png" alt="" width="1254" height="1254" draggable={false} />
+            </span>
+
+            <span className="people-role-copy">
+              <strong className="people-role-title people-role-title--worker" aria-label="App del treballador">
+                <span>App del</span>
+                <span>treballador</span>
+              </strong>
+              <span className="people-role-action">
+                Participar, compartir i bescanviar punts
+                <ArrowRight className="people-role-arrow" size={22} strokeWidth={2} aria-hidden="true" />
               </span>
-              <ArrowRight className="people-access-arrow text-ink" size={21} aria-hidden />
-            </Link>
-          </nav>
-        </div>
+            </span>
+          </Link>
+        </nav>
       </section>
     </main>
   )
