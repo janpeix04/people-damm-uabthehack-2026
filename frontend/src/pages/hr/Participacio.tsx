@@ -4,13 +4,13 @@ import { useApp } from '../../store/AppContext'
 import { PageHead } from '../../components/HRLayout'
 import { cn, FestaCard, Meter } from '../../components/ui'
 
-const CHANNEL_SPLIT: Record<string, number> = { qr: 34, whatsapp: 24, app: 16, placa: 9, email: 8, tablet: 5, world: 3, telegram: 1 }
+const CHANNEL_SPLIT: Record<string, number> = { qr: 34, teams: 24, app: 20, placa: 9, email: 8, world: 5 }
 
 export default function Participacio() {
   const { festa } = useApp()
   return (
     <div className="flex flex-col gap-5">
-      <PageHead title="Participació" sub="Qui està responent, per on arriba l’enquesta i on falten veus." actions={<Link to="/rrhh/crear?plantilla=0" className="btn-red">Reforçar amb una microenquesta</Link>} />
+      <PageHead title="Participació" sub="Qui està responent, per on arriba l’enquesta i on falten veus." actions={<Link to="/rrhh/crear" className="btn-red">Reforçar amb una microenquesta</Link>} />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
         <section className="card p-5">
           <h2 className="serif text-[22px]">Per zona</h2>
@@ -30,13 +30,16 @@ export default function Participacio() {
           <section className="card p-5">
             <h2 className="serif text-[22px] mb-3">Per on entren</h2>
             <div className="flex flex-col gap-2">
-              {CHANNELS.map(c => (
-                <div key={c.key} className="grid grid-cols-[minmax(0,1fr)_110px_36px] items-center gap-2 text-[13px]">
-                  <span className="truncate">{c.label}</span>
-                  <div className="h-2 rounded-full bg-cream-dk"><div className="h-full rounded-full bg-red" style={{ width: `${CHANNEL_SPLIT[c.key] * 2.5}%` }} /></div>
-                  <span className="text-right tabular-nums text-ink-muted">{CHANNEL_SPLIT[c.key]}%</span>
-                </div>
-              ))}
+              {CHANNELS.map(c => {
+                const val = CHANNEL_SPLIT[c.key] ?? 0
+                return (
+                  <div key={c.key} className="grid grid-cols-[minmax(0,1fr)_110px_36px] items-center gap-2 text-[13px]">
+                    <span className="truncate">{c.label}</span>
+                    <div className="h-2 rounded-full bg-cream-dk"><div className="h-full rounded-full bg-red" style={{ width: `${val * 2.5}%` }} /></div>
+                    <span className="text-right tabular-nums text-ink-muted">{val}%</span>
+                  </div>
+                )
+              })}
             </div>
             <p className="text-xs text-ink-muted mt-3">Total respostes d’aquest mes: {festa.responses + 892}</p>
           </section>

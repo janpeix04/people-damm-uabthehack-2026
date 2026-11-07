@@ -9,8 +9,10 @@ import type { Question, ZoneKey } from '../data/types'
 const BASE = (import.meta.env.VITE_N8N_WEBHOOK_BASE ?? '/webhook').replace(/\/$/, '')
 const TIMEOUT_MS = 60_000
 
-export const COLECTIUS = ['Planta', 'Logística', 'Comercial', 'Oficina', 'Manager'] as const
-export type Colectiu = (typeof COLECTIUS)[number]
+export const DEPARTAMENTS = ['Planta', 'Logística', 'Comercial', 'Oficina', 'Manager'] as const
+export type Departament = (typeof DEPARTAMENTS)[number]
+export const COLECTIUS = DEPARTAMENTS
+export type Colectiu = Departament
 
 export type N8nQuestionType = 'escala_1_5' | 'text_obert' | 'opcion_multiple'
 
@@ -37,7 +39,7 @@ export interface N8nSurvey {
 
 export interface GenerateInput {
   objetivo: string
-  colectiu: Colectiu
+  colectiu: string
   centre_tipus?: string
   durada_max: number
   restriccions?: string

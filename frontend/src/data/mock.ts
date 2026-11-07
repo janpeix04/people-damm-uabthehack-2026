@@ -33,20 +33,34 @@ export const SURVEY_ZONES = ZONES.filter(z => z.survey)
 export const CHANNELS: { key: ChannelKey; label: string; sub: string; icon: string }[] = [
   { key: 'qr', label: 'QR a planta', sub: 'Cartells a línies, vestidors i menjador', icon: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h3v3h-3zM18 18h3v3h-3z' },
   { key: 'app', label: 'Notificació a l’app', sub: 'Avís al mòbil de qui la té instal·lada', icon: 'M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0' },
-  { key: 'whatsapp', label: 'Grup de WhatsApp', sub: 'Missatge preparat per al cap de torn', icon: 'M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.5 8.5 0 1 1 21 11.5z' },
-  { key: 'telegram', label: 'Telegram', sub: 'Canal intern', icon: 'M22 2L11 13M22 2l-7 20-4-9-9-4z' },
+  { key: 'teams', label: 'Microsoft Teams', sub: 'Canal corporatiu d’equips i xat intern', icon: 'M19.5 7.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM22 8h-5a2 2 0 0 0-2 2v2h9v-2a2 2 0 0 0-2-2zM9 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm3 1.5H6a3 3 0 0 0-3 3V16h12v-2.5a3 3 0 0 0-3-3z' },
   { key: 'email', label: 'Correu', sub: 'Per a oficines i comercial', icon: 'M4 4h16v16H4zM22 6l-10 7L2 6' },
-  { key: 'tablet', label: 'Tauleta al menjador', sub: 'Mode quiosc, sense dades personals', icon: 'M5 2h14v20H5zM11 18h2' },
   { key: 'placa', label: 'La Plaça', sub: 'Parada de l’enquesta destacada', icon: 'M3 11l9-7 9 7v9H3zM9 20v-6h6v6' },
   { key: 'world', label: 'Damm World', sub: 'Apareix com a missió de l’equip', icon: 'M2 20V9l6 4V9l6 4V5h4l2 15zM2 20h20' },
 ]
+
+export const CHANNEL_LABELS: Record<string, string> = {
+  qr: 'QR a planta',
+  app: 'Notificació a l’app',
+  teams: 'Microsoft Teams',
+  email: 'Correu',
+  placa: 'La Plaça',
+  world: 'Damm World',
+  whatsapp: 'Grup de WhatsApp',
+  telegram: 'Telegram',
+  tablet: 'Tauleta al menjador',
+}
+
+export const channelLabel = (key: string): string => {
+  return CHANNELS.find(x => x.key === key)?.label || CHANNEL_LABELS[key] || key
+}
 
 const Q = (id: string, dim: string, type: Question['type'], secs: number, text: string, extra: Partial<Question> = {}): Question => ({ id, dim, type, secs, text, ...extra })
 
 export const SURVEYS: Survey[] = [
   {
     id: 'pols-novembre', title: 'Pols mensual · Novembre', goal: 'Seguiment del clima general', status: 'open',
-    zones: SURVEY_ZONES.map(z => z.key), channels: ['qr', 'app', 'whatsapp', 'placa', 'world'],
+    zones: SURVEY_ZONES.map(z => z.key), channels: ['qr', 'app', 'teams', 'placa', 'world'],
     questions: [
       Q('p1', 'Benestar', 'faces', 10, 'Com et sents aquesta setmana a la feina?'),
       Q('p2', 'Descans', 'list', 10, 'Has pogut fer els descansos que necessitaves?', { options: ['Sempre', 'Gairebé sempre', 'Poques vegades', 'Mai'] }),
@@ -57,7 +71,7 @@ export const SURVEYS: Survey[] = [
   },
   {
     id: 'torns', title: 'Torns i descans', goal: 'Impacte del nou sistema de torns', status: 'open',
-    zones: ['envasat', 'logistica'], channels: ['qr', 'app', 'tablet', 'placa'],
+    zones: ['envasat', 'logistica'], channels: ['qr', 'app', 'teams', 'placa'],
     questions: [
       Q('t1', 'Organització', 'faces', 10, 'Com valores el nou sistema de torns?'),
       Q('t2', 'Descans', 'list', 10, 'Pots fer els descansos complets?', { options: ['Sempre', 'Gairebé sempre', 'Poques vegades', 'Mai'] }),

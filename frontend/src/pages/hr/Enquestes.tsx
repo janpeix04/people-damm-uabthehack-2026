@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus } from 'lucide-react'
-import { CHANNELS, MIN_SAMPLE, SURVEY_ZONES, TEMPLATES, zoneByKey } from '../../data/mock'
+import { channelLabel, MIN_SAMPLE, SURVEY_ZONES, TEMPLATES, zoneByKey } from '../../data/mock'
 import type { SurveyStatus } from '../../data/types'
 import { useApp } from '../../store/AppContext'
 import { PageHead } from '../../components/HRLayout'
@@ -57,7 +57,7 @@ export default function Enquestes() {
                   </div>
                 )}
                 <div className="flex flex-wrap justify-between items-center gap-2.5 border-t border-[#F1EAE0] pt-3">
-                  <div className="flex flex-wrap gap-1 items-center"><span className="text-xs text-ink-muted mr-1">Canals:</span>{s.channels.map(c => <span key={c} className="text-[11.5px] font-bold bg-cream rounded-md px-1.5 py-0.5">{CHANNELS.find(x => x.key === c)!.label}</span>)}</div>
+                  <div className="flex flex-wrap gap-1 items-center"><span className="text-xs text-ink-muted mr-1">Canals:</span>{s.channels.map(c => <span key={c} className="text-[11.5px] font-bold bg-cream rounded-md px-1.5 py-0.5">{channelLabel(c)}</span>)}</div>
                   <div className="flex gap-1.5 flex-wrap">
                     <Link to={`/rrhh/enquestes/${s.id}`} className="btn-ink !h-9 !px-3.5 !text-[13px] !rounded-[11px]">Difusió i resultats</Link>
                     {s.status === 'open' && <button className="btn-line !h-9 !px-3.5 !text-[13px] !rounded-[11px]" onClick={() => toast('Recordatori programat (simulació)')}>Enviar recordatori</button>}
