@@ -82,7 +82,7 @@ export function getChannelsForDepartments(deps: string[]): ChannelKey[] {
 }
 
 /** Generador intel·ligent de suport segons departaments, durada i idioma seleccionats */
-function generateAlternativeQuestion(existingCount: number, lang: LangKey, goal: string, deps: string[]): Question {
+function generateAlternativeQuestion(existingCount: number, lang: LangKey, goal: string, deps: string[] = []): Question {
   const id = `q_extra_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`
   const goalLower = goal.toLowerCase()
   const isTurn = goalLower.includes('torn') || goalLower.includes('turno') || goalLower.includes('shift')
