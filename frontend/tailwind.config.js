@@ -27,7 +27,7 @@ export default {
       boxShadow: {
         card: '0 1px 2px rgba(23,23,23,.04), 0 12px 34px rgba(23,23,23,.06)',
         lift: '0 2px 5px rgba(23,23,23,.08), 0 24px 56px rgba(23,23,23,.14)',
-        red: '0 10px 24px rgb(var(--brand-shadow) / .28)',
+        red: '0 6px 14px rgb(var(--brand-shadow) / .18)',
       },
     },
   },

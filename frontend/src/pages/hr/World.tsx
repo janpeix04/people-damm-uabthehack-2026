@@ -52,7 +52,7 @@ export default function HRWorld(){
      <p className="text-sm"><strong>{department.score===null?'Sense dades publicables':fmt(department.score)+' / 10'}</strong> · {mood.label}</p>
      <div><div className="flex justify-between gap-2 text-sm mb-2"><span>Participació</span><strong>{department.participation}%</strong></div><Meter value={department.participation}/></div>
      <p className="text-sm">{department.headcount} persones · {department.responses} respostes</p>
-     <p className="text-xs leading-relaxed text-ink-muted">Estat d’ànim d’avui{siteInfo?`, només ${siteInfo.name}`:''}. {department.score===null?`Resultat ocult: calen almenys ${department.threshold} respostes${siteInfo?' en aquest centre':''} per protegir l’anonimat.`:'Mitjana de les cinc caretes, expressada de 0 a 10. Es renova cada dia.'}</p>
+     <p className="text-xs leading-relaxed text-ink-muted">{department.days>1?`Estat d’ànim dels darrers ${department.days} dies`:'Estat d’ànim d’avui'}{siteInfo?`, només ${siteInfo.name}`:''}. {department.score===null?`Resultat ocult: cal acreditar almenys ${department.threshold} participants${siteInfo?' en aquest centre':''} per protegir l’anonimat.`:'Mitjana de les cinc caretes, expressada de 0 a 10. Es renova cada dia.'}</p>
     </section>}
    <div className="mt-auto border-t border-line pt-3 flex flex-col gap-1.5 text-xs text-ink-soft">
     <div className="flex flex-wrap gap-x-3 gap-y-1"><span className="font-semibold text-ink">Far:</span>{(['happy','uneasy','stressed','nodata'] as const).map(w=><span key={w} className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{background:BEACON[w]}}/>{MOODS[w].label}</span>)}</div>

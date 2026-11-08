@@ -12,6 +12,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { useApp } from '../../store/AppContext'
+import { useSites } from '../../api/departments'
 import { PageHead } from '../../components/HRLayout'
 import { Meter, cn } from '../../components/ui'
 import {
@@ -27,6 +28,10 @@ import { QuestionCard } from '../../components/analytics/QuestionCard'
 export default function Analisi() {
   const [params, setParams] = useSearchParams()
   const { hrSurveys, hrLoading, hrError, refreshHr } = useApp()
+  const site=params.get('centre')||''
+  const {sites}=useSites()
+  const siteName=site?sites.find(s=>s.code===site)?.name??site:''
+
 
   const allForms = useMemo<AnalyticsFormConfig[]>(() => hrSurveys.map(s => ({
     ...s,
@@ -60,12 +65,12 @@ export default function Analisi() {
 
   // Càlcul de mètriques agregades amb el motor d'analítica
   const stats = useMemo(() => {
-    return currentForm ? filterAndAggregateForm(currentForm, filters) : null
-  }, [currentForm, filters])
+    return currentForm ? filterAndAggregateForm(currentForm, {...filters,site}) : null
+  }, [currentForm, filters, site])
 
   // Descarregar dades en CSV
   const handleExportCsv = () => {
-    if(currentForm&&stats)exportResponsesCsv(currentForm, stats)
+    if(currentForm&&stats)exportResponsesCsv(currentForm, stats, site)
   }
 
   // Imprimir informe
@@ -83,7 +88,7 @@ export default function Analisi() {
       <PageHead
         eyebrow="People Analytics · Escolta Activa"
         title="Anàlisi i Insights de Formularis"
-        sub="Mètriques agregades per formulari, comparatives per torns i canals, desglossament per preguntes i k-anonimat garantit."
+        sub={`${siteName ? `Centre: ${siteName} · ` : 'Tot el grup Damm · '}Mètriques agregades per formulari, comparatives per torns i canals, desglossament per preguntes i k-anonimat garantit.`}
         actions={
           <div className="flex items-center gap-2 flex-wrap no-print">
             <button
@@ -155,7 +160,7 @@ export default function Analisi() {
                       {stats.participationRate}%
                     </div>
                     <div className="text-xs text-ink-muted mt-0.5">
-                      {stats.totalResponses} respostes de {currentForm.target} objectiu
+                      {stats.totalResponses} respostes de {stats.target} objectiu
                     </div>
                   </div>
                   <Meter value={stats.participationRate} thin />

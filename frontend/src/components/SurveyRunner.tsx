@@ -10,7 +10,7 @@ interface Props {
   preview?: boolean
 }
 
-/** Una pregunta per pantalla, botons grans, barra de progrés i to proper/inclusiu d'IA per defecte. */
+/** Una pregunta per pantalla, botons grans, barra de progrés i un avís d'anonimat a les preguntes obertes. */
 export function SurveyRunner({ questions, onExit, onDone, preview }: Props) {
   const [step, setStep] = useState(0)
   const [ans, setAns] = useState<Record<string, unknown>>({})
@@ -51,20 +51,12 @@ export function SurveyRunner({ questions, onExit, onDone, preview }: Props) {
         </div>
       </header>
 
-      {/* Missatge de suport de la IA segons el tipus de pregunta */}
-      {step > 0 && (
+      {/* Missatge de suport a les preguntes obertes */}
+      {step > 0 && q.type === 'text' && (
         <div className="mx-4 sm:mx-5 mt-3 px-3.5 py-2.5 rounded-[14px] bg-[#FAF7F2] border border-[#E8DEC8] flex items-center gap-2.5 text-xs">
           <Sparkles size={16} className="text-red shrink-0" aria-hidden />
           <span className="text-ink leading-snug">
-            {q.type !== 'text' ? (
-              <>
-                <strong>To proper i inclusiu:</strong> Totes les respostes són confidencials i s'utilitzen únicament per impulsar millores col·lectives.
-              </>
-            ) : (
-              <>
-                <strong>Espai obert d'escolta:</strong> Pots escriure lliurement. La IA anonimitza de forma automàtica qualsevol dada identificativa.
-              </>
-            )}
+            <strong>Espai obert d'escolta:</strong> Pots escriure lliurement. La IA anonimitza de forma automàtica qualsevol dada identificativa.
           </span>
         </div>
       )}

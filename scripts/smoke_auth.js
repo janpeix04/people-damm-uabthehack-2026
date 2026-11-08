@@ -27,7 +27,7 @@ try{
   const hr=await call('/api/auth/login',{body:{email:`hr_admin.${suffix}@auth-test.invalid`,password}});assert.equal(hr.status,200);
   assert.equal((await call('/api/hr/surveys',{cookie:hr.cookie})).status,200);
   const directory=await call('/api/hr/directory',{cookie:hr.cookie});assert.equal(directory.status,200);assert.ok(directory.data.users.some(u=>u.id===ids[0]));assert.ok(!/password_hash|wallet_token|token_digest/.test(JSON.stringify(directory.data)));console.log('PASS HR directory protected and secrets excluded');
-  const departments=await call('/api/hr/departments',{cookie:hr.cookie});assert.equal(departments.status,200);assert.deepEqual(departments.data.map(d=>d.code),['fabrica','logistica','comercial','oficina']);console.log('PASS official department overview');
+  const departments=await call('/api/hr/departments',{cookie:hr.cookie});assert.equal(departments.status,200);assert.deepEqual(departments.data.map(d=>d.code),['fabrica','logistica','comercial','oficina','others']);console.log('PASS official department overview');
   assert.equal((await call('/api/hr/plaza',{cookie:hr.cookie,body:{action:'state'}})).status,200);
   assert.equal((await call('/api/app/state',{cookie:hr.cookie,body:{}})).status,403);console.log('PASS HR access is separate');
   await call('/api/auth/logout',{cookie:worker.cookie,body:{}});assert.equal((await call('/api/auth/session',{cookie:worker.cookie})).data.user,null);assert.equal((await call('/api/app/state',{cookie:worker.cookie,body:{}})).status,401);console.log('PASS logout revokes server session');

@@ -28,6 +28,8 @@ test('App: avatar persists, anonymous idea waits for moderation, opinions do not
     await appAction(db,'reaction',{wallet,idea:pending[0].id,on:true});await appAction(db,'reaction',{wallet,idea:pending[0].id,on:true});
     const state=await plazaState(db,wallet);assert.equal(state.plaza.participants,0);assert.equal(state.ideas[0].likes,1);assert.equal(state.ideas[0].reacted,true);
     const otherWallet='b2'.repeat(32);
+    await plazaState(db,otherWallet);
+    await db.query('update synthetic_people set site_id=(select id from sites where code=$2) where id=app_private.wallet_person($1,false)',[otherWallet,otherSite]);
     assert.equal((await plazaState(db,otherWallet)).ideas.length,0,'other workplace cannot see the opinion');
     await assert.rejects(appAction(db,'reaction',{wallet:otherWallet,idea:pending[0].id,on:true}),/trobada/);
     await db.query('update synthetic_people set site_id=(select site_id from synthetic_people where id=app_private.wallet_person($1,false)) where id=app_private.wallet_person($2,false)',[wallet,otherWallet]);

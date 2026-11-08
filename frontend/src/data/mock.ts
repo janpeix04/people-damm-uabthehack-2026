@@ -146,12 +146,6 @@ export const INITIATIVES: Initiative[] = [
   { id: 'a6', title: 'Dimecres sense reunions', problem: 'Volum de reunions creixent.', action: 'Bloquejar els dimecres a la tarda.', owner: 'Direcció de Persones', status: 'proposada', due: '15 gen.', kpi: 'Mencions sobre reunions −30%', zone: 'oficines', fromAI: true },
 ]
 
-export const AI_RECS = [
-  { id: 'r1', title: 'Pauses escalonades a Envasat', why: 'Descans és la dimensió que més cau (−0,7) i concentra 241 mencions.', cta: 'Veure anàlisi', to: '/rrhh/analisi' },
-  { id: 'r2', title: 'Microenquesta per al torn de nit', why: '3 preguntes en 30 s, difosa per QR al menjador entre les 2 h i les 4 h.', cta: 'Crear amb IA', to: '/rrhh/crear?plantilla=1' },
-  { id: 'r3', title: 'Sincro Logística-Envasat', why: 'Tema emergent a l’alça durant 3 mesos.', cta: 'Veure anàlisi', to: '/rrhh/analisi' },
-]
-
 export const PLAZA_TOPICS = [
   { label: 'Descansos', n: 64, trend: 'a l’alça', tone: 'neg' as const },
   { label: 'Bon ambient', n: 51, trend: 'estable', tone: 'pos' as const },

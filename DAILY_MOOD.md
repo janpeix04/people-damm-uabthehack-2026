@@ -1,5 +1,7 @@
 # Estat d’ànim diari
 
+Integració amb `main`: la vista corporativa resumeix avui; en seleccionar un centre es mostren els darrers 7 dies i la participació mitjana diària. El llindar exigeix almenys 10 participants acreditats: comptes diferents als comprovants privats o, per a dades històriques sense vincle d’edició, la cohort més gran d’un únic dia. No es sumen cohorts diàries per acreditar persones diferents. Les respostes repetides d’un grup petit durant la setmana no desbloquegen la nota.
+
 Adaptació selectiva de `feat/daily-checkin-worker-yellow` a `NewNew`: tema groc als espais del treballador, caretes SVG sense comentari, transicions de modals/preguntes/controls i accés permanent «Editar estat d’ànim» a la capçalera del treballador. La tria d’una cara desa immediatament.
 
 Amb la migració `20261108220000_edit_daily_mood`, el comprovant privat conserva una referència a la resposta per permetre modificar-la. Aquesta referència no s’exposa a RRHH; l’API del treballador només retorna la seva cara actual i si és editable. L’edició substitueix la resposta del dia i no suma participació. Les respostes antigues no es vinculen retrospectivament i no són editables. La taula pública de respostes continua sense nom, usuari, moneder ni hora exacta; el comprovant privat sí permet relacionar la resposta amb el compte per donar suport a l’edició.

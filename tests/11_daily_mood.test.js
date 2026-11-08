@@ -30,7 +30,16 @@ test('Daily mood: one anonymous answer per day, optional department, current-day
   await db.query('insert into daily_moods(day,site_id,department_id,mood) select $1,$2,$3,5 from generate_series(1,9)',[state.day,person.site_id,dept]);
   const site=(await db.query('select code from sites where id=$1',[person.site_id])).rows[0].code;
   assert.equal((await departmentOverview(db,site)).find(d=>d.code==='others').score,10);
+  // un centre mira els darrers 7 dies; tot el grup només avui
   await db.query("update daily_moods set day=day-1");
+  assert.equal((await departmentOverview(db,site)).find(d=>d.code==='others').score,10);
+  assert.equal((await departmentOverview(db)).find(d=>d.code==='others').responses,0);
+  await db.query("update daily_moods set day=day-6");
   assert.equal((await departmentOverview(db,site)).find(d=>d.code==='others').score,null);
+  await db.query(`insert into daily_moods(day,site_id,department_id,mood)
+    select $1::date-day_offset,$2,$3,5 from generate_series(0,6) day_offset cross join generate_series(1,2) person`,[state.day,person.site_id,dept]);
+  const repeated=(await departmentOverview(db,site)).find(d=>d.code==='others');
+  assert.equal(repeated.responses,14);
+  assert.equal(repeated.score,null,'a small daily cohort repeated across seven days stays hidden');
  }finally{await db.close()}
 });
