@@ -27,8 +27,8 @@ try{
   const idea=(await call('hr/plaza',{action:'list'})).find(x=>x.text===marker);assert.equal(idea.status,'moderant');
   await call('hr/plaza',{action:'moderate',id:idea.id,status:'published'});
   assert.ok((await call('app/state')).ideas.some(x=>x.id===idea.id));console.log('PASS idea moderation');
-  await call('app/reaction',{index:0,on:true});await call('app/reaction',{index:0,on:true});
-  assert.deepEqual((await call('app/state')).plaza.reacted,[0]);console.log('PASS reaction reload');
+  await call('app/reaction',{idea:idea.id,on:true});await call('app/reaction',{idea:idea.id,on:true});
+  assert.equal((await call('app/state')).ideas.find(i=>i.id===idea.id).likes,1);console.log('PASS reaction reload');
   if(!(await call('app/state')).plaza.question){
     await call('hr/plaza',{action:'question',text:marker,options:['Option A','Option B'],approved:true});
     poll=(await call('app/state')).plaza.question.id;

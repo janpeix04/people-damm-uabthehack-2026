@@ -132,7 +132,7 @@ interface Ctx extends Persisted {
   /** Respon la pregunta del dia (un cop al dia). */
   answerDaily: (key: string) => Promise<void>
   /** "+1 Jo també" en una bafarada de la Plaça. */
-  reactTopic: (index: number, on: boolean) => void
+  reactTopic: (id: string, on: boolean) => Promise<void>
   addIdea: (category: string, text: string) => Promise<void>
   setInitiativeStatus: (id: string, status: ActionStatus) => void
   setAvatar: (a: Avatar) => Promise<void>
@@ -258,7 +258,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
       plazaWeek,
       answerDaily: async key => { if (!plazaWeek.question) throw new Error('No hi ha pregunta publicada.'); await mutatePlaza('daily', { question: plazaWeek.question.id, option: key }) },
-      reactTopic: (index, on) => { void mutatePlaza('reaction', { index, on }).catch(e => toast(e instanceof Error ? e.message : 'Error')) },
+      reactTopic: async (id, on) => { try { await mutatePlaza('reaction', { idea:id, on }) } catch(e) { toast(e instanceof Error?e.message:'Error'); throw e } },
       addIdea: async (category, text) => { await mutatePlaza('idea', { category, text }) },
 
       setInitiativeStatus: (id, status) => setSt(p => ({ ...p, initiatives: p.initiatives.map(i => i.id === id ? { ...i, status } : i) })),

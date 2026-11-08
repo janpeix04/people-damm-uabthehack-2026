@@ -76,6 +76,8 @@ export interface Survey {
 }
 
 export interface Idea {
+  likes?: number
+  reacted?: boolean
   id: string
   category: string
   text: string

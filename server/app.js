@@ -1,24 +1,21 @@
 import { InputError } from './surveys.js';
 
 const avatarDefault={skin:1,hair:0,shirt:0,style:0,logo:true};
-const mapIdea=r=>({id:r.id,category:r.category,text:r.body_redacted,status:({pending:'moderant',published:'publicada',rejected:'rebutjada',archived:'arxivada'})[r.status],at:new Date(r.submitted_on).getTime()});
-export async function ideas(db,all=false){return (await db.query(`select i.*,c.name category from plaza_ideas i join plaza_categories c on c.id=i.category_id ${all?'':"where i.status='published'"} order by i.submitted_on desc,i.id`)).rows.map(mapIdea)}
+const mapIdea=r=>({id:r.id,category:r.category,text:r.body_redacted,status:({pending:'moderant',published:'publicada',rejected:'rebutjada',archived:'arxivada'})[r.status],at:new Date(r.submitted_on).getTime(),likes:r.likes,reacted:r.reacted});
+export async function ideas(db,all=false,digest=null){return (await db.query(`select i.*,c.name category,
+ (select count(*)::int from app_private.plaza_idea_reactions r where r.idea_id=i.id) likes,
+ exists(select 1 from app_private.plaza_idea_reactions r where r.idea_id=i.id and r.wallet_digest=$1) reacted
+ from plaza_ideas i join plaza_categories c on c.id=i.category_id ${all?'':"where i.status='published'"} order by i.submitted_on desc,i.id`,[digest])).rows.map(mapIdea)}
 async function wallet(db,token){
   if(typeof token!=='string'||!/^[0-9a-f]{64}$/.test(token))throw new InputError('invalid_wallet');
   await db.query('select app_private.wallet_person($1,true)',[token]);
   return (await db.query("select extensions.digest($1,'sha256') digest",[token])).rows[0].digest;
 }
-async function join(db,digest){await db.query("insert into app_private.plaza_weekly_participants(week_start,wallet_digest) values(date_trunc('week',now() at time zone 'Europe/Madrid')::date,$1) on conflict do nothing",[digest]);}
 
 export async function plazaState(db,token){
   const digest=token?await wallet(db,token):null;
   const pref=(await db.query('select skin,hair,shirt,hair_style style,show_logo logo from app_private.worker_preferences where wallet_digest=$1',[digest])).rows[0]||avatarDefault;
-  const w=(await db.query(`select
-    (select count(*)::int from synthetic_people) headcount,
-    (select count(*)::int from app_private.plaza_weekly_participants where week_start=date_trunc('week',now() at time zone 'Europe/Madrid')::date) participants,
-    (select count(*)::int from app_private.plaza_weekly_participants where week_start=date_trunc('week',now() at time zone 'Europe/Madrid')::date-7) last_count,
-    exists(select 1 from app_private.plaza_weekly_participants where week_start=date_trunc('week',now() at time zone 'Europe/Madrid')::date and wallet_digest=$1) joined,
-    (8-extract(isodow from now() at time zone 'Europe/Madrid'))::int resets_in`,[digest])).rows[0];
+  const w={headcount:0,participants:0,last_count:0,joined:false,resets_in:0};
   const q=(await db.query("select * from plaza_daily_questions where question_date=(now() at time zone 'Europe/Madrid')::date and status='published'")).rows[0];
   let question=null,results=null,myAnswer=null,todayTotal=0;
   if(q){
@@ -29,8 +26,8 @@ export async function plazaState(db,token){
     question={id:q.id,text:q.prompt,options:opts.map(o=>({...o,n:0}))};
     if(todayTotal>=q.min_sample_size)results=opts.map(o=>({...o,pct:o.n/todayTotal*100}));
   }
-  const reacted=(await db.query("select topic_index from app_private.plaza_topic_reactions where wallet_digest=$1 and week_start=date_trunc('week',now() at time zone 'Europe/Madrid')::date order by topic_index",[digest])).rows.map(r=>r.topic_index);
-  return {avatar:pref,ideas:await ideas(db),plaza:{...w,lastWeek:w.headcount?w.last_count/w.headcount*100:0,resetsIn:w.resets_in,reacted,question,results,myAnswer,todayTotal}};
+  const reacted=[];
+  return {avatar:pref,ideas:await ideas(db,false,digest),plaza:{...w,lastWeek:w.headcount?w.last_count/w.headcount*100:0,resetsIn:w.resets_in,reacted,question,results,myAnswer,todayTotal}};
 }
 
 export async function appAction(db,action,b){
@@ -51,7 +48,7 @@ export async function appAction(db,action,b){
     if(typeof b.text!=='string'||b.text.trim().length<3||b.text.length>4000)throw new InputError('La idea ha de tenir entre 3 i 4.000 caràcters.');
     const cat=(await db.query('select id from plaza_categories where active and (id=$1 or name=$1)',[b.category])).rows[0];
     if(!cat)throw new InputError('Categoria no vàlida.');
-    await db.query('insert into plaza_ideas(category_id,body_redacted) values($1,$2)',[cat.id,b.text.trim()]);await join(db,digest);
+    await db.query('insert into plaza_ideas(category_id,body_redacted) values($1,$2)',[cat.id,b.text.trim()]);
   }else if(action==='daily'){
     const q=(await db.query("select id from plaza_daily_questions where question_date=(now() at time zone 'Europe/Madrid')::date and status='published' and id::text=$1 for share",[b.question])).rows[0];
     if(!q)throw new InputError('La pregunta ja no està oberta.',409);
@@ -59,11 +56,12 @@ export async function appAction(db,action,b){
     if(!o)throw new InputError('Opció no vàlida.');
     const receipt=await db.query('insert into app_private.plaza_daily_receipts(wallet_digest,question_id) values($1,$2) on conflict do nothing returning question_id',[digest,q.id]);
     if(receipt.rowCount)await db.query('insert into app_private.plaza_daily_votes(question_id,option_id) values($1,$2)',[q.id,o.id]);
-    await join(db,digest);
+    
   }else if(action==='reaction'){
-    if(!Number.isInteger(b.index)||b.index<0||b.index>5||typeof b.on!=='boolean')throw new InputError('Reacció no vàlida.');
-    if(b.on){await db.query("insert into app_private.plaza_topic_reactions(week_start,wallet_digest,topic_index) values(date_trunc('week',now() at time zone 'Europe/Madrid')::date,$1,$2) on conflict do nothing",[digest,b.index]);await join(db,digest);}
-    else await db.query("delete from app_private.plaza_topic_reactions where week_start=date_trunc('week',now() at time zone 'Europe/Madrid')::date and wallet_digest=$1 and topic_index=$2",[digest,b.index]);
+    if(typeof b.idea!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(b.idea)||typeof b.on!=='boolean')throw new InputError('Reacció no vàlida.');
+    if(!(await db.query("select id from plaza_ideas where id=$1 and status='published' for share",[b.idea])).rowCount)throw new InputError('Opinió no trobada.',404);
+    if(b.on)await db.query('insert into app_private.plaza_idea_reactions(idea_id,wallet_digest) values($1,$2) on conflict do nothing',[b.idea,digest]);
+    else await db.query('delete from app_private.plaza_idea_reactions where idea_id=$1 and wallet_digest=$2',[b.idea,digest]);
   }else throw new InputError('Acció no trobada.',404);
   return plazaState(db,b.wallet);
 }

@@ -8,7 +8,7 @@ import {useDepartments,useSites} from '../../api/departments'
 import {useAuth} from '../../store/AuthContext'
 
 // edificis antics de l'escena que pertanyen a cada departament (enllaços antics amb ?zona=)
-const AREAS:Record<string,string[]>={fabrica:['envasat','malta','coccio','fermentacio'],logistica:['logistica'],comercial:['comercial'],oficina:['oficines']}
+const AREAS:Record<string,string[]>={fabrica:['envasat','malta','coccio','fermentacio'],logistica:['logistica'],comercial:['comercial'],oficina:['oficines'],others:['others']}
 // colors tal com es veuen els fars a l'escena
 const BEACON={happy:'#2E9E5B',uneasy:'#E3A21A',stressed:'#D83A2E',nodata:'#9AA3AE'} as const
 
@@ -25,7 +25,7 @@ export default function HRWorld(){
  if(loading&&!departments.length)return <p role="status" className="p-6">Carregant departaments…</p>
  if(error&&!departments.length)return <p role="alert" className="p-6">{error}</p>
  const siteInfo=sites.find(s=>s.code===site)
- const absent=(d:{headcount:number})=>!!site&&d.headcount===0
+ const absent=(d:{headcount:number;responses:number})=>!!site&&d.headcount===0&&d.responses===0
  // si el departament triat no existeix en aquest centre, es mostra el més gran dels que sí que hi són
  const picked=departments.find(d=>d.code===selected)
  const department=picked&&!absent(picked)?picked:[...departments].sort((a,b)=>b.headcount-a.headcount).find(d=>!absent(d))||picked||departments[0]
@@ -50,13 +50,13 @@ export default function HRWorld(){
     :<section className="border-t-2 pt-4 flex flex-col gap-4" style={{borderColor:mood.ink}}>
      <div className="flex justify-between gap-3"><div><p className="eyebrow">Departament seleccionat</p><h3 className="serif text-2xl mt-1">{department.name}</h3></div><PathIcon d={mood.path} color={mood.ink} size={28}/></div>
      <p className="text-sm"><strong>{department.score===null?'Sense dades publicables':fmt(department.score)+' / 10'}</strong> · {mood.label}</p>
-     <div><div className="flex justify-between gap-2 text-sm mb-2"><span>Participació</span><strong>{department.participation}%</strong></div><Meter value={department.participation} goal={60}/></div>
+     <div><div className="flex justify-between gap-2 text-sm mb-2"><span>Participació</span><strong>{department.participation}%</strong></div><Meter value={department.participation}/></div>
      <p className="text-sm">{department.headcount} persones · {department.responses} respostes</p>
-     <p className="text-xs leading-relaxed text-ink-muted">Darrer període amb respostes{siteInfo?`, només ${siteInfo.name}`:''}. {department.score===null?`Nota oculta: calen almenys ${department.threshold} respostes d’escala${siteInfo?' en aquest centre':''} per protegir l’anonimat.`:'Mitjana de preguntes d’escala normalitzades de 0 a 10.'}</p>
+     <p className="text-xs leading-relaxed text-ink-muted">Estat d’ànim d’avui{siteInfo?`, només ${siteInfo.name}`:''}. {department.score===null?`Resultat ocult: calen almenys ${department.threshold} respostes${siteInfo?' en aquest centre':''} per protegir l’anonimat.`:'Mitjana de les cinc caretes, expressada de 0 a 10. Es renova cada dia.'}</p>
     </section>}
    <div className="mt-auto border-t border-line pt-3 flex flex-col gap-1.5 text-xs text-ink-soft">
     <div className="flex flex-wrap gap-x-3 gap-y-1"><span className="font-semibold text-ink">Far:</span>{(['happy','uneasy','stressed','nodata'] as const).map(w=><span key={w} className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{background:BEACON[w]}}/>{MOODS[w].label}</span>)}</div>
-    <span>Got = participació (marca vermella: 60%) · ⚠ = alerta</span>
+    <span>Got = participació · ⚠ = alerta</span>
    </div>
   </aside>
  </div>

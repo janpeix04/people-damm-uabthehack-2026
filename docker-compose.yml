@@ -114,6 +114,10 @@ services:
       - ./supabase/migrations/20261108140000_four_departments.sql:/docker-entrypoint-initdb.d/09-four-departments.sql:ro
       - ./supabase/migrations/20261108150000_directory_integrations.sql:/docker-entrypoint-initdb.d/10-directory-integrations.sql:ro
       - ./supabase/migrations/20261108160000_response_sites.sql:/docker-entrypoint-initdb.d/11-response-sites.sql:ro
+      - ./supabase/migrations/20261108170000_others_department.sql:/docker-entrypoint-initdb.d/12-others-department.sql:ro
+      - ./supabase/migrations/20261108180000_altres_department_label.sql:/docker-entrypoint-initdb.d/13-altres-department-label.sql:ro
+      - ./supabase/migrations/20261108190000_daily_mood.sql:/docker-entrypoint-initdb.d/14-daily-mood.sql:ro
+      - ./supabase/migrations/20261108200000_plaza_idea_reactions.sql:/docker-entrypoint-initdb.d/15-plaza-idea-reactions.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-damm_pulse}"]
       interval: 10s

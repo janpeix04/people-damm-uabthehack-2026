@@ -169,7 +169,7 @@ export default function Analisi() {
                       {stats.totalResponses} respostes de {currentForm.target} objectiu
                     </div>
                   </div>
-                  <Meter value={stats.participationRate} goal={60} thin />
+                  <Meter value={stats.participationRate} thin />
                 </article>
 
                 {/* 2. Puntuació mitjana */}
