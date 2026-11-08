@@ -9,6 +9,10 @@ test('Department overview can be filtered by site without exposing segments belo
  const db=new PGlite({extensions:{pgcrypto}});
  try{
   for(const f of MIGRATIONS)await db.exec(fs.readFileSync(f==='SEED'?'supabase/seed.sql':`supabase/migrations/${f}.sql`,'utf8'));
+  await db.exec(fs.readFileSync('supabase/migrations/20261108190000_daily_mood.sql','utf8'));
+  await db.exec(`insert into daily_moods(day,site_id,department_id,mood)
+    select (now() at time zone 'Europe/Madrid')::date,p.site_id,p.department_id,4
+    from (select site_id,department_id from synthetic_people limit 1) p cross join generate_series(1,10)`);
   assert.equal((await db.query('select count(*)::int n from survey_responses where site_id is null')).rows[0].n,0,'seed responses get a site');
   assert.equal((await db.query("select count(*)::int n from information_schema.columns where table_name='survey_responses' and column_name in ('synthetic_person_id','assignment_id')")).rows[0].n,0);
   const sites=await siteList(db);
