@@ -1306,7 +1306,7 @@ function buildWorld(){
   [[-1.2, -1.2], [1.2, -1.2], [-1.2, 1.2], [1.2, 1.2]].forEach(function(p){ bx(.18, 23, .18, dk, p[0], 11.5, p[1], tower); });
   for (var ty = 2.5; ty <= 22.5; ty += 2.5) { bx(2.6, .12, .12, dk, 0, ty, 1.2, tower, false); bx(2.6, .12, .12, dk, 0, ty, -1.2, tower, false); bx(.12, .12, 2.6, dk, 1.2, ty, 0, tower, false); bx(.12, .12, 2.6, dk, -1.2, ty, 0, tower, false); }
   for (var ty2 = 0; ty2 < 22.5; ty2 += 2.5) { beam(V(-1.2, ty2, 1.2), V(1.2, ty2 + 2.5, 1.2), .08, .08, dk, tower); beam(V(1.2, ty2, -1.2), V(1.2, ty2 + 2.5, 1.2), .08, .08, dk, tower); }
-  sign('FERMENTACIÓ', 8, 1, -21, .75, -27, C, { bg: '#C8102E', fg: '#FFFFFF', font: '800 90px Figtree, sans-serif' });
+  sign('FERMENTACIÓ', 8, 1, -21, .75, -26.94, C, { bg: '#C8102E', fg: '#FFFFFF', font: '800 90px Figtree, sans-serif' });
   for (var px = -38; px <= 34; px += 8) { bx(.3, 8, .3, metalGrey, px, 4, -38.2, S); bx(.3, 8, .3, metalGrey, px, 4, -37, S); bx(.3, .3, 1.5, metalGrey, px, 8, -37.6, S); }
   [[-38, steel, .3], [-37.6, copper, .26], [-37.2, red, .2]].forEach(function(p){ var pp = mesh(cyl(p[2], p[2], 72, 14), p[1], -2, 8.4, p[0], S); pp.rotation.z = Math.PI / 2; });
 
