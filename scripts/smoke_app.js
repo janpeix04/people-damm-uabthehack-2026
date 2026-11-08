@@ -7,7 +7,7 @@ let token=null;
 const cookies={},ids=[];
 const suffix=crypto.randomBytes(8).toString('hex');
 const marker='HTTP-plaza-'+[...crypto.randomBytes(24)].map(n=>String.fromCharCode(97+n%26)).join('');
-const db=new pg.Client({host:process.env.POSTGRES_HOST||'127.0.0.1',port:Number(process.env.POSTGRES_PORT||54322),database:process.env.POSTGRES_DB||'damm_pulse',user:process.env.POSTGRES_USER||'postgres',password:process.env.POSTGRES_PASSWORD});
+const db=new pg.Client({host:process.env.POSTGRES_HOST||'127.0.0.1',port:Number(process.env.POSTGRES_PORT||54322),database:process.env.POSTGRES_DB||'damm_pulse',user:process.env.POSTGRES_USER||'postgres',password:process.env.POSTGRES_PASSWORD||'postgres'});
 let poll=null;
 async function call(path,data={}){
   const r=await fetch(`http://localhost:${process.env.FRONTEND_PORT||8080}/api/${path}`,{method:'POST',headers:{'Content-Type':'application/json','X-App-Request':'1',Cookie:cookies[path.startsWith('hr/')?'hr_admin':'worker']||''},body:JSON.stringify(data),signal:AbortSignal.timeout(15000)});

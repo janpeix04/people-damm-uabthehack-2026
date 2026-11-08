@@ -6,8 +6,10 @@ declare
   v_analysis_id uuid;
   segment_was_accepted boolean := false;
 begin
-  select c.id into v_campaign_id from public.campaigns c where c.slug = 'pols-torns-novembre';
-  select ar.id into v_analysis_id from public.analysis_runs ar where ar.campaign_id = v_campaign_id limit 1;
+  select c.id,ar.id into v_campaign_id,v_analysis_id
+  from public.campaigns c join public.analysis_runs ar on ar.campaign_id=c.id
+  where c.slug in ('seguretat-industrial','pols-novembre','pols-torns-novembre')
+  order by c.created_at desc,ar.created_at desc limit 1;
 
   if v_campaign_id is null then
     raise exception 'Seed campaign is missing';
@@ -19,8 +21,9 @@ begin
   end if;
 
   -- Works both before and after the four-department consolidation.
-  if (select count(distinct collective) from public.departments) <> 4 then
-    raise exception 'Expected 4 collectives in departments';
+  if (select count(distinct collective) from public.departments where collective in ('fabriques','logistica','comercial','oficines')) <> 4
+     or exists(select 1 from public.departments where collective not in ('fabriques','logistica','comercial','oficines','others')) then
+    raise exception 'Expected the four official collectives, with optional Others';
   end if;
 
   if (select count(distinct site_id) from public.synthetic_people) <> 14 then

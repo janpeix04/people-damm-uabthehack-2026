@@ -1,5 +1,7 @@
 # 🍺 Damm Pulse IA — Plataforma de Escucha Activa, Continua e Inteligente
 
+> **Datos de demostración:** al crear un volumen PostgreSQL vacío, Docker aplica las migraciones y después `supabase/demo_seed.sql`, con cinco campañas y datos sintéticos. Reiniciar o reconstruir los contenedores con un volumen existente no ejecuta ese seed. `npm run db:demo` y `scripts/reseed_all.js` son operaciones manuales: también eliminan determinadas campañas antiguas y sus respuestas. No utilizarlos para actualizar una BD que deba conservar esos datos. La pantalla de análisis utiliza PostgreSQL; no recupera resultados simulados del frontend.
+
 > **UAB THE HACK! 2026 · Reto Estrella Damm**  
 > *«¿Cómo podemos medir el clima laboral de manera ágil, continua e inteligente con IA? Escoltar millor, actuar abans.»*
 
