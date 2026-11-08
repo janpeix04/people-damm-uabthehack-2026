@@ -13,6 +13,7 @@ const REWARD_IMAGES:Record<string,string>={
   solidari:'/images/rewards/solidari-yellow.png',
 }
 import { useT } from '../i18n'
+import { useDemoText } from '../i18n/demo'
 
 export function PointsCard({ className }: { className?: string }) {
   const { points, redeemed, rewards } = useApp()
@@ -48,13 +49,14 @@ export function RewardsNote() {
 export function RewardsCatalog({ limit, className }: { limit?: number; className?: string }) {
   const { points, redeemReward, redeemed, rewards, toast } = useApp()
   const t = useT()
+  const dx = useDemoText()
   const [code, setCode] = useState<{ name: string; code: string } | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const list = limit ? rewards.slice(0, limit) : rewards
   const redeem = async (r: (typeof rewards)[number]) => {
     setBusy(r.id)
     try {
-      setCode({ name: r.name, code: await redeemReward(r) })
+      setCode({ name: dx(r.name), code: await redeemReward(r) })
     } catch (e) {
       toast(ERROR_MESSAGES[e instanceof AppApiError ? e.code : 'server_error'])
     } finally {
@@ -70,15 +72,15 @@ export function RewardsCatalog({ limit, className }: { limit?: number; className
             <article key={r.id} className="group card overflow-hidden flex flex-col shadow-[0_12px_34px_rgba(71,42,31,.08)]">
               <div className="aspect-[16/10] overflow-hidden bg-cream-dk">
                 {(REWARD_IMAGES[r.id]||r.image)
-                  ? <img src={REWARD_IMAGES[r.id]||r.image} alt={r.imageAlt || r.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.025]" />
+                  ? <img src={REWARD_IMAGES[r.id]||r.image} alt={dx(r.imageAlt || r.name)} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.025]" />
                   : <div className="h-full grid place-items-center" style={{ background: r.tint }}><PathIcon d={r.icon} size={44} color={r.ink} stroke={1.7} /></div>}
               </div>
               <div className="p-4 sm:p-5 flex flex-col gap-2 flex-1">
                 <div className="flex items-start justify-between gap-3">
-                  <h3 className="serif text-[21px] sm:text-[23px] font-bold leading-tight">{r.name}</h3>
+                  <h3 className="serif text-[21px] sm:text-[23px] font-bold leading-tight">{dx(r.name)}</h3>
                   <div className="text-sm font-extrabold text-red-dk whitespace-nowrap pt-1">{t('home.points', { count: r.cost })}</div>
                 </div>
-                <p className="text-[13.5px] leading-relaxed text-ink-muted flex-1">{r.description}</p>
+                <p className="text-[13.5px] leading-relaxed text-ink-muted flex-1">{dx(r.description)}</p>
                 <button
                   disabled={!ok || busy !== null}
                   onClick={() => redeem(r)}
@@ -101,7 +103,7 @@ export function RewardsCatalog({ limit, className }: { limit?: number; className
           <h2 className="serif text-xl mb-2">{t('home.yourCodes')}</h2>
           {redeemed.map(r => (
             <div key={r.code} className="flex justify-between gap-3 text-sm py-2 border-t border-cream-dk first:border-0">
-              <span>{r.name}</span><strong className="tabular-nums tracking-wider">{r.code}</strong>
+              <span>{dx(r.name)}</span><strong className="tabular-nums tracking-wider">{r.code}</strong>
             </div>
           ))}
         </section>

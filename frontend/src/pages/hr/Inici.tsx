@@ -1,11 +1,12 @@
 import { Link, useSearchParams } from 'react-router-dom'
-import { Sparkles } from 'lucide-react'
+import { ClipboardList, MessagesSquare, Sparkles, Users } from 'lucide-react'
 import { MOODS, zoneByKey } from '../../data/mock'
 import { useDepartments } from '../../api/departments'
 import { useAuth } from '../../store/AuthContext'
 import { useApp } from '../../store/AppContext'
 import { fmt, Meter, PathIcon, MoodBadge } from '../../components/ui'
 import { useI18n } from '../../i18n'
+import { useDemoText } from '../../i18n/demo'
 
 export default function HRInici() {
   const [params]=useSearchParams()
@@ -14,6 +15,7 @@ export default function HRInici() {
   const {user}=useAuth()
   const { hrSurveys: surveys } = useApp()
   const { t, locale } = useI18n()
+  const dx = useDemoText()
   const shortDate = (iso: string) => new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short' })
   const open = surveys.filter(s => s.status === 'open')
   // indicadors d'avui calculats a partir dels departaments (backend). El clima només fa servir
@@ -31,10 +33,10 @@ export default function HRInici() {
   const period = days === 1 ? t('home.periodToday') : t('home.periodDays', { n: days })
   const dash = '–'
   const kpis = [
-    { label: t('home.kpiClimate'), value: ready && climate != null ? fmt(climate) : dash, note: climate != null ? t('home.kpiClimateNote', { period, n: scored.length }) : t('home.kpiClimateHidden'), w: climateMood as keyof typeof MOODS },
-    { label: t('home.kpiParticipation'), value: ready ? `${participation}%` : dash, note: t('home.kpiParticipationNote', { headcount: headcount.toLocaleString(locale) }), w: null },
-    { label: t('home.kpiResponses'), value: ready ? responses.toLocaleString(locale) : dash, note: t('home.kpiResponsesNote', { period }), w: null },
-    { label: t('home.kpiActive'), value: String(open.length), note: open.length ? t('home.kpiActiveFirstCloses', { date: shortDate(open.map(s => s.closesAt).sort()[0]) }) : t('home.kpiActiveNone'), w: null },
+    { label: t('home.kpiClimate'), value: ready && climate != null ? fmt(climate) : dash, note: climate != null ? t('home.kpiClimateNote', { period, n: scored.length }) : t('home.kpiClimateHidden'), w: climateMood as keyof typeof MOODS, Icon: null },
+    { label: t('home.kpiParticipation'), value: ready ? `${participation}%` : dash, note: t('home.kpiParticipationNote', { headcount: headcount.toLocaleString(locale) }), w: null, Icon: Users },
+    { label: t('home.kpiResponses'), value: ready ? responses.toLocaleString(locale) : dash, note: t('home.kpiResponsesNote', { period }), w: null, Icon: MessagesSquare },
+    { label: t('home.kpiActive'), value: String(open.length), note: open.length ? t('home.kpiActiveFirstCloses', { date: shortDate(open.map(s => s.closesAt).sort()[0]) }) : t('home.kpiActiveNone'), w: null, Icon: ClipboardList },
   ]
   const firstName = user?.name?.trim().split(/\s+/)[0]
   return (
@@ -50,7 +52,7 @@ export default function HRInici() {
       <section aria-label={t('home.hrKpisAria')} className="grid gap-3.5 grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
         {kpis.map(k => (
           <div key={k.label} className="card p-4 flex gap-3.5 items-center">
-            {k.w ? <MoodBadge w={k.w} /> : <span className="w-[46px] h-[46px] rounded-[14px] bg-red-soft grid place-items-center shrink-0"><span className="w-2.5 h-2.5 rounded-full bg-red" /></span>}
+            {k.w ? <MoodBadge w={k.w} /> : <span className="w-[46px] h-[46px] rounded-[14px] bg-red-soft grid place-items-center shrink-0">{k.Icon && <k.Icon size={22} className="text-red" aria-hidden />}</span>}
             <div className="min-w-0">
               <div className="text-[12.5px] font-semibold text-ink-muted">{k.label}</div>
               <div className="serif text-[30px] leading-tight tabular-nums">{k.value}</div>
@@ -73,7 +75,7 @@ export default function HRInici() {
               const w = MOODS[z.mood]
               return (
                 <Link to={`/rrhh/world?departament=${z.code}`} key={z.code} className="rounded-[16px] bg-white border-2 p-3.5 flex flex-col gap-2 hover:-translate-y-0.5 transition" style={{ borderColor:w.ink }}>
-                  <div className="flex justify-between items-center gap-2"><span className="text-sm font-bold">{z.name}</span><PathIcon d={w.path} size={22} color={w.ink} /></div>
+                  <div className="flex justify-between items-center gap-2"><span className="text-sm font-bold">{dx(z.name)}</span><PathIcon d={w.path} size={22} color={w.ink} /></div>
                   <div className="flex items-baseline gap-2"><span className="serif text-[26px] leading-none">{z.score != null ? fmt(z.score) : t('home.noData')}</span><span className="text-xs font-bold" style={{ color: w.ink }}>{t(`data.mood_${z.mood}`)}</span></div>
                   <div className="h-1.5 rounded-full bg-cream"><div className="h-full rounded-full bg-ink" style={{ width: `${z.participation}%` }} /></div>
                   <div className="text-[11.5px] text-ink-soft">{t('home.deptPeople', { n: z.headcount, pct: z.participation })}</div>
@@ -96,8 +98,8 @@ export default function HRInici() {
                 const pct = Math.round((s.responses / s.target) * 100)
                 return (
                   <tr key={s.id} className="border-t border-cream-dk">
-                    <td className="py-3 px-2 font-bold"><Link to={`/rrhh/enquestes/${s.id}`} className="hover:text-red-dk">{s.title}</Link></td>
-                    <td className="py-3 px-2 text-ink-muted">{s.zones.length >= 8 ? t('home.wholePlant') : s.zones.map(k => zoneByKey(k).name).join(', ')}</td>
+                    <td className="py-3 px-2 font-bold"><Link to={`/rrhh/enquestes/${s.id}`} className="hover:text-red-dk">{dx(s.title)}</Link></td>
+                    <td className="py-3 px-2 text-ink-muted">{s.zones.length >= 8 ? t('home.wholePlant') : s.zones.map(k => dx(zoneByKey(k).name)).join(', ')}</td>
                     <td className="py-3 px-2"><span className="flex flex-wrap gap-1">{s.channels.map(c => <span key={c} className="text-[11px] font-bold bg-cream rounded-md px-1.5 py-0.5">{t(`data.channel_${c}`).split(' ')[0]}</span>)}</span></td>
                     <td className="py-3 px-2"><div className="flex items-center gap-2"><Meter value={pct} thin className="flex-1" /><span className="text-xs font-bold tabular-nums">{pct}%</span></div></td>
                     <td className="py-3 px-2 text-ink-muted">{shortDate(s.closesAt)}</td>

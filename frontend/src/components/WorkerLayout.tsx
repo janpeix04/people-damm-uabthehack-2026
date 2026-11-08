@@ -12,7 +12,7 @@ const TABS: { to: string; label: string; Icon: typeof Home }[] = [
   { to: '/app', label: 'common.navHome', Icon: Home },
   { to: '/app/enquestes', label: 'common.navSurveys', Icon: ClipboardList },
   { to: '/app/placa', label: 'common.navPlaza', Icon: MessageCircle },
-  { to: '/app/estat-anim', label: 'Estat d’ànim', Icon: Heart },
+  { to: '/app/estat-anim', label: 'common.navMood', Icon: Heart },
   { to: '/app/recompenses', label: 'common.navRewards', Icon: Gift },
 ]
 

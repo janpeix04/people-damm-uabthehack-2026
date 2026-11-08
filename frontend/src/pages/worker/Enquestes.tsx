@@ -3,11 +3,13 @@ import { Check, ChevronRight, Clock } from 'lucide-react'
 import type { Survey } from '../../data/types'
 import { POINTS_PER_SURVEY, useApp } from '../../store/AppContext'
 import { getLocale, useT } from '../../i18n'
+import { useDemoText } from '../../i18n/demo'
 
 const fmtDate = (d: string) => new Date(d).toLocaleDateString(getLocale(), { day: 'numeric', month: 'short' })
 
 export function SurveyCard({ s }: { s: Survey }) {
   const t = useT()
+  const dx = useDemoText()
   const secs = Math.max(30, s.questions.reduce((a, q) => a + q.secs, 0))
   return (
     <Link to={`/e/${s.id}`} className={'card p-4 md:p-5 flex gap-4 items-center hover:shadow-card transition'}>
@@ -15,7 +17,7 @@ export function SurveyCard({ s }: { s: Survey }) {
         <Clock size={22} className="text-red" aria-hidden />
       </span>
       <span className="flex-1 min-w-0 flex flex-col gap-1">
-        <strong className="text-[15px] md:text-base leading-snug">{s.title}</strong>
+        <strong className="text-[15px] md:text-base leading-snug">{dx(s.title)}</strong>
         <span className="text-[13px] text-ink-muted flex flex-wrap gap-x-3">
           <span>{t('home.questions', { count: s.questions.length })}</span>
           <span>≈ {secs} s</span>

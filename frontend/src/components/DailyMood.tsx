@@ -5,13 +5,15 @@ import {useNavigate} from 'react-router-dom'
 import ListeningSettings from './ListeningSettings'
 import {listeningCall,type ListeningPrompt} from '../api/listening'
 import {useApp} from '../store/AppContext'
+import {translate,useT} from '../i18n'
+import {useDemoText} from '../i18n/demo'
 
 type State={day:string;answered:boolean;department_name:string}
 async function call(action:string,body:object={}){
  const response=await fetch(`/api/app/${action}`,{method:'POST',headers:{'Content-Type':'application/json','X-App-Request':'1'},body:JSON.stringify(body)})
  const data=await response.json()
  if(response.status===401)window.dispatchEvent(new Event('auth-expired'))
- if(!response.ok)throw new Error(data.error||'No s’ha pogut guardar la resposta.')
+ if(!response.ok)throw new Error(data.error||translate('common.moodSaveError'))
  return data as State
 }
 const MOODS = [
@@ -64,6 +66,7 @@ export default function DailyMood({children}:{children:ReactNode}){
  const navigate=useNavigate()
  const [reminder,setReminder]=useState<Extract<ListeningPrompt,{kind:'survey'}>|null>(null)
  const {toast}=useApp()
+ const t=useT(),dx=useDemoText()
  const [state,setState]=useState<State|null>(null),[open,setOpen]=useState(false)
  const [busy,setBusy]=useState(false),[error,setError]=useState('')
  const refresh=useCallback(()=>{
@@ -81,25 +84,25 @@ export default function DailyMood({children}:{children:ReactNode}){
  const save=async(mood:number,department:boolean)=>{
   if(busy||!state||state.answered)return false
   setBusy(true);setError('')
-  try{const data=await call('mood',{day:state.day,mood,unspecified:department,});setState(data);toast('Resposta desada.');return true}
-  catch(e){setError(e instanceof Error?e.message:'Error de connexió');return false}
+  try{const data=await call('mood',{day:state.day,mood,unspecified:department,});setState(data);toast(t('common.moodSaved'));return true}
+  catch(e){setError(e instanceof Error?e.message:t('common.connectionError'));return false}
   finally{setBusy(false)}
  }
  const dismiss=()=>setOpen(false)
  return <MoodContext.Provider value={{state,busy,error,retry:refresh,save}}>
   {children}
   <div className="worker-theme">
-  <Modal open={open} onClose={dismiss} title="Com et sents avui?">
-   <div className="grid grid-cols-5 gap-1.5 sm:gap-2" aria-label="Estat d’ànim d’avui">
-    {MOODS.map(item=><button key={item.value} type="button" disabled={busy||!state||state.answered} aria-label={item.label} aria-pressed={false} className="mood-choice min-w-0 rounded-2xl border-2 px-1 py-3 grid place-items-center disabled:opacity-50" style={{background:item.soft,borderColor:'transparent'}} onClick={async()=>{if(await save(item.value,false))setOpen(false)}}><svg className="mood-face" width="46" height="46" viewBox="0 0 44 44" aria-hidden><circle cx="22" cy="22" r="20" fill={item.color}/><circle cx="15.5" cy="18" r="2.2" fill="white"/><circle cx="28.5" cy="18" r="2.2" fill="white"/><path d={item.mouth} stroke="white" strokeWidth="2.3" fill="none" strokeLinecap="round"/></svg></button>)}
+  <Modal open={open} onClose={dismiss} title={t('common.moodModalTitle')}>
+   <div className="grid grid-cols-5 gap-1.5 sm:gap-2" aria-label={t('common.moodTodayAria')}>
+    {MOODS.map(item=><button key={item.value} type="button" disabled={busy||!state||state.answered} aria-label={t(`common.mood${item.value}`)} aria-pressed={false} className="mood-choice min-w-0 rounded-2xl border-2 px-1 py-3 grid place-items-center disabled:opacity-50" style={{background:item.soft,borderColor:'transparent'}} onClick={async()=>{if(await save(item.value,false))setOpen(false)}}><svg className="mood-face" width="46" height="46" viewBox="0 0 44 44" aria-hidden><circle cx="22" cy="22" r="20" fill={item.color}/><circle cx="15.5" cy="18" r="2.2" fill="white"/><circle cx="28.5" cy="18" r="2.2" fill="white"/><path d={item.mouth} stroke="white" strokeWidth="2.3" fill="none" strokeLinecap="round"/></svg></button>)}
    </div>
    {error&&<p role="alert" className="text-sm text-red">{error}</p>}
-   <button className="btn-line" disabled={busy} onClick={dismiss}>Ara no</button>
+   <button className="btn-line" disabled={busy} onClick={dismiss}>{t('common.notNow')}</button>
   </Modal>
-  <Modal open={!!reminder} onClose={()=>setReminder(null)} title="Una consulta pendent">
-   <p className="font-semibold">{reminder?.title}</p>
-   <p className="text-sm text-ink-muted">Si et va bé, pots compartir la teva opinió. Respondre és voluntari; aquest avís respecta la freqüència que has triat.</p>
-   <div className="flex flex-wrap gap-2"><button className="btn-red" onClick={()=>{if(reminder){const survey=reminder.survey;setReminder(null);navigate(`/e/${survey}`)}}}>Obrir consulta</button><button className="btn-line" onClick={()=>setReminder(null)}>Ara no</button></div>
+  <Modal open={!!reminder} onClose={()=>setReminder(null)} title={t('common.reminderTitle')}>
+   <p className="font-semibold">{dx(reminder?.title)}</p>
+   <p className="text-sm text-ink-muted">{t('common.reminderBody')}</p>
+   <div className="flex flex-wrap gap-2"><button className="btn-red" onClick={()=>{if(reminder){const survey=reminder.survey;setReminder(null);navigate(`/e/${survey}`)}}}>{t('common.reminderOpen')}</button><button className="btn-line" onClick={()=>setReminder(null)}>{t('common.notNow')}</button></div>
   </Modal>
   </div>
  </MoodContext.Provider>

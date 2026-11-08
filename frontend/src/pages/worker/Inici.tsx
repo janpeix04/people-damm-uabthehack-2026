@@ -5,12 +5,14 @@ import { PlazaCard } from '../../components/ui'
 import { RewardsCatalog } from '../../components/Rewards'
 import { SurveyCard } from './Enquestes'
 import { useI18n } from '../../i18n'
+import { useDemoText } from '../../i18n/demo'
 
 /** Inici de l’app del treballador. */
 export default function WorkerInici() {
   const { pending, points, backend, ideas } = useApp()
   const next = pending[0]
   const { t, locale } = useI18n()
+  const dx = useDemoText()
 
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-6 pt-5 md:pt-10 pb-8 md:pb-14 flex flex-col gap-8 md:gap-12">
@@ -36,7 +38,7 @@ export default function WorkerInici() {
               <span className="text-[11.5px] font-extrabold tracking-[.12em] uppercase bg-white/20 rounded-full px-2.5 py-1">{t('home.youHaveSurveys', { count: pending.length })}</span>
               <span className="text-[12.5px] font-bold opacity-90">{t('home.closesOn', { date: new Date(next.closesAt).toLocaleDateString(locale, { day: 'numeric', month: 'short' }) })}</span>
             </div>
-            <div className="serif text-[28px] md:text-[34px] leading-[1.1]">{next.title}</div>
+            <div className="serif text-[28px] md:text-[34px] leading-[1.1]">{dx(next.title)}</div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] md:text-sm font-semibold opacity-95">
               <span>{t('home.questions', { count: next.questions.length })}</span>
               <span>≈ {Math.max(30, next.questions.reduce((a, q) => a + q.secs, 0))} s</span>
@@ -107,7 +109,7 @@ export default function WorkerInici() {
             <div className="flex flex-col gap-1.5">
               {ideas.slice(0, 3).map(idea => (
                 <div key={idea.id} className="flex justify-between items-center gap-3 rounded-[12px] px-3 py-2 text-sm bg-cream">
-                  <p className="min-w-0 line-clamp-2 break-words">{idea.text}</p><span className="shrink-0 text-xs text-ink-muted">{idea.likes||0} {idea.likes===1?'vot':'vots'}</span>
+                  <p className="min-w-0 line-clamp-2 break-words">{dx(idea.text)}</p><span className="shrink-0 text-xs text-ink-muted">{t('home.votes', { count: idea.likes || 0 })}</span>
                 </div>
               ))}
             </div>

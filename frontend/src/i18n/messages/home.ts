@@ -6,6 +6,9 @@ import type { Messages } from '..'
  */
 const m: Messages = {
   ca: {
+    votes_one: '{count} vot',
+    votes_other: '{count} vots',
+
     hrSummary: 'Consulta el clima i la participació de Fàbrica, Logística, Comercial, Oficina i Altres.',
     deptPeople: '{n} persones · {pct}% de participació',
     loadingDepartments: 'Carregant departaments…',
@@ -100,6 +103,9 @@ const m: Messages = {
     yourCodes: 'Els teus codis',
   },
   es: {
+    votes_one: '{count} voto',
+    votes_other: '{count} votos',
+
     hrSummary: 'Consulta el clima y la participación de Fábrica, Logística, Comercial, Oficina y Otros.',
     deptPeople: '{n} personas · {pct}% de participación',
     loadingDepartments: 'Cargando departamentos…',
@@ -190,6 +196,9 @@ const m: Messages = {
     yourCodes: 'Tus códigos',
   },
   en: {
+    votes_one: '{count} vote',
+    votes_other: '{count} votes',
+
     hrSummary: 'Check climate and participation for Factory, Logistics, Sales, Office and Other.',
     deptPeople: '{n} people · {pct}% participation',
     loadingDepartments: 'Loading departments…',
