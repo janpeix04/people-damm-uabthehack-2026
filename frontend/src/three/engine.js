@@ -1533,9 +1533,11 @@ function buildWorld(){
   });
   // bancs en cercle al voltant de la font
   for (var bn = 0; bn < 6; bn++) { if (bn % 3 === 0) continue; var ba = bn / 6 * Math.PI * 2 + Math.PI / 6; bench(S, PX + Math.cos(ba) * 4.9, PZ + Math.sin(ba) * 4.9, -ba - Math.PI / 2); }
-  // parterres de flors (nord-est), entre l'avinguda i la plaça
+  // parterres de flors (nord-est), entre l'avinguda i la plaça.
+  // Els de l'oest queden centrats entre el paviment del pavelló (x -4,5) i el camí nord-sud (x 0,7),
+  // amb ~0,6 de marge a cada costat perquè no toquin la planta volada (x -5,4).
   var flowers = [];
-  [[-3.5, 9.5, 6, 4], [6.8, 9.5, 5, 4], [-3.5, 15, 6, 2.4], [6.8, 15, 5, 2.4]].forEach(function(bd){
+  [[-1.9, 9.5, 4, 4], [6.8, 9.5, 5, 4], [-1.9, 15, 4, 2.4], [6.8, 15, 5, 2.4]].forEach(function(bd){
     bx(bd[2], .45, bd[3], std('#7A5A3C', .9), bd[0], .22, bd[1], S);
     for (var fl = 0; fl < bd[2] * bd[3] * 1.4; fl++) flowers.push([bd[0] + rr(-bd[2] / 2 + .3, bd[2] / 2 - .3), .62, bd[1] + rr(-bd[3] / 2 + .3, bd[3] / 2 - .3), 0, 0, rr(.18, .28)]);
   });
