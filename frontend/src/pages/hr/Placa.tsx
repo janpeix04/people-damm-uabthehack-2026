@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
 import { hrPlazaCall } from '../../api/plaza'
 import type { Idea } from '../../data/types'
-import { Eye, Inbox, MessageCircle, MessageCircleQuestion } from 'lucide-react'
+import { Inbox, MessageCircle, MessageCircleQuestion } from 'lucide-react'
 import { Scene3D } from '../../components/Scene3D'
 import { DailyQuestion, FestaWeekPanel, TopicsModal } from '../../components/Panels'
 import { Modal } from '../../components/ui'
 import { useApp } from '../../store/AppContext'
-import UserSite from '../../components/UserSite'
 
 /** La Plaça vista per RRHH: l'escena a pantalla completa amb els controls flotant a sobre. */
 export default function HRPlaca() {
@@ -32,20 +31,16 @@ export default function HRPlaca() {
   const moderant = ideas.filter(i => i.status === 'moderant').length
 
   return (
-    <div className="relative h-[calc(100dvh-64px)] lg:h-[100dvh]">
+    <div className="relative h-full min-h-0 overflow-hidden">
       <Scene3D kind="plaza" className="absolute inset-0" ariaLabel="La Plaça en 3D: font, terrassa, escenari, parada de l’enquesta i persones conversant"
         festa={plazaWeek.pct} readOnly
         onAction={a => (a === 'stage' ? toast(plazaWeek.pct >= 60 ? 'Concert desbloquejat aquesta setmana per la participació a La Plaça' : 'El concert s’obre al 60% de participació setmanal a La Plaça') : a === 'idea' ? setModal('ideas') : toast('Vista de RRHH: les enquestes les responen els treballadors'))} />
 
       <div className="absolute left-3 right-3 top-3 sm:left-4 sm:right-4 sm:top-4 flex gap-2 items-start pointer-events-none">
         <div className="flex-1 max-w-[380px] flex flex-col gap-2">
-          <div className="pointer-events-auto rounded-[14px] border border-line bg-paper/95 px-3 py-2 shadow-lift"><UserSite /><p className="text-[10px] text-ink-muted mt-1">Vista conjunta de tots els centres.</p></div>
           <FestaWeekPanel hr className="pointer-events-auto" />
           <div className="hidden lg:block pointer-events-auto bg-paper/95 border border-line rounded-[18px] shadow-lift px-4 py-3.5"><DailyQuestion hr /></div>
         </div>
-        <span className="hidden md:flex ml-auto pointer-events-auto items-center gap-2 bg-paper/95 border border-line rounded-full shadow-lift px-4 h-11 text-[13px] font-semibold text-ink-soft">
-          <Eye size={17} aria-hidden /> Vista RRHH · així la veuen els treballadors
-        </span>
       </div>
 
       <div className="absolute left-3 right-3 bottom-3 sm:bottom-4 flex flex-wrap justify-center gap-2">

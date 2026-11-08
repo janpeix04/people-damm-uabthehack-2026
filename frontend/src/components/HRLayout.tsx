@@ -11,7 +11,7 @@ const NAV = [
   { to: '/rrhh/enquestes', label: 'Enquestes', icon: ClipboardList },
   { to: '/rrhh/crear', label: 'Crear enquesta', icon: Sparkles, tag: 'IA' },
   { to: '/rrhh/analisi', label: 'Anàlisi i insights', icon: BarChart3 },
-  { to: '/rrhh/teams', label: 'Microsoft Teams', icon: MessagesSquare },
+  { to: '/rrhh/directori', label: 'Directori i integracions', icon: MessagesSquare },
   { to: '/rrhh/world', label: 'Damm World', icon: Factory, tag: '3D' },
   { to: '/rrhh/placa', label: 'La Plaça', icon: MessageCircle, tag: '3D' },
 ]
@@ -44,7 +44,7 @@ export default function HRLayout() {
   const fullBleed = loc.pathname.startsWith('/rrhh/world') || loc.pathname.startsWith('/rrhh/placa')
 
   return (
-    <div className="min-h-[100dvh] flex bg-cream">
+    <div className={cn('flex bg-cream', fullBleed ? 'h-[100dvh] overflow-hidden' : 'min-h-[100dvh]')}>
       <aside className={cn('hidden lg:flex shrink-0 flex-col gap-6 bg-paper border-r border-line py-5 sticky top-0 h-[100dvh] overflow-y-auto scroll-thin transition-[width] duration-300', mini ? 'w-[88px] px-2' : 'w-[264px] px-4')}>
         {mini ? <div className="flex justify-center"><Logo size="sm" /></div> : <div className="px-1.5 flex justify-center"><div className="w-[110px]"><Logo size="full" /></div></div>}
         {nav(mini)}
@@ -53,9 +53,9 @@ export default function HRLayout() {
           : <button onClick={() => setMini(true)} className="-mt-3 flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[13.5px] font-semibold text-ink-muted hover:bg-cream" aria-label="Amagar el menú"><PanelLeftClose size={19} aria-hidden />Amagar el menú</button>}
       </aside>
 
-      <div className="flex-1 min-w-0 flex flex-col">
-        <div className="bg-paper border-b border-line px-4 py-2 flex justify-between gap-3"><UserSite /><SessionButton /></div>
-        <header className="lg:hidden sticky top-0 z-30 bg-paper/95 backdrop-blur border-b border-line flex items-center justify-between px-4 h-16">
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col">
+        <div className="shrink-0 bg-paper border-b border-line px-4 py-2 flex justify-between gap-3"><UserSite /><SessionButton /></div>
+        <header className="lg:hidden shrink-0 sticky top-0 z-30 bg-paper/95 backdrop-blur border-b border-line flex items-center justify-between px-4 h-16">
           <Brand />
           <button className="w-11 h-11 grid place-items-center rounded-[12px] bg-cream" onClick={() => setOpen(true)} aria-label="Obrir el menú"><Menu size={22} /></button>
         </header>
@@ -67,7 +67,7 @@ export default function HRLayout() {
             </div>
           </div>
         )}
-        <main className={cn('flex-1 min-w-0', !fullBleed && 'px-4 sm:px-6 lg:px-9 py-6 lg:py-7')}>
+        <main className={cn('flex-1 min-w-0', fullBleed && 'min-h-0 overflow-hidden', !fullBleed && 'px-4 sm:px-6 lg:px-9 py-6 lg:py-7')}>
           <Outlet />
         </main>
       </div>

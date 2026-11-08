@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom'
 import { Search, Sparkles } from 'lucide-react'
-import { AI_RECS, channelLabel, MOODS, ZONES, zoneByKey } from '../../data/mock'
+import { AI_RECS, channelLabel, MOODS, zoneByKey } from '../../data/mock'
+import {useDepartments} from '../../api/departments'
 import { useApp } from '../../store/AppContext'
 import { FestaCard, fmt, Meter, PathIcon, MoodBadge } from '../../components/ui'
 
 export default function HRInici() {
+  const {departments,loading,error}=useDepartments()
   const { hrSurveys: surveys, festa } = useApp()
   const open = surveys.filter(s => s.status === 'open')
   const kpis = [
@@ -30,7 +32,7 @@ export default function HRInici() {
       <section className="flex flex-wrap gap-5 items-stretch">
         <div className="flex-[999_1_460px] min-w-0 flex flex-col justify-center gap-2">
           <h1 className="serif text-[34px] sm:text-[40px] leading-[1.05]">Bon dia, equip de Persones</h1>
-          <p className="text-base leading-relaxed text-ink-muted max-w-[620px]">El clima general és de <strong className="text-ink">6,5 i l’emoció predominant és inquietud</strong>. Envasat i Logística necessiten atenció aquesta setmana, i Manteniment encara no té prou respostes.</p>
+          <p className="text-base leading-relaxed text-ink-muted max-w-[620px]">Consulta el clima i la participació dels quatre departaments: Fàbrica, Logística, Comercial i Oficina.</p>
         </div>
         <div className="flex-[1_1_340px] min-w-0"><FestaCard /></div>
       </section>
@@ -51,22 +53,25 @@ export default function HRInici() {
       <div className="flex flex-wrap gap-5 items-start">
         <section className="card p-5 flex-[999_1_560px] min-w-0 flex flex-col gap-3.5">
           <div className="flex flex-wrap justify-between items-end gap-2">
-            <div><h2 className="serif text-2xl">Mapa d’emocions</h2><p className="text-[13px] text-ink-muted">Emoció predominant de cada equip (agregada), amb la nota i la participació</p></div>
+            <div><h2 className="serif text-2xl">Mapa d’emocions</h2><p className="text-[13px] text-ink-muted">Departaments oficials · indicador d’escales i participació agregats</p></div>
             <Link to="/rrhh/world" className="text-[13.5px] font-bold text-red-dk">Obrir Damm World 3D →</Link>
           </div>
           <div className="grid gap-2.5 grid-cols-[repeat(auto-fill,minmax(190px,1fr))]">
-            {ZONES.map(z => {
+            {loading&&<p role="status">Carregant departaments…</p>}
+            {error&&<p role="alert">{error}</p>}
+            {departments.map(z => {
               const w = MOODS[z.mood]
               return (
-                <Link to={`/rrhh/world?zona=${z.key}`} key={z.key} className="rounded-[16px] p-3.5 flex flex-col gap-2 hover:-translate-y-0.5 transition" style={{ background: w.bg, border: z.mood === 'stressed' ? '1px solid #F2B8B1' : '1px solid transparent' }}>
+                <Link to={`/rrhh/world?departament=${z.code}`} key={z.code} className="rounded-[16px] bg-white border-2 p-3.5 flex flex-col gap-2 hover:-translate-y-0.5 transition" style={{ borderColor:w.ink }}>
                   <div className="flex justify-between items-center gap-2"><span className="text-sm font-bold">{z.name}</span><PathIcon d={w.path} size={22} color={w.ink} /></div>
-                  <div className="flex items-baseline gap-2"><span className="serif text-[26px] leading-none">{z.score != null ? fmt(z.score) : z.key === 'jardi' ? '60%' : 'Sense dades'}</span><span className="text-xs font-bold" style={{ color: w.ink }}>{z.moodLabel}</span></div>
-                  {z.survey && <div className="h-1.5 rounded-full bg-white/85"><div className="h-full rounded-full bg-ink" style={{ width: `${z.participation}%` }} /></div>}
-                  <div className="text-[11.5px] text-ink-soft">{z.key === 'manteniment' ? `${z.responses} de 10 respostes: ocult` : z.key === 'jardi' ? 'S’obre al 60% de planta' : `${z.headcount} persones · ${z.participation}%`}</div>
+                  <div className="flex items-baseline gap-2"><span className="serif text-[26px] leading-none">{z.score != null ? fmt(z.score) : 'Sense dades'}</span><span className="text-xs font-bold" style={{ color: w.ink }}>{w.label}</span></div>
+                  <div className="h-1.5 rounded-full bg-cream"><div className="h-full rounded-full bg-ink" style={{ width: `${z.participation}%` }} /></div>
+                  <div className="text-[11.5px] text-ink-soft">{z.headcount} persones · {z.participation}% de participació</div>
                 </Link>
               )
             })}
           </div>
+          <p className="text-xs text-ink-muted">Dades de la BD · darrer període amb respostes · mitjana d’escales de 0 a 10. Mostres inferiors al llindar de privacitat ocultes.</p>
         </section>
 
         <aside className="flex-[1_1_320px] min-w-0 flex flex-col gap-4">
