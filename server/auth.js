@@ -4,7 +4,7 @@ import { InputError } from './surveys.js';
 const scrypt=promisify(scryptCallback);
 export const digest=token=>createHash('sha256').update(token).digest('hex');
 export async function hashPassword(password){
-  if(typeof password!=='string'||password.length<12||password.length>128)throw new InputError('La contrasenya ha de tenir entre 12 i 128 caràcters.');
+  if(typeof password!=='string'||password.length<1||password.length>128)throw new InputError('La contrasenya ha de tenir entre 1 i 128 caràcters.');
   const salt=randomBytes(16).toString('hex');
   const key=await scrypt(password,salt,64,{N:16384,r:8,p:1,maxmem:64*1024*1024});
   return `scrypt$${salt}$${key.toString('hex')}`;
@@ -29,7 +29,7 @@ export async function login(db,email,password,ip='local'){
     if(count>limit)throw new InputError('Massa intents. Torna-ho a provar d’aquí a 15 minuts.',429);
   }
   const row=(await db.query(`select u.id,u.email,p.app_role role,p.display_label name,p.active,c.password_hash from auth.users u
-    join user_profiles p on p.user_id=u.id join app_private.auth_credentials c on c.user_id=u.id where lower(u.email)=$1`,[email])).rows[0];
+    join user_profiles p on p.user_id=u.id join app_private.auth_credentials c on c.user_id=u.id where lower(u.email)=any(case when $1 like '%@demo' then array[$1, $1 || '.damm.invalid'] when $1 like '%@demo.damm.invalid' then array[$1, replace($1, '.damm.invalid', '')] else array[$1] end)`,[email])).rows[0];
   const ok=await verify(password,row?.password_hash||dummy);
   if(!row||!row.active||!ok||!['worker','hr_admin','hr_analyst'].includes(row.role))throw new InputError('Correu o contrasenya incorrectes.',401);
   const token=randomBytes(32).toString('hex');
@@ -63,19 +63,19 @@ export async function userWallet(db,user){
 }
 export async function provisionUser(db,{email,password,name,role,personId,siteCode}){
   if(!['worker','hr_admin','hr_analyst'].includes(role))throw new InputError('Rol no vàlid.');
-  if(typeof email!=='string'||!/^\S+@\S+\.\S+$/.test(email))throw new InputError('Correu no vàlid.');
+  if(typeof email!=='string'||!/^\S+@\S+$/.test(email))throw new InputError('Correu no vàlid.');
   const hash=await hashPassword(password);
   const u=(await db.query(`insert into auth.users(email) values($1) on conflict(lower(email)) do update set email=excluded.email returning id`,[email.trim().toLowerCase()])).rows[0];
-  if((await db.query('select 1 from app_private.auth_credentials where user_id=$1',[u.id])).rowCount)throw new InputError('Aquest compte ja té credencials.');
+
   await db.query(`insert into user_profiles(user_id,app_role,display_label) values($1,$2,$3) on conflict(user_id) do update set app_role=excluded.app_role,display_label=excluded.display_label,active=true`,[u.id,role,name||email]);
-  await db.query('insert into app_private.auth_credentials(user_id,password_hash) values($1,$2)',[u.id,hash]);
+  await db.query(`insert into app_private.auth_credentials(user_id,password_hash) values($1,$2) on conflict(user_id) do update set password_hash=excluded.password_hash`,[u.id,hash]);
   let site=null;
   if(siteCode){
     site=(await db.query('select id from public.sites where code=$1 and active',[siteCode])).rows[0];
     if(!site)throw new InputError('Centre no vàlid.');
     if(role!=='worker')await db.query('update public.user_profiles set home_site_id=$2 where user_id=$1',[u.id,site.id]);
   }
-  if(role==='worker'){
+  if(role==='worker'&&!(await db.query('select 1 from app_private.worker_accounts where user_id=$1',[u.id])).rowCount){
     const person=(await db.query(`select p.id from synthetic_people p where ($1::uuid is null or p.id=$1)
       and ($2::uuid is null or p.site_id=$2)
       and not exists(select 1 from app_private.app_wallets w where w.synthetic_person_id=p.id)

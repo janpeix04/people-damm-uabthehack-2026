@@ -70,3 +70,13 @@ test('RRHH: edita un esborrany amb el mateix identificador i protegeix els publi
     await assert.rejects(createSurvey(db,{...published,status:'draft'},false,draft.id),/Només es poden editar/);
   } finally { await db.exec('ROLLBACK'); }
 });
+
+test('RRHH: permet publicar enquestes amb més de 12 preguntes (sense límit artificial)', async () => {
+  await db.exec('BEGIN');
+  try {
+    const questions15 = Array.from({ length: 15 }, (_, i) => ({ type: 'scale', text: `Pregunta ${i + 1}?`, min: 1, max: 5, secs: 10 }));
+    const saved = await createSurvey(db, { ...survey('open'), questions: questions15 }, true);
+    assert.equal(saved.questions.length, 15);
+    assert.equal(saved.status, 'open');
+  } finally { await db.exec('ROLLBACK'); }
+});

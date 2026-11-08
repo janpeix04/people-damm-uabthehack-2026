@@ -9,7 +9,16 @@ import type { Question, ZoneKey } from '../data/types'
 const BASE = '/api/hr/automation'
 const TIMEOUT_MS = 60_000
 
-export const DEPARTAMENTS = ['Fàbrica', 'Logística', 'Comercial', 'Oficina'] as const
+export const DEPARTAMENTS = [
+  'Envasat',
+  'Logística',
+  'Sala de cocció',
+  'Recepció de malta',
+  'Fermentació',
+  'Manteniment',
+  'Comercial',
+  'Oficines',
+] as const
 export type Departament = (typeof DEPARTAMENTS)[number]
 export const COLECTIUS = DEPARTAMENTS
 export type Colectiu = Departament
@@ -163,16 +172,23 @@ export function toN8nQuestion(q: Question, i: number): N8nQuestion {
 }
 
 const ZONE_COLECTIU: Record<ZoneKey, Colectiu> = {
-  malta: 'Fàbrica', coccio: 'Fàbrica', fermentacio: 'Fàbrica', envasat: 'Fàbrica', manteniment: 'Fàbrica',
-  logistica: 'Logística', oficines: 'Oficina', comercial: 'Comercial', jardi: 'Fàbrica',
+  malta: 'Recepció de malta',
+  coccio: 'Sala de cocció',
+  fermentacio: 'Fermentació',
+  envasat: 'Envasat',
+  manteniment: 'Manteniment',
+  logistica: 'Logística',
+  oficines: 'Oficines',
+  comercial: 'Comercial',
+  jardi: 'Envasat',
 }
 
-/** Col·lectiu amb més plantilla entre les zones triades (Planta si no n'hi ha cap). */
+/** Col·lectiu o departament amb més plantilla entre les zones triades */
 export function zonesToColectiu(zones: ZoneKey[]): Colectiu {
   const total: Partial<Record<Colectiu, number>> = {}
   SURVEY_ZONES.filter(z => zones.includes(z.key)).forEach(z => {
     const c = ZONE_COLECTIU[z.key]
     total[c] = (total[c] ?? 0) + z.headcount
   })
-  return (Object.entries(total).sort((a, b) => b[1] - a[1])[0]?.[0] as Colectiu) ?? 'Fàbrica'
+  return (Object.entries(total).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] as Colectiu) ?? 'Envasat'
 }

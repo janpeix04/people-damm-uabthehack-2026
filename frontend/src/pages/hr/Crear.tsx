@@ -6,7 +6,6 @@ import type { ChannelKey, Question, Survey, ZoneKey } from '../../data/types'
 import { DEPARTAMENTS, generateSurvey, toQuestion, type N8nSurvey } from '../../api/n8n'
 import { useApp } from '../../store/AppContext'
 import { cn, PathIcon, PrivacyNote } from '../../components/ui'
-import TeamsDeliveryPreview from '../../components/TeamsDeliveryPreview'
 import { SurveyRunner } from '../../components/SurveyRunner'
 
 const STEPS = ['Objectiu', 'Preguntes', 'Públic i canals', 'Revisió i publicació']
@@ -15,9 +14,9 @@ const today = () => new Date().toISOString().slice(0, 10)
 const plusDays = (d: number) => new Date(Date.now() + d * 864e5).toISOString().slice(0, 10)
 
 const LANG_OPTIONS = [
-  { key: 'CASTELLANO', label: 'CASTELLANO', apiVal: 'Castellano' },
-  { key: 'CATALÀ', label: 'CATALÀ', apiVal: 'Català' },
-  { key: 'ENGLISH', label: 'ENGLISH', apiVal: 'English' },
+  { key: 'CATALÀ', label: 'Català', apiVal: 'Català' },
+  { key: 'CASTELLANO', label: 'Castellano', apiVal: 'Castellano' },
+  { key: 'ENGLISH', label: 'English', apiVal: 'English' },
 ] as const
 
 type LangKey = (typeof LANG_OPTIONS)[number]['key']
@@ -25,26 +24,20 @@ type LangKey = (typeof LANG_OPTIONS)[number]['key']
 const RESTRICTIONS = 'No señalar a personas individuales ni evaluar desempeño personal'
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : 'Error desconegut')
 
-/** Obté les zones corresponents als departaments triats a la Fase 1 */
+/** Obté les zones corresponents als departaments de veritat triats a la Fase 1 */
 export function getZonesForDepartments(deps: string[]): ZoneKey[] {
-  if (deps.length === 0 || (deps.includes('Fàbrica') && deps.length === DEPARTAMENTS.length)) {
-    return SURVEY_ZONES.map(z => z.key)
-  }
+  if (deps.length === 0) return []
   const set = new Set<ZoneKey>()
   deps.forEach(d => {
-    switch (d) {
-      case 'Fàbrica':
-        ;(['envasat', 'coccio', 'malta', 'fermentacio', 'manteniment'] as ZoneKey[]).forEach(k => set.add(k))
-        break
-      case 'Logística':
-        set.add('logistica')
-        break
-      case 'Comercial':
-        set.add('comercial')
-        break
-      case 'Oficina':
-        set.add('oficines')
-        break
+    const match = SURVEY_ZONES.find(
+      z => z.name.toLowerCase() === d.toLowerCase() || z.key.toLowerCase() === d.toLowerCase()
+    )
+    if (match) {
+      set.add(match.key)
+    } else if (d === 'Fàbrica') {
+      ;(['envasat', 'coccio', 'malta', 'fermentacio', 'manteniment'] as ZoneKey[]).forEach(k => set.add(k))
+    } else if (d === 'Oficina') {
+      set.add('oficines')
     }
   })
   return Array.from(set)
@@ -53,11 +46,13 @@ export function getZonesForDepartments(deps: string[]): ZoneKey[] {
 /** Obté els canals recomanats segons els departaments triats a la Fase 1 */
 export function getChannelsForDepartments(deps: string[]): ChannelKey[] {
   const set = new Set<ChannelKey>()
-  const hasFabricaOrLogistica = deps.includes('Fàbrica') || deps.includes('Logística')
-  const hasOficina = deps.includes('Oficina')
+  const hasPlanta = deps.some(d =>
+    ['Envasat', 'Logística', 'Sala de cocció', 'Recepció de malta', 'Fermentació', 'Manteniment', 'Fàbrica'].includes(d)
+  )
+  const hasOficina = deps.some(d => ['Oficines', 'Oficina'].includes(d))
   const hasComercial = deps.includes('Comercial')
 
-  if (hasFabricaOrLogistica) {
+  if (hasPlanta) {
     set.add('qr')
     set.add('app')
     set.add('placa')
@@ -75,123 +70,141 @@ export function getChannelsForDepartments(deps: string[]): ChannelKey[] {
     set.add('teams')
   }
   if (set.size === 0) {
-    return ['qr', 'app', 'teams', 'placa', 'world']
+    return ['qr', 'app', 'placa', 'world']
   }
   return Array.from(set)
 }
 
-/** Generador intel·ligent de suport segons departaments, durada i idioma seleccionats */
-function generateAlternativeQuestion(existingCount: number, lang: LangKey, goal: string, deps: string[] = []): Question {
-  const id = `q_extra_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`
+/** Banc de preguntes per ajustar automàticament la microconsulta al temps indicat */
+export const DURATION_QUESTION_BANK: Record<LangKey, Array<{ dim: string; type: Question['type']; secs: number; text: string; options?: string[]; deps?: string[] }>> = {
+  CASTELLANO: [
+    { dim: 'Descanso', type: 'faces', secs: 10, text: '¿Sientes que el tiempo de descanso entre turnos es suficiente para tu bienestar?', deps: ['Envasat', 'Sala de cocció', 'Recepció de malta', 'Fermentació', 'Manteniment'] },
+    { dim: 'Horarios', type: 'list', secs: 12, text: '¿Con cuánta antelación conoces habitualmente tus horarios y turnos de trabajo?', options: ['Con más de 2 semanas', 'Con 1 semana', 'Con pocos días', 'Sin previsión'] },
+    { dim: 'Conciliación', type: 'scale', secs: 12, text: 'Del 0 al 10, ¿cómo valoras el equilibrio entre tus jornadas de trabajo y tu vida personal?' },
+    { dim: 'Ambiente', type: 'faces', secs: 10, text: '¿Cómo valoras el ambiente de trabajo y el apoyo de tus compañeros de equipo?' },
+    { dim: 'Comunicación', type: 'scale', secs: 12, text: 'Del 0 al 10, ¿recibes con claridad y a tiempo la información para desempeñar tu labor?' },
+    { dim: 'Recursos', type: 'scale', secs: 12, text: 'Del 0 al 10, ¿cuentas con las herramientas, equipos e información necesarios para trabajar eficazmente?' },
+    { dim: 'Seguridad', type: 'faces', secs: 10, text: '¿Cómo valoras las condiciones de seguridad, ergonomía y salud en tu puesto de trabajo?' },
+    { dim: 'Carga de trabajo', type: 'scale', secs: 12, text: 'Del 0 al 10, ¿consideras que el ritmo y volumen de tareas asignadas son adecuados y sostenibles?' },
+    { dim: 'Apoyo responsable', type: 'faces', secs: 10, text: '¿Sientes cercanía y apoyo por parte de tu responsable directo cuando surge una dificultad?' },
+    { dim: 'Reconocimiento', type: 'yesno', secs: 8, text: '¿Sientes que tu esfuerzo y contribución diaria son valorados en el equipo?' },
+    { dim: 'Coordinación', type: 'scale', secs: 12, text: 'Del 0 al 10, ¿cómo valoras la coordinación operativa entre las distintas áreas y departamentos?' },
+    { dim: 'Organización', type: 'list', secs: 12, text: '¿Cómo calificarías la distribución de la carga de trabajo durante tu semana?', options: ['Equilibrada', 'Puntualmente alta', 'Frecuentemente sobrecargada', 'Irregular'] },
+    { dim: 'Escucha activa', type: 'yesno', secs: 8, text: '¿Sientes que tus aportaciones e iniciativas son tomadas en consideración?' },
+    { dim: 'Formación', type: 'scale', secs: 12, text: 'Del 0 al 10, ¿dispones de las oportunidades de aprendizaje necesarias para tu desarrollo profesional?' },
+    { dim: 'Agilidad', type: 'faces', secs: 10, text: '¿Con qué rapidez y eficacia se resuelven las incidencias operativas en el día a día?' },
+    { dim: 'Instalaciones', type: 'faces', secs: 10, text: '¿Cómo valoras el confort de los espacios comunes (comedores, vestuarios, zonas de descanso)?' },
+    { dim: 'Compromiso', type: 'scale', secs: 12, text: 'Del 0 al 10, ¿te sientes identificado/a y motivado/a con los proyectos y valores de Damm?' },
+    { dim: 'Propuesta', type: 'text', secs: 20, text: '¿Qué propuesta constructiva o mejora práctica te gustaría sugerir para nuestro día a día?' },
+  ],
+  'CATALÀ': [
+    { dim: 'Descans', type: 'faces', secs: 10, text: 'Sents que el temps de descans entre torns és suficient per recuperar-te adequadament?', deps: ['Envasat', 'Sala de cocció', 'Recepció de malta', 'Fermentació', 'Manteniment'] },
+    { dim: 'Horaris', type: 'list', secs: 12, text: 'Amb quanta antelació coneixes habitualment els teus horaris i torns de feina?', options: ['Amb més de 2 setmanes', 'Amb 1 setmana', 'Amb pocs dies', 'Sense previsió'] },
+    { dim: 'Conciliació', type: 'scale', secs: 12, text: 'Del 0 al 10, com valores l’equilibri entre la teva jornada laboral i la teva vida personal?' },
+    { dim: 'Ambient', type: 'faces', secs: 10, text: 'Com valores l’ambient de treball i la col·laboració en el teu equip?' },
+    { dim: 'Comunicació', type: 'scale', secs: 12, text: 'Del 0 al 10, reps amb prou claredat i agilitat la informació que necessites per a la teva feina?' },
+    { dim: 'Recursos', type: 'scale', secs: 12, text: 'Del 0 al 10, comptes amb les eines, equips i sistemes necessaris per treballar amb eficàcia?' },
+    { dim: 'Seguretat', type: 'faces', secs: 10, text: 'Com valores les condicions de seguretat, ergonomia i salut al teu lloc de treball?' },
+    { dim: 'Càrrega de treball', type: 'scale', secs: 12, text: 'Del 0 al 10, consideres que el volum i ritme de treball actual són sostenibles?' },
+    { dim: 'Suport comandament', type: 'faces', secs: 10, text: 'Sents proximitat i suport per part del teu comandament quan sorgeix una incidència?' },
+    { dim: 'Reconeixement', type: 'yesno', secs: 8, text: 'Sents que el teu esforç i dedicació diària són reconeguts a l’equip?' },
+    { dim: 'Coordinació', type: 'scale', secs: 12, text: 'Del 0 al 10, com valores la coordinació entre les diferents àrees i departaments?' },
+    { dim: 'Organització', type: 'list', secs: 12, text: 'Com qualificaries la distribució de les tasques al llarg de la teva setmana?', options: ['Equilibrada', 'Puntualment alta', 'Freqüentment sobrecarregada', 'Irregular'] },
+    { dim: 'Escolta activa', type: 'yesno', secs: 8, text: 'Sents que les teves opinions i propostes de millora són escoltades?' },
+    { dim: 'Formació', type: 'scale', secs: 12, text: 'Del 0 al 10, disposes de la capacitació necessària per desenvolupar les teves tasques amb confiança?' },
+    { dim: 'Agilitat', type: 'faces', secs: 10, text: 'Amb quanta rapidesa i eficàcia es resolen els problemes operatius en el dia a dia?' },
+    { dim: 'Instal·lacions', type: 'faces', secs: 10, text: 'Com valores el confort dels espais de descans i menjador a les nostres instal·lacions?' },
+    { dim: 'Compromís', type: 'scale', secs: 12, text: 'Del 0 al 10, com et sents d’identificat/da amb els projectes i l’esperit de Damm?' },
+    { dim: 'Propostes', type: 'text', secs: 20, text: 'Quina proposta constructiva o idea pràctica t’agradaria aportar per millorar el nostre dia a dia?' },
+  ],
+  ENGLISH: [
+    { dim: 'Rest', type: 'faces', secs: 10, text: 'Do you feel the rest intervals between shifts are adequate for your recovery?', deps: ['Envasat', 'Sala de cocció', 'Recepció de malta', 'Fermentació', 'Manteniment'] },
+    { dim: 'Schedules', type: 'list', secs: 12, text: 'How far in advance do you usually receive your work schedule?', options: ['Over 2 weeks', 'About 1 week', 'A few days', 'No advance notice'] },
+    { dim: 'Work-Life', type: 'scale', secs: 12, text: 'From 0 to 10, how well does your work schedule balance with your personal life?' },
+    { dim: 'Environment', type: 'faces', secs: 10, text: 'How would you rate the overall teamwork and collaboration in your department?' },
+    { dim: 'Communication', type: 'scale', secs: 12, text: 'From 0 to 10, how clearly and promptly is important work information communicated?' },
+    { dim: 'Tools & Resources', type: 'scale', secs: 12, text: 'From 0 to 10, do you have the necessary equipment, tools, and systems to work effectively?' },
+    { dim: 'Safety', type: 'faces', secs: 10, text: 'How do you rate the workplace safety, ergonomic conditions, and health measures in your area?' },
+    { dim: 'Workload', type: 'scale', secs: 12, text: 'From 0 to 10, do you consider your current workload and pace to be manageable and sustainable?' },
+    { dim: 'Leadership', type: 'faces', secs: 10, text: 'Do you feel supported and guided by your direct lead when difficulties arise?' },
+    { dim: 'Recognition', type: 'yesno', secs: 8, text: 'Do you feel your daily efforts and dedication are recognized by your team?' },
+    { dim: 'Cross-collaboration', type: 'scale', secs: 12, text: 'From 0 to 10, how smoothly do different departments collaborate with each other?' },
+    { dim: 'Organization', type: 'list', secs: 12, text: 'How would you describe your workload distribution throughout the week?', options: ['Balanced', 'Occasionally intense', 'Frequently heavy', 'Unpredictable'] },
+    { dim: 'Active Listening', type: 'yesno', secs: 8, text: 'Do you feel your ideas and suggestions are taken into account?' },
+    { dim: 'Learning', type: 'scale', secs: 12, text: 'From 0 to 10, do you have adequate learning and skill development opportunities?' },
+    { dim: 'Agility', type: 'faces', secs: 10, text: 'How promptly and effectively are daily operational challenges solved?' },
+    { dim: 'Facilities', type: 'faces', secs: 10, text: 'How would you rate the comfort of rest areas, dining spaces, and facilities?' },
+    { dim: 'Engagement', type: 'scale', secs: 12, text: 'From 0 to 10, how engaged and connected do you feel with Damm\'s goals and spirit?' },
+    { dim: 'Suggestions', type: 'text', secs: 20, text: 'What constructive idea or practical improvement would you suggest for our workplace?' },
+  ],
+}
+
+/** Assegura que la quantitat inicial de preguntes s'acosti a la durada indicada per la persona usuària */
+export function ensureQuestionsMatchDuration(
+  baseQuestions: Question[],
+  targetDurationSecs: number,
+  lang: LangKey,
+  goal: string,
+  deps: string[] = []
+): Question[] {
+  const result: Question[] = [...baseQuestions]
+  let currentSecs = result.reduce((a, q) => a + q.secs, 0)
+
+  if (currentSecs >= targetDurationSecs * 0.9 && result.length >= 3) {
+    return result
+  }
+
+  const bank = DURATION_QUESTION_BANK[lang] || DURATION_QUESTION_BANK['CASTELLANO']
+  const existingTexts = new Set(result.map(q => q.text.toLowerCase().trim()))
+
   const goalLower = goal.toLowerCase()
-  const isTurn = goalLower.includes('torn') || goalLower.includes('turno') || goalLower.includes('shift')
-  const isLog = deps.includes('Logística') || goalLower.includes('logíst') || goalLower.includes('logistic')
-  const isCom = deps.includes('Comercial') || goalLower.includes('comercial') || goalLower.includes('vent')
-  const isOfi = deps.includes('Oficina') || goalLower.includes('oficin')
+  const prioritized = [...bank].sort((a, b) => {
+    const aMatchGoal = goalLower.includes(a.dim.toLowerCase()) ? 1 : 0
+    const bMatchGoal = goalLower.includes(b.dim.toLowerCase()) ? 1 : 0
+    if (aMatchGoal !== bMatchGoal) return bMatchGoal - aMatchGoal
+    const aMatchDep = a.deps && deps.some(d => a.deps!.includes(d)) ? 1 : 0
+    const bMatchDep = b.deps && deps.some(d => b.deps!.includes(d)) ? 1 : 0
+    return bMatchDep - aMatchDep
+  })
 
-  if (lang === 'CASTELLANO') {
-    if (isTurn) {
-      const qs: Question[] = [
-        { id, dim: 'Descanso', type: 'faces', secs: 10, text: '¿Sientes que el tiempo de descanso entre turnos es suficiente para tu bienestar?' },
-        { id, dim: 'Organización', type: 'list', secs: 12, text: '¿Con cuánta antelación conoces habitualmente tus horarios y turnos?', options: ['Con más de 2 semanas', 'Con 1 semana', 'Con pocos días', 'Sin previsión'] },
-        { id, dim: 'Conciliación', type: 'scale', secs: 12, text: 'Del 0 al 10, ¿cómo valoras el equilibrio entre tus turnos de trabajo y tu vida personal?' },
-        { id, dim: 'Sugerencias', type: 'text', secs: 15, text: '¿Qué ajuste específico en los descansos o turnos mejoraría más tu día a día?' },
-      ]
-      return qs[existingCount % qs.length]
+  let counter = 1
+  for (const item of prioritized) {
+    if (currentSecs >= targetDurationSecs - 5 && result.length >= 3) {
+      break
     }
-    if (isLog) {
-      const qs: Question[] = [
-        { id, dim: 'Logística', type: 'faces', secs: 10, text: '¿Cómo valoras la coordinación operativa entre las plataformas de logística y planta?' },
-        { id, dim: 'Cargas de trabajo', type: 'scale', secs: 12, text: 'Del 0 al 10, ¿cómo gestionamos los picos de volumen y entregas?' },
-        { id, dim: 'Recursos', type: 'text', secs: 15, text: '¿Qué mejora en muelles o sistemas de transporte optimizaría tu labor?' },
-      ]
-      return qs[existingCount % qs.length]
+    if (existingTexts.has(item.text.toLowerCase().trim())) {
+      continue
     }
-    if (isCom) {
-      const qs: Question[] = [
-        { id, dim: 'Comercial', type: 'faces', secs: 10, text: '¿Dispones de las herramientas móviles y soporte de marketing necesarios en tu ruta?' },
-        { id, dim: 'Objetivos', type: 'scale', secs: 12, text: 'Del 0 al 10, ¿sientes que los objetivos comerciales son claros y alcanzables?' },
-        { id, dim: 'Propuestas', type: 'text', secs: 15, text: '¿Qué propuesta comercial ayudaría a reforzar la relación con nuestros clientes?' },
-      ]
-      return qs[existingCount % qs.length]
+    const id = `q_gen_${Date.now().toString(36)}_${counter++}_${Math.random().toString(36).substring(2, 5)}`
+    const q: Question = {
+      id,
+      dim: item.dim,
+      type: item.type,
+      secs: item.secs,
+      text: item.text,
+      options: item.options ? [...item.options] : undefined,
     }
-    if (isOfi) {
-      const qs: Question[] = [
-        { id, dim: 'Colaboración', type: 'faces', secs: 10, text: '¿Cómo valoras la flexibilidad y el entorno de trabajo digital en las oficinas?' },
-        { id, dim: 'Eficiencia', type: 'scale', secs: 12, text: 'Del 0 al 10, ¿el volumen de reuniones te permite avanzar en tus prioridades?' },
-        { id, dim: 'Iniciativas', type: 'text', secs: 15, text: '¿Qué iniciativa simplificaría procesos en tu área o departamento?' },
-      ]
-      return qs[existingCount % qs.length]
-    }
-    const defaultQs: Question[] = [
-      { id, dim: 'Ambiente', type: 'faces', secs: 10, text: '¿Cómo valoras el ambiente de trabajo y el apoyo de tus compañeros de equipo?' },
-      { id, dim: 'Comunicación', type: 'scale', secs: 12, text: 'Del 0 al 10, ¿recibes con claridad y a tiempo la información para desempeñar tu labor?' },
-      { id, dim: 'Bienestar', type: 'yesno', secs: 8, text: '¿Sientes que tu opinión y propuestas son escuchadas en tu departamento?' },
-      { id, dim: 'Mejora', type: 'text', secs: 15, text: '¿Qué propuesta concreta te gustaría compartir para mejorar el clima de trabajo?' },
-    ]
-    return defaultQs[existingCount % defaultQs.length]
+    result.push(q)
+    existingTexts.add(item.text.toLowerCase().trim())
+    currentSecs += item.secs
   }
 
-  if (lang === 'ENGLISH') {
-    if (isTurn) {
-      const qs: Question[] = [
-        { id, dim: 'Rest', type: 'faces', secs: 10, text: 'Do you feel the rest intervals between shifts are adequate for your wellbeing?' },
-        { id, dim: 'Planning', type: 'list', secs: 12, text: 'How far in advance do you usually receive your work schedule?', options: ['Over 2 weeks', 'About 1 week', 'A few days', 'No advance notice'] },
-        { id, dim: 'Work-Life', type: 'scale', secs: 12, text: 'From 0 to 10, how well does your shift schedule balance with your personal life?' },
-        { id, dim: 'Suggestions', type: 'text', secs: 15, text: 'What specific improvement would help your schedule and rest the most?' },
-      ]
-      return qs[existingCount % qs.length]
-    }
-    const defaultQs: Question[] = [
-      { id, dim: 'Environment', type: 'faces', secs: 10, text: 'How would you rate the overall teamwork and collaboration in your department?' },
-      { id, dim: 'Communication', type: 'scale', secs: 12, text: 'From 0 to 10, how clearly and promptly is important work information communicated?' },
-      { id, dim: 'Listening', type: 'yesno', secs: 8, text: 'Do you feel your ideas and feedback are taken into consideration?' },
-      { id, dim: 'Ideas', type: 'text', secs: 15, text: 'What concrete suggestion would you share to improve our everyday work?' },
-    ]
-    return defaultQs[existingCount % defaultQs.length]
-  }
+  return result
+}
 
-  // Català
-  if (isTurn) {
-    const qs: Question[] = [
-      { id, dim: 'Descans', type: 'faces', secs: 10, text: 'Sents que el temps de descans entre torns és suficient per recuperar-te?' },
-      { id, dim: 'Planificació', type: 'list', secs: 12, text: 'Amb quanta antelació coneixes habitualment els teus torns de feina?', options: ['Amb més de 2 setmanes', 'Amb 1 setmana', 'Amb pocs dies', 'Sense previsió'] },
-      { id, dim: 'Conciliació', type: 'scale', secs: 12, text: 'Del 0 al 10, com valores l’equilibri entre els torns i la teva vida personal?' },
-      { id, dim: 'Propostes', type: 'text', secs: 15, text: 'Quin ajust concret en els descansos o torns ajudaria més al teu dia a dia?' },
-    ]
-    return qs[existingCount % qs.length]
+/** Generador intel·ligent de suport segons departaments, durada i idioma seleccionats */
+function generateAlternativeQuestion(existingCount: number, lang: LangKey, _goal?: string, _deps: string[] = []): Question {
+  const bank = DURATION_QUESTION_BANK[lang] || DURATION_QUESTION_BANK['CASTELLANO']
+  const id = `q_extra_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`
+  const item = bank[existingCount % bank.length]
+  return {
+    id,
+    dim: item.dim,
+    type: item.type,
+    secs: item.secs,
+    text: item.text,
+    options: item.options ? [...item.options] : undefined,
   }
-  if (isLog) {
-    const qs: Question[] = [
-      { id, dim: 'Logística', type: 'faces', secs: 10, text: 'Com valores la coordinació i el ritme de treball a les plataformes logístiques?' },
-      { id, dim: 'Recursos', type: 'scale', secs: 12, text: 'Del 0 al 10, comptes amb els mitjans adequats per gestionar els pics de càrrega?' },
-      { id, dim: 'Millores', type: 'text', secs: 15, text: 'Quina adaptació en rutes o molls facilitaria més la feina diària?' },
-    ]
-    return qs[existingCount % qs.length]
-  }
-  if (isCom) {
-    const qs: Question[] = [
-      { id, dim: 'Comercial', type: 'faces', secs: 10, text: 'Com valores les eines mòbils i el suport en ruta per atendre els clients?' },
-      { id, dim: 'Agilitat', type: 'scale', secs: 12, text: 'Del 0 al 10, reps respostes ràpides davant d’incidències comercials?' },
-      { id, dim: 'Propostes', type: 'text', secs: 15, text: 'Quina proposta t’agradaria impulsar per millorar la relació amb els establiments?' },
-    ]
-    return qs[existingCount % qs.length]
-  }
-  if (isOfi) {
-    const qs: Question[] = [
-      { id, dim: 'Oficines', type: 'faces', secs: 10, text: 'Com valores la flexibilitat horària i la coordinació amb els altres departaments?' },
-      { id, dim: 'Eficiència', type: 'scale', secs: 12, text: 'Del 0 al 10, la gestió de reunions et deixa espai per a la feina de fons?' },
-      { id, dim: 'Projectes', type: 'text', secs: 15, text: 'Quina millora de processos o digitalització proposaries per al teu equip?' },
-    ]
-    return qs[existingCount % qs.length]
-  }
-  const catQs: Question[] = [
-    { id, dim: 'Ambient', type: 'faces', secs: 10, text: 'Com valores l’ambient de treball i la companyonia en el teu equip?' },
-    { id, dim: 'Comunicació', type: 'scale', secs: 12, text: 'Del 0 al 10, reps amb prou claredat i agilitat la informació que necessites?' },
-    { id, dim: 'Escolta', type: 'yesno', secs: 8, text: 'Sents que les teves aportacions i propostes es tenen en compte?' },
-    { id, dim: 'Millores', type: 'text', secs: 15, text: 'Quina idea pràctica t’agradaria proposar per fer millor la nostra feina?' },
-  ]
-  return catQs[existingCount % catQs.length]
 }
 
 export default function Crear() {
@@ -210,7 +223,7 @@ export default function Crear() {
   const [goal, setGoal] = useState('')
   const [durationMinutes, setDurationMinutes] = useState<number | ''>(2)
   const [lang, setLang] = useState<LangKey>('CASTELLANO')
-  const [departments, setDepartments] = useState<string[]>(['Fàbrica', 'Logística'])
+  const [departments, setDepartments] = useState<string[]>([])
 
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -220,8 +233,8 @@ export default function Crear() {
   const [pool, setPool] = useState<Question[]>([])
   const [sel, setSel] = useState<string[]>([])
   const [editing, setEditing] = useState<string | null>(null)
-  const [zones, setZones] = useState<ZoneKey[]>(() => getZonesForDepartments(['Fàbrica', 'Logística']))
-  const [channels, setChannels] = useState<ChannelKey[]>(() => getChannelsForDepartments(['Fàbrica', 'Logística']))
+  const [zones, setZones] = useState<ZoneKey[]>([])
+  const [channels, setChannels] = useState<ChannelKey[]>(() => getChannelsForDepartments([]))
   const [opens, setOpens] = useState(today())
   const [closes, setCloses] = useState(plusDays(14))
   const [approved, setApproved] = useState(false)
@@ -231,20 +244,20 @@ export default function Crear() {
     if (!saved || saved.status !== 'draft') return
     setTitle(saved.title); setGoal(saved.goal); setZones(saved.zones); setChannels(saved.channels)
     setOpens((saved.opensAt || today()).slice(0, 10)); setCloses((saved.closesAt || plusDays(14)).slice(0, 10))
-    setLang(saved.locale === 'en' ? 'ENGLISH' : saved.locale === 'es' ? 'CASTELLANO' : LANG_OPTIONS[1].key)
+    setLang(saved.locale === 'en' ? 'ENGLISH' : saved.locale === 'es' ? 'CASTELLANO' : 'CATALÀ')
     setPool(saved.questions); setSel(saved.questions.map(q => q.id))
     setDraft({ id: 'manual', survey: { titulo: saved.title, preguntas: [], introduccion_transparencia: saved.intro }, warnings: [] })
     setLoadedId(editId); setStep(1)
   }, [editId, loadedId, hrSurveys])
 
   const currentLangObj = LANG_OPTIONS.find(l => l.key === lang) ?? LANG_OPTIONS[0]
-  const collectiveStr = departments.length > 0 ? departments.join(', ') : 'Fàbrica'
+  const collectiveStr = departments.length > 0 ? departments.join(', ') : 'Departaments de Damm'
   const durationSecs = (Number(durationMinutes) || 1) * 60
 
   const byId = useMemo(() => Object.fromEntries(pool.map(q => [q.id, q])), [pool])
   const chosen = sel.map(id => byId[id]).filter(Boolean)
   const secs = chosen.reduce((a, q) => a + q.secs, 0)
-  const valid = chosen.length >= 3 && chosen.length <= 12
+  const valid = chosen.length >= 3
   const people = SURVEY_ZONES.filter(z => zones.includes(z.key)).reduce((a, z) => a + z.headcount, 0)
 
   // Sincronitza públic i canals derivats dels departaments de la Fase 1
@@ -253,6 +266,18 @@ export default function Crear() {
     const derivedChannels = getChannelsForDepartments(newDeps)
     setZones(derivedZones)
     setChannels(derivedChannels)
+  }
+
+  const toggleDepartment = (d: string) => {
+    const next = departments.includes(d) ? departments.filter(x => x !== d) : [...departments, d]
+    setDepartments(next)
+    syncPublicAndChannelsWithDepartments(next)
+  }
+
+  const toggleAllDepartments = () => {
+    const next = departments.length === DEPARTAMENTS.length ? [] : [...DEPARTAMENTS]
+    setDepartments(next)
+    syncPublicAndChannelsWithDepartments(next)
   }
 
   /** WF-01: Crida a la IA d'n8n amb durada, departaments, idioma i objectiu */
@@ -274,22 +299,37 @@ export default function Crear() {
     setLoading(true)
     setGenError(null)
     try {
-      const r = await callWF01()
-      const qs = r.survey.preguntas.map(toQuestion)
-      setDraft({ id: r.survey_id, survey: r.survey, warnings: r.control_calidad?.anti_sesgo_warnings ?? [] })
-      if (!title.trim() && r.survey.titulo) setTitle(r.survey.titulo)
-      setPool(qs)
+      let qs: Question[] = []
+      let surveyDraft: N8nSurvey = { titulo: title, preguntas: [] }
+      let antiSesgoWarnings: string[] = []
+      let surveyId = `srv_${Date.now()}`
 
-      // Selecció inicial de preguntes respectant la durada marcada a la Fase 1 (mínim 3)
+      try {
+        const r = await callWF01()
+        surveyId = r.survey_id
+        surveyDraft = r.survey
+        antiSesgoWarnings = r.control_calidad?.anti_sesgo_warnings ?? []
+        qs = r.survey.preguntas.map(toQuestion)
+      } catch (wfErr) {
+        console.warn("WF-01 ha fallat o no està disponible. S'activa el generador adaptatiu local:", wfErr)
+      }
+
+      // Assegurar que el nombre de preguntes generades s'acosta al temps indicat (durationSecs)
+      const adjustedPool = ensureQuestionsMatchDuration(qs, durationSecs, lang, goal, departments)
+      setDraft({ id: surveyId, survey: surveyDraft, warnings: antiSesgoWarnings })
+      if (!title.trim() && surveyDraft.titulo) setTitle(surveyDraft.titulo)
+      setPool(adjustedPool)
+
+      // Selecció inicial de preguntes per cobrir el temps esperat de la microconsulta
       let accSecs = 0
       const initialSel: string[] = []
-      for (const q of qs) {
-        if (initialSel.length < 3 || accSecs + q.secs <= durationSecs) {
+      for (const q of adjustedPool) {
+        if (initialSel.length < 3 || accSecs + q.secs <= durationSecs + 10) {
           initialSel.push(q.id)
           accSecs += q.secs
         }
       }
-      setSel(initialSel.length >= 3 ? initialSel : qs.slice(0, Math.max(3, qs.length)).map(q => q.id))
+      setSel(initialSel.length >= 3 ? initialSel : adjustedPool.map(q => q.id))
 
       // Sincronització automàtica de públic i canals amb els departaments de Fase 1
       syncPublicAndChannelsWithDepartments(departments)
@@ -328,14 +368,6 @@ export default function Crear() {
     setAcceptedSteps(prev => Array.from(new Set([...prev, 2])))
     setMaxAcceptedStep(prev => Math.max(prev, 3))
     setStep(3)
-  }
-
-  const startManual = () => {
-    const questions = Array.from({ length: 3 }, (_, i) => generateAlternativeQuestion(i, lang, goal, departments))
-    setDraft({ id: 'manual', survey: { titulo: title, preguntas: [] }, warnings: [] })
-    setPool(questions)
-    setSel(questions.map(q => q.id))
-    setStep(1)
   }
 
   const toggle = <T,>(arr: T[], v: T, set: (x: T[]) => void) =>
@@ -588,10 +620,7 @@ export default function Crear() {
                   <label className="eyebrow block font-bold">Departaments * (Selector múltiple)</label>
                   <button
                     type="button"
-                    onClick={() => {
-                      const next = departments.length === DEPARTAMENTS.length ? [] : [...DEPARTAMENTS]
-                      setDepartments(next)
-                    }}
+                    onClick={toggleAllDepartments}
                     className="text-xs font-bold text-red-dk hover:underline"
                   >
                     {departments.length === DEPARTAMENTS.length ? 'Deseleccionar tots' : 'Seleccionar tots els departaments'}
@@ -605,7 +634,7 @@ export default function Crear() {
                         key={d}
                         type="button"
                         aria-pressed={on}
-                        onClick={() => toggle(departments, d, setDepartments)}
+                        onClick={() => toggleDepartment(d)}
                         className={cn(
                           'h-10 px-4 rounded-full border-[1.5px] text-[13.5px] font-bold transition-all flex items-center gap-1.5',
                           on ? 'border-red bg-red-soft text-red-dk shadow-sm' : 'border-line bg-white text-ink hover:border-ink-muted'
@@ -624,7 +653,6 @@ export default function Crear() {
                 </p>
               </div>
 
-              <button className="btn-line" disabled={!title.trim() || !goal.trim()} onClick={startManual}>Començar amb preguntes de plantilla</button>
               {genError && (
                 <div role="alert" className="text-[13px] font-semibold rounded-[12px] px-3.5 py-2.5 bg-warn-bg text-warn-ink">
                   No s’han pogut generar les preguntes: {genError}. Comprova que el workflow WF-01 estigui actiu i torna-ho a provar.
@@ -902,14 +930,6 @@ export default function Crear() {
                   })}
                 </div>
               </div>
-
-              <TeamsDeliveryPreview
-                selected={channels.includes('teams')}
-                title={title || draft?.survey.titulo || 'Nova enquesta'}
-                questions={chosen.length}
-                closesAt={closes}
-                onToggle={() => toggle(channels, 'teams', setChannels)}
-              />
 
               {/* Obertura i tancament d'enquesta */}
               <div className="pt-4 border-t border-[#F1EAE0] flex flex-col gap-3">

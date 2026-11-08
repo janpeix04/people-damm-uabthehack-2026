@@ -2,7 +2,7 @@ import pg from 'pg';
 import {randomBytes} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {provisionUser,userWallet,digest} from '../server/auth.js';
-const db=new pg.Client({host:process.env.POSTGRES_HOST||'127.0.0.1',port:Number(process.env.POSTGRES_PORT||54322),database:process.env.POSTGRES_DB||'damm_pulse',user:process.env.POSTGRES_USER||'postgres',password:process.env.POSTGRES_PASSWORD});
+const db=new pg.Client({host:process.env.POSTGRES_HOST||'127.0.0.1',port:Number(process.env.POSTGRES_PORT||54322),database:process.env.POSTGRES_DB||'damm_pulse',user:process.env.POSTGRES_USER||'postgres',password:process.env.POSTGRES_PASSWORD||'postgres'});
 const base=`http://localhost:${process.env.FRONTEND_PORT||8080}`;
 const password=randomBytes(24).toString('base64url');const suffix=randomBytes(8).toString('hex');const ids=[];
 async function call(path,{body,cookie,header=true,origin}={}){
