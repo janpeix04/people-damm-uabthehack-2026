@@ -8,6 +8,7 @@ export interface FormResponse {
   formId: string
   submittedAt: string // ISO string
   zone: ZoneKey
+  site: string
   shift: ShiftType
   channel: ChannelKey
   sentiment: SentimentType
@@ -27,6 +28,8 @@ export interface FilterOptions {
   formId?: string
   dateRange?: 'all' | '7d' | '30d' | '90d'
   zone?: ZoneKey | 'all'
+  /** codi del centre (selector global de RRHH); buit = tot el grup */
+  site?: string
   shift?: ShiftType | 'all'
   channel?: ChannelKey | 'all'
   sentiment?: SentimentType | 'all'
@@ -266,6 +269,56 @@ const COMMENTS_POOL: Record<string, { text: string; sentiment: SentimentType; ca
   ],
 }
 
+// Plantilla sintètica per centre i departament (la mateixa que synthetic_people a la BD), per repartir
+// les respostes entre centres de manera realista i calcular l'objectiu de cada centre.
+type Dept = 'fabrica' | 'logistica' | 'comercial' | 'oficina'
+const SITE_HEADCOUNT: Record<string, Partial<Record<Dept, number>>> = {
+  cc_damm_el_prat: { fabrica: 68, logistica: 36, comercial: 13, oficina: 10 },
+  font_salem_el_puig: { fabrica: 26, logistica: 35, comercial: 12 },
+  logistic_bcn_zal: { logistica: 72 },
+  seu_central_bcn: { oficina: 58, comercial: 11 },
+  estrella_levante_murcia: { fabrica: 26, comercial: 12, oficina: 13 },
+  cervezas_victoria_malaga: { fabrica: 26, comercial: 12, oficina: 13 },
+  font_salem_santarem: { fabrica: 24, comercial: 12, oficina: 13 },
+  cacaolat_santa_coloma: { fabrica: 24, comercial: 12, oficina: 13 },
+  la_moravia_lleida: { fabrica: 43 },
+  logistic_murcia: { logistica: 37 },
+  cafes_garriga_barbera: { fabrica: 24, comercial: 11 },
+  font_salem_salem: { fabrica: 25 },
+  veri_osca: { fabrica: 24 },
+  fuente_liviana_conca: { fabrica: 22 },
+}
+// Clima de cada centre respecte a la mitjana (punts sobre 10): els centres logístics van més carregats,
+// la seu central i les plantes petites, millor.
+const SITE_BIAS: Record<string, number> = {
+  cc_damm_el_prat: -0.3, font_salem_el_puig: -0.4, logistic_bcn_zal: -0.9, seu_central_bcn: 0.6,
+  estrella_levante_murcia: -0.2, cervezas_victoria_malaga: 0.2, font_salem_santarem: -0.1, cacaolat_santa_coloma: 0.3,
+  la_moravia_lleida: 0.5, logistic_murcia: -0.6, cafes_garriga_barbera: 0, font_salem_salem: 0.2, veri_osca: 0.4, fuente_liviana_conca: 0.1,
+}
+const ZONE_DEPT: Record<string, Dept> = {
+  envasat: 'fabrica', coccio: 'fabrica', malta: 'fabrica', fermentacio: 'fabrica', manteniment: 'fabrica',
+  logistica: 'logistica', oficines: 'oficina', comercial: 'comercial',
+}
+const deptOf = (zone: string): Dept => ZONE_DEPT[zone] || 'fabrica'
+const headcount = (site: string | null, depts: Dept[]) =>
+  Object.entries(SITE_HEADCOUNT).reduce((n, [code, hc]) => site && code !== site ? n : n + depts.reduce((m, d) => m + (hc[d] || 0), 0), 0)
+function pickSiteDept(depts: Dept[], r: number): [string, Dept] {
+  const total = headcount(null, depts)
+  let acc = 0
+  for (const [code, hc] of Object.entries(SITE_HEADCOUNT)) for (const d of depts) {
+    acc += (hc[d] || 0) / total
+    if (r < acc) return [code, d]
+  }
+  return ['cc_damm_el_prat', depts[0]]
+}
+/** Objectiu del formulari en un centre: la part proporcional de la plantilla dels seus departaments. */
+export function siteTarget(form: { target: number; zones: string[] }, site?: string): number {
+  if (!site) return form.target
+  const depts = [...new Set(form.zones.map(deptOf))]
+  const all = headcount(null, depts)
+  return all ? Math.round(form.target * headcount(site, depts) / all) : 0
+}
+
 export function generateAllResponses(): FormResponse[] {
   const all: FormResponse[] = []
   const rand = makePrng(42817)
@@ -280,9 +333,14 @@ export function generateAllResponses(): FormResponse[] {
     const baseDate = new Date(form.opensAt).getTime()
     const endDate = new Date(form.closesAt).getTime()
     const span = Math.max(86400000, endDate - baseDate)
+    const formDepts = [...new Set(form.zones.map(deptOf))]
 
     for (let i = 0; i < totalResponses; i++) {
-      const zone = form.zones[Math.floor(rand() * form.zones.length)]
+      // centre i departament segons la plantilla real; després una zona del formulari d'aquell departament
+      const [site, dept] = pickSiteDept(formDepts, rand())
+      const deptZones = form.zones.filter(z => deptOf(z) === dept)
+      const zone = deptZones[Math.floor(rand() * deptZones.length)]
+      const bias = SITE_BIAS[site] || 0
       const shift = shifts[Math.floor(rand() * shifts.length)]
       const channel = form.channels?.length ? form.channels[Math.floor(rand() * form.channels.length)] : fallbackChannels[Math.floor(rand() * fallbackChannels.length)]
       
@@ -302,6 +360,7 @@ export function generateAllResponses(): FormResponse[] {
           if (shift === 'nit') mean -= 1.3
           if (zone === 'envasat' || zone === 'logistica') mean -= 0.8
           if (zone === 'oficines' || zone === 'fermentacio') mean += 0.9
+          mean += bias
 
           const noise = (rand() - 0.5) * 3
           const val = Math.max(0, Math.min(10, Math.round(mean + noise)))
@@ -310,18 +369,18 @@ export function generateAllResponses(): FormResponse[] {
           scaleCount++
         } else if (q.type === 'faces') {
           const opts = q.options || ['Molt bé', 'Bé', 'Regular', 'Malament']
-          const r = rand()
+          const r = Math.min(0.999, Math.max(0, rand() - bias * 0.08))
           // 45% bo, 30% neutre, 15% molt bo, 10% negatiu
           const idx = r < 0.25 ? 0 : r < 0.65 ? 1 : r < 0.88 ? 2 : 3
           answers[q.id] = opts[Math.min(idx, opts.length - 1)]
         } else if (q.type === 'list') {
           const opts = q.options || ['Opció 1', 'Opció 2', 'Opció 3']
-          const r = rand()
+          const r = Math.min(0.999, Math.max(0, rand() - bias * 0.08))
           const idx = Math.floor(Math.pow(r, 1.2) * opts.length)
           answers[q.id] = opts[Math.min(idx, opts.length - 1)]
         } else if (q.type === 'yesno') {
           // Majoritàriament afirmatiu (65-80%)
-          answers[q.id] = rand() < 0.72
+          answers[q.id] = rand() < 0.72 + bias * 0.05
         } else if (q.type === 'text') {
           // El 40% deixa un comentari de text obert
           if (rand() < 0.42) {
@@ -346,6 +405,7 @@ export function generateAllResponses(): FormResponse[] {
         formId: form.id,
         submittedAt: subDate.toISOString(),
         zone,
+        site,
         shift,
         channel,
         sentiment: commentObj ? commentObj.sentiment : sentiment,
@@ -442,6 +502,9 @@ export function filterAndAggregateForm(
       if (now - t > days * 86400000) return false
     }
 
+    // Filtre de centre
+    if (filters.site && r.site !== filters.site) return false
+
     // Filtre de zona
     if (filters.zone && filters.zone !== 'all' && r.zone !== filters.zone) return false
 
@@ -466,14 +529,15 @@ export function filterAndAggregateForm(
   })
 
   const n = filtered.length
+  const target = siteTarget(form, filters.site)
   // k-anonimato: Mínim 5 respostes per mostrar resultats agregats sense revelar identitats
   const isSuppressed = n < 5
 
   if (isSuppressed) {
     return {
       totalResponses: n,
-      target: form.target,
-      participationRate: Math.round((n / Math.max(1, form.target)) * 100),
+      target,
+      participationRate: Math.round((n / Math.max(1, target)) * 100),
       avgScore: 0,
       npsScore: 0,
       avgDurationSecs: 0,
@@ -738,8 +802,8 @@ export function filterAndAggregateForm(
 
   return {
     totalResponses: n,
-    target: form.target,
-    participationRate: Math.round((n / Math.max(1, form.target)) * 100),
+    target,
+    participationRate: Math.min(100, Math.round((n / Math.max(1, target)) * 100)),
     avgScore,
     npsScore,
     avgDurationSecs,
@@ -763,8 +827,8 @@ export function filterAndAggregateForm(
 // EXPORTADOR CSV
 // ---------------------------------------------------------------------------
 
-export function exportResponsesCsv(form: AnalyticsFormConfig, _stats?: AggregateStats): void {
-  const headers = ['ID', 'Data', 'Zona', 'Torn', 'Canal', 'Sentiment', 'Durada(s)']
+export function exportResponsesCsv(form: AnalyticsFormConfig, _stats?: AggregateStats, site?: string): void {
+  const headers = ['ID', 'Data', 'Centre', 'Zona', 'Torn', 'Canal', 'Sentiment', 'Durada(s)']
   form.questions.forEach((q, idx) => {
     headers.push(`P${idx + 1}: ${q.text.replace(/,/g, ' ')}`)
   })
@@ -772,11 +836,12 @@ export function exportResponsesCsv(form: AnalyticsFormConfig, _stats?: Aggregate
   // CSV content
   const rows: string[] = [headers.join(',')]
 
-  const responses = ALL_RESPONSES.filter(r => r.formId === form.id)
+  const responses = ALL_RESPONSES.filter(r => r.formId === form.id && (!site || r.site === site))
   responses.forEach(r => {
     const row = [
       r.id,
       r.submittedAt.slice(0, 10),
+      r.site,
       r.zone,
       r.shift,
       r.channel,

@@ -1306,7 +1306,7 @@ function buildWorld(){
   [[-1.2, -1.2], [1.2, -1.2], [-1.2, 1.2], [1.2, 1.2]].forEach(function(p){ bx(.18, 23, .18, dk, p[0], 11.5, p[1], tower); });
   for (var ty = 2.5; ty <= 22.5; ty += 2.5) { bx(2.6, .12, .12, dk, 0, ty, 1.2, tower, false); bx(2.6, .12, .12, dk, 0, ty, -1.2, tower, false); bx(.12, .12, 2.6, dk, 1.2, ty, 0, tower, false); bx(.12, .12, 2.6, dk, -1.2, ty, 0, tower, false); }
   for (var ty2 = 0; ty2 < 22.5; ty2 += 2.5) { beam(V(-1.2, ty2, 1.2), V(1.2, ty2 + 2.5, 1.2), .08, .08, dk, tower); beam(V(1.2, ty2, -1.2), V(1.2, ty2 + 2.5, 1.2), .08, .08, dk, tower); }
-  sign('FERMENTACIÓ', 8, 1, -21, .75, -27, C, { bg: '#C8102E', fg: '#FFFFFF', font: '800 90px Figtree, sans-serif' });
+  sign('FERMENTACIÓ', 8, 1, -21, .75, -26.94, C, { bg: '#C8102E', fg: '#FFFFFF', font: '800 90px Figtree, sans-serif' });
   for (var px = -38; px <= 34; px += 8) { bx(.3, 8, .3, metalGrey, px, 4, -38.2, S); bx(.3, 8, .3, metalGrey, px, 4, -37, S); bx(.3, .3, 1.5, metalGrey, px, 8, -37.6, S); }
   [[-38, steel, .3], [-37.6, copper, .26], [-37.2, red, .2]].forEach(function(p){ var pp = mesh(cyl(p[2], p[2], 72, 14), p[1], -2, 8.4, p[0], S); pp.rotation.z = Math.PI / 2; });
 
@@ -1533,9 +1533,11 @@ function buildWorld(){
   });
   // bancs en cercle al voltant de la font
   for (var bn = 0; bn < 6; bn++) { if (bn % 3 === 0) continue; var ba = bn / 6 * Math.PI * 2 + Math.PI / 6; bench(S, PX + Math.cos(ba) * 4.9, PZ + Math.sin(ba) * 4.9, -ba - Math.PI / 2); }
-  // parterres de flors (nord-est), entre l'avinguda i la plaça
+  // parterres de flors (nord-est), entre l'avinguda i la plaça.
+  // Els de l'oest queden centrats entre el paviment del pavelló (x -4,5) i el camí nord-sud (x 0,7),
+  // amb ~0,6 de marge a cada costat perquè no toquin la planta volada (x -5,4).
   var flowers = [];
-  [[-3.5, 9.5, 6, 4], [6.8, 9.5, 5, 4], [-3.5, 15, 6, 2.4], [6.8, 15, 5, 2.4]].forEach(function(bd){
+  [[-1.9, 9.5, 4, 4], [6.8, 9.5, 5, 4], [-1.9, 15, 4, 2.4], [6.8, 15, 5, 2.4]].forEach(function(bd){
     bx(bd[2], .45, bd[3], std('#7A5A3C', .9), bd[0], .22, bd[1], S);
     for (var fl = 0; fl < bd[2] * bd[3] * 1.4; fl++) flowers.push([bd[0] + rr(-bd[2] / 2 + .3, bd[2] / 2 - .3), .62, bd[1] + rr(-bd[3] / 2 + .3, bd[3] / 2 - .3), 0, 0, rr(.18, .28)]);
   });
@@ -1893,7 +1895,7 @@ export function mountScene(container, kind, opts) {
     zones.forEach(function (z) {
       var a = W.anchors[z.key] || (W.zoneDept && W.anchors[W.zoneDept[z.sceneKey || z.key]]); if (!a) return;
       var esc = function (v) { return String(v).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); };
-      var name = esc(z.name), label = z.absent ? '' : esc(z.score);
+      var name = esc(z.name), label = z.absent || z.score === '?' ? '' : esc(z.score);
       var el = addLabel(a, '<button type="button" class="pin' + (z.absent ? ' off' : '') + '" data-z="' + esc(z.key) + '" aria-pressed="' + (z.key === selected) + '" aria-label="' + name + ': ' + (z.absent ? 'no hi ha equip en aquest centre' : esc(z.moodLabel)) + '"><span class="w" style="background:' + esc(z.bg) + '"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="' + esc(z.ink) + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + esc(z.path) + '"/></svg></span>' + name + '<em>' + label + '</em></button>');
       labels[labels.length - 1].pin = true;
       el.querySelector('button').addEventListener('click', function () { select(z.key); });

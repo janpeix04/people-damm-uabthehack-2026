@@ -12,9 +12,11 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { useApp } from '../../store/AppContext'
+import { useSites } from '../../api/departments'
 import { PageHead } from '../../components/HRLayout'
 import { Meter, cn } from '../../components/ui'
 import {
+  ALL_RESPONSES,
   ANALYTICS_FORMS,
   exportResponsesCsv,
   filterAndAggregateForm,
@@ -28,6 +30,10 @@ import { QuestionCard } from '../../components/analytics/QuestionCard'
 export default function Analisi() {
   const [params, setParams] = useSearchParams()
   const { hrSurveys } = useApp()
+  // centre del selector global de RRHH (buit = tot el grup)
+  const site = params.get('centre') || ''
+  const { sites } = useSites()
+  const siteName = site ? sites.find(s => s.code === site)?.name ?? site : ''
 
   // Integració de formularis: llista base + enquestes creades a la plataforma
   const allForms = useMemo<AnalyticsFormConfig[]>(() => {
@@ -75,12 +81,16 @@ export default function Analisi() {
 
   // Càlcul de mètriques agregades amb el motor d'analítica
   const stats = useMemo(() => {
-    return filterAndAggregateForm(currentForm, filters)
-  }, [currentForm, filters])
+    return filterAndAggregateForm(currentForm, { ...filters, site })
+  }, [currentForm, filters, site])
+  const availableResponses = useMemo(
+    () => ALL_RESPONSES.filter(r => r.formId === currentForm.id && (!site || r.site === site)).length,
+    [currentForm.id, site],
+  )
 
   // Descarregar dades en CSV
   const handleExportCsv = () => {
-    exportResponsesCsv(currentForm, stats)
+    exportResponsesCsv(currentForm, stats, site)
   }
 
   // Imprimir informe
@@ -94,7 +104,7 @@ export default function Analisi() {
       <PageHead
         eyebrow="People Analytics · Escolta Activa"
         title="Anàlisi i Insights de Formularis"
-        sub="Mètriques agregades per formulari, comparatives per torns i canals, desglossament per preguntes i k-anonimat garantit."
+        sub={`${siteName ? `Centre: ${siteName} · ` : 'Tot el grup Damm · '}Mètriques agregades per formulari, comparatives per torns i canals, desglossament per preguntes i k-anonimat garantit.`}
         actions={
           <div className="flex items-center gap-2 flex-wrap no-print">
             <button
@@ -132,7 +142,7 @@ export default function Analisi() {
             filters={filters}
             onChangeFilters={setFilters}
             totalMatching={stats.totalResponses}
-            totalAvailable={currentForm.responses}
+            totalAvailable={availableResponses}
           />
 
           {/* Advertència de k-anonimat si n < 5 */}
@@ -166,7 +176,7 @@ export default function Analisi() {
                       {stats.participationRate}%
                     </div>
                     <div className="text-xs text-ink-muted mt-0.5">
-                      {stats.totalResponses} respostes de {currentForm.target} objectiu
+                      {stats.totalResponses} respostes de {stats.target} objectiu
                     </div>
                   </div>
                   <Meter value={stats.participationRate} thin />
