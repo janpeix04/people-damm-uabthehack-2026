@@ -54,7 +54,7 @@ export function Meter({ value, className, thin }: { value: number; className?: s
 
 /** Accés informatiu a les opinions, sense seguiment de participació. */
 export function PlazaCard() {
-  return <section className="card flex flex-col gap-2 p-5"><h2 className="serif text-[21px]">La Plaça</h2><p className="text-sm text-ink-muted">Un espai per compartir opinions i idees voluntàriament, sense punts ni recompenses. El concert està sempre actiu.</p></section>
+  return <section className="card flex flex-col gap-2 p-5"><h2 className="serif text-[21px]">La Plaça</h2><p className="text-sm text-ink-muted">Un espai per compartir opinions i idees voluntàriament, sense punts ni recompenses. La barra de cerveses està sempre oberta.</p></section>
 }
 
 export function PrivacyNote({ children, className }: { children: ReactNode; className?: string }) {

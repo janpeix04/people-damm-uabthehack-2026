@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { DAMM_BEERS } from '../data/beers';
 
 var RM = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var renderer = null;
@@ -814,20 +815,102 @@ function buildPlaza(){
   mesh(new THREE.PlaneGeometry(.9, .32), new THREE.MeshStandardMaterial({ map: textTex('IDEES', { w: 256, h: 96, bg: '#C8102E', fg: '#FFFFFF', font: '800 56px Figtree, sans-serif' }), roughness: .4 }), 0, 1.4, .41, box, false);
   pickables.push(box);
 
-  // escenari
-  var curtains = [];
+  // ---------- LA BARRA: cerveses de Damm (pèrgola de fusta, canyís, para-sol enrotllat i garlandes) ----------
+  // Els noms van amb tipografia genèrica; els logotips oficials es poden posar més endavant.
+  var bartenders = [];
   (function(){
-    var g = new THREE.Group(); g.position.set(0, 0, -12.2); g.scale.setScalar(.75); S.add(g); g.userData.action = 'stage';
-    var wood = std('#8E6B4B', .75);
-    bx(11, 1.1, 5, wood, 0, .55, 0, g); bx(11.1, .9, .1, std('#7A0C1E', .8), 0, .5, 2.52, g, false);
-    bx(.5, 5.6, .5, std('#2C2C30', .5, .5), -5.2, 3.9, -2, g); bx(.5, 5.6, .5, std('#2C2C30', .5, .5), 5.2, 3.9, -2, g); bx(10.9, .5, .6, std('#2C2C30', .5, .5), 0, 6.7, -2, g);
-    // fons fosc amb llums (es veu quan s'obre el teló) i teló de dues meitats
-    mesh(new THREE.PlaneGeometry(10, 5.2), new THREE.MeshStandardMaterial({ roughness: .9, map: makeTex(256, 128, function(gg, W, H){ gg.fillStyle = '#1C1416'; gg.fillRect(0, 0, W, H); for (var i = 0; i < 40; i++) { gg.fillStyle = pick(['rgba(255,214,120,.9)', 'rgba(255,120,140,.8)', 'rgba(255,255,255,.7)']); gg.beginPath(); gg.arc(rr(4, W - 4), rr(4, H * .55), rr(1, 2.4), 0, Math.PI * 2); gg.fill(); } }) }), 0, 3.7, -2.42, g, false);
-    var curtainM = new THREE.MeshStandardMaterial({ map: T.curtain, roughness: .9, side: THREE.DoubleSide });
-    curtains = [-1, 1].map(function(sd){ var c = mesh(new THREE.PlaneGeometry(5.05, 5.2), curtainM, sd * 2.5, 3.7, -2.3, g); c.userData.side = sd; c.userData.keep = true; return c; });
-    mesh(new THREE.PlaneGeometry(6.5, 1.0), new THREE.MeshStandardMaterial({ map: textTex('CONCERT DE LA PLAÇA', { w: 1024, h: 160, bg: '#1F1A18', fg: '#E9D3A6', font: '400 84px "DM Serif Display", Georgia, serif' }), roughness: .5 }), 0, 6.7, -1.68, g, false);
+    var g = new THREE.Group(); g.position.set(0, 0, -12.2); S.add(g); g.userData.action = 'stage';
+    var BW = 9.6, ZF = 1.6, ZB = -2.1; // amplada, front del taulell i paret del fons (relatius al grup)
+    var post = PINE_M, reed = new THREE.MeshStandardMaterial({ roughness: .95, side: THREE.DoubleSide, map: makeTex(256, 128, function(gg, W, H){
+      gg.fillStyle = '#C9A877'; gg.fillRect(0, 0, W, H);
+      for (var x = 0; x < W; x += 3) { gg.fillStyle = pick(['#B8945F', '#D8BC8A', '#A9844F', '#E2C89A']); gg.fillRect(x, 0, 2, H); }
+      for (var y = 10; y < H; y += 28) { gg.fillStyle = 'rgba(90,60,30,.35)'; gg.fillRect(0, y, W, 2); }
+    }) });
+    // tarima i paret del fons de llistons vermells
+    bx(BW + .6, .12, 4.6, PINE_M, 0, .06, -.2, g, false);
+    bx(BW, 3.7, .25, REDPLANK, 0, 1.85, ZB, g);
+    [-1, 1].forEach(function(sd){ bx(.25, 3.7, 2.2, REDPLANK, sd * (BW / 2 - .12), 1.85, ZB + 1.1, g); });
+    // taulell: llistons vermells, sobre de fusta i una línia de llum càlida sota la vora
+    bx(BW - .4, 1.05, .7, REDPLANK, 0, .52, ZF, g);
+    bx(BW - .1, .08, 1.0, PINE_M, 0, 1.09, ZF - .1, g);
+    bx(BW - .5, .04, .04, std('#FFE3A6', .4, 0, { emissive: '#FFB54D', emissiveIntensity: 1.1 }), 0, .99, ZF + .42, g, false);
+    mesh(new THREE.PlaneGeometry(3.6, .5), new THREE.MeshStandardMaterial({ map: letterTex('La Barra', '#FFFFFF', 'italic 400 170px "DM Serif Display", Georgia, serif', 1024, 160), transparent: true, depthWrite: false }), -1.6, .55, ZF + .36, g, false, false);
+    // tiradors: un per cada cervesa de barril, amb el disc del color de l'etiqueta i les inicials
+    var taps = DAMM_BEERS.filter(function(b){ return b.tap; }), chrome = std('#D9DDE2', .18, .95);
+    taps.forEach(function(b, i){
+      var x = -3.9 + i * (7.8 / (taps.length - 1));
+      mesh(new THREE.CylinderGeometry(.045, .055, .42, 10), chrome, x, 1.34, ZF - .25, g, false);
+      bx(.05, .05, .2, chrome, x, 1.5, ZF - .16, g, false);
+      var badge = mesh(new THREE.CircleGeometry(.12, 20), new THREE.MeshStandardMaterial({ roughness: .4, map: makeTex(96, 96, function(gg, W, H){
+        gg.clearRect(0, 0, W, H); gg.fillStyle = '#FFFFFF'; gg.beginPath(); gg.arc(48, 48, 47, 0, Math.PI * 2); gg.fill();
+        gg.fillStyle = b.label; gg.beginPath(); gg.arc(48, 48, 41, 0, Math.PI * 2); gg.fill();
+        gg.fillStyle = b.ink; gg.font = '800 30px Figtree, sans-serif'; gg.textAlign = 'center'; gg.textBaseline = 'middle';
+        gg.fillText(b.name.replace(/[^A-Za-zÀ-ÿ ]/g, '').split(' ').map(function(w){ return w[0]; }).join('').slice(0, 2).toUpperCase(), 48, 50);
+      }), transparent: true }), x, 1.72, ZF - .24, g, false, false);
+      bx(.03, .2, .03, std('#1F1A18', .5), x, 1.58, ZF - .24, g, false);
+    });
+    // gots apilats al taulell
+    for (var cs = 0; cs < 3; cs++) for (var ch = 0; ch < 4; ch++) mesh(new THREE.CylinderGeometry(.075, .06, .17, 10), std('#EEF3F5', .2, 0, { transparent: true, opacity: .7 }), 3.6 + cs * .2, 1.21 + ch * .1, ZF - .3, g, false);
+    // prestatges amb una ampolla de cada cervesa (etiqueta del seu color)
+    var labG = new THREE.CylinderGeometry(.052, .052, .08, 12, 1, true);
+    // etiqueta amb textura (els colors de textura surten fidels; un color de material es veuria pàl·lid)
+    var LABC = {};
+    function labM(b){ return LABC[b.key] || (LABC[b.key] = new THREE.MeshStandardMaterial({ roughness: .55, map: makeTex(64, 32, function(gg, W, H){ gg.fillStyle = b.label; gg.fillRect(0, 0, W, H); gg.fillStyle = b.ink; gg.fillRect(0, H * .42, W, H * .16); }) })); }
+    [1.55, 2.15, 2.75].forEach(function(y, row){
+      bx(3.9, .06, .32, PINE_M, -2.5, y, ZB + .3, g);
+      for (var k = 0; k < 9; k++) {
+        var b = DAMM_BEERS[(row * 9 + k) % DAMM_BEERS.length], bx0 = -4.2 + k * .42;
+        var bo = new THREE.Group(); bo.position.set(bx0, y + .03, ZB + .3); bo.scale.setScalar(1.55); g.add(bo);
+        mesh(BOTTLE.glass, b.key === 'free' || b.key === 'lemon' ? std('#3E6B2A', .15, .1) : BOTTLE.glassM, 0, 0, 0, bo, false);
+        mesh(labG, labM(b), 0, .1, 0, bo, false);
+        mesh(BOTTLE.cap, BOTTLE.capM, 0, .307, 0, bo, false);
+      }
+    });
+    // jardineres de fusta apilades amb herbes (al mig de la paret)
+    [1.4, 2.2, 3.0].forEach(function(y){ bx(.9, .32, .32, PINE_M, .25, y, ZB + .28, g); for (var p = 0; p < 3; p++) mesh(BUSH_G, pick(GREENS), -.05 + p * .3, y + .25, ZB + .28, g).scale.set(.9, .8, .9); });
+    // estrella daurada i nom (tipografia genèrica) a la dreta, com a la foto
+    var st = star3d(.42, .1, std('#E6B422', .28, .75)); st.position.set(2.75, 3.15, ZB + .2); g.add(st);
+    mesh(new THREE.PlaneGeometry(2.4, .6), new THREE.MeshStandardMaterial({ map: letterTex('DAMM', '#FFFFFF', '800 200px Figtree, sans-serif', 1024, 256), transparent: true, depthWrite: false }), 2.75, 2.55, ZB + .14, g, false, false);
+    // carta amb totes les cerveses (es pot llegir apropant-s'hi)
+    var cartaT = makeTex(1024, 560, function(gg, W, H){
+      gg.fillStyle = '#F7F4EC'; gg.fillRect(0, 0, W, H); gg.fillStyle = '#2E6B4E'; gg.fillRect(0, 0, W, 86);
+      gg.fillStyle = '#FFFFFF'; gg.font = '800 50px Figtree, sans-serif'; gg.textAlign = 'left'; gg.textBaseline = 'middle'; gg.fillText('CERVESES DAMM', 30, 45);
+      var half = Math.ceil(DAMM_BEERS.length / 2);
+      DAMM_BEERS.forEach(function(b, i){
+        var col = i < half ? 0 : 1, row = i % half, x = 30 + col * 500, y = 120 + row * 50;
+        gg.fillStyle = b.label; gg.beginPath(); gg.arc(x + 12, y, 12, 0, Math.PI * 2); gg.fill();
+        gg.fillStyle = '#1F1A18'; gg.font = '700 32px Figtree, sans-serif'; gg.fillText(b.name, x + 34, y + 2);
+        if (b.tap) { gg.fillStyle = '#2E6B4E'; gg.font = '700 22px Figtree, sans-serif'; gg.fillText('BARRIL', x + 380, y + 2); }
+      });
+    });
+    bx(2.5, 1.42, .06, std('#2E6B4E', .6), 2.75, 1.62, ZB + .14, g, false);
+    mesh(new THREE.PlaneGeometry(2.4, 1.32), new THREE.MeshStandardMaterial({ map: cartaT, roughness: .7 }), 2.75, 1.62, ZB + .18, g, false, false);
+    // pèrgola de fusta amb canyís i para-sol vermell enrotllat
+    [[-BW / 2, ZF + .15], [BW / 2, ZF + .15], [-BW / 2, ZB], [BW / 2, ZB], [0, ZF + .15]].forEach(function(p){ bx(.2, 4, .2, post, p[0], 2, p[1], g); });
+    [ZF + .15, ZB].forEach(function(z){ bx(BW + .6, .22, .22, post, 0, 4.05, z, g); });
+    for (var cb = -2; cb <= 2; cb++) bx(.14, .16, ZF - ZB + .8, post, cb * BW / 4.2, 4.22, (ZF + ZB) / 2, g);
+    var roofP = mesh(new THREE.PlaneGeometry(BW + .4, ZF - ZB + .7), reed, 0, 4.32, (ZF + ZB) / 2, g); roofP.rotation.x = -Math.PI / 2 + .06;
+    var roll = mesh(new THREE.CylinderGeometry(.24, .24, BW + .3, 18), CANVAS, 0, 3.78, ZF + .3, g); roll.rotation.z = Math.PI / 2;
+    for (var rr2 = -4; rr2 <= 4; rr2 += .5) mesh(new THREE.TorusGeometry(.245, .02, 4, 16), std('#7A0A14', .8), rr2, 3.78, ZF + .3, g, false).rotation.y = Math.PI / 2;
+    // cartells de preus penjats dels pals
+    [-BW / 2 + .5, BW / 2 - .5].forEach(function(x){
+      bx(.9, .6, .04, std('#FFFFFF', .6), x, 3.15, ZF + .3, g, false); bx(.9, .14, .045, std('#2E6B4E', .6), x, 3.4, ZF + .3, g, false);
+    });
+    // garlandes de llums sota la pèrgola
+    var bulbBar = std('#FFF1C4', .3, 0, { emissive: '#FFC86B', emissiveIntensity: 1 });
+    [[ZF + .2, .5], [ZB + .4, .35]].forEach(function(r){
+      catenary(g, V(-BW / 2, 3.95, r[0]), V(BW / 2, 3.95, r[0]), r[1], 20).forEach(function(p, i){ if (i % 2 === 0) mesh(BULB_G, bulbBar, p.x, p.y - .1, p.z, g, false, false); });
+    });
     pickables.push(g);
   })();
+  // cambrers darrere el taulell i gent fent una canya
+  [[-2.4, -12.1, 0], [1.6, -12.2, 0]].forEach(function(p, i){
+    var c = makePerson(S, people, { x: p[0], z: p[1], rot: p[2], skin: ['#EFC3A1', '#B57A52'][i], hair: ['#2E1F17', '#5A3A22'][i], shirt: '#C8102E', hairStyle: i ? 3 : 1, logo: true });
+    bartenders.push(c);
+  });
+  [[-3.3, -9.65, '#F4EFE6', true], [-1.0, -9.6, '#E86A1C', false], [.6, -9.65, '#8FBF6A', true], [3.2, -9.6, '#5C7C8A', true]].forEach(function(p, i){
+    makePerson(S, people, { x: p[0], z: p[1], rot: Math.PI, skin: ['#F6D7C3', '#D9A074', '#8A5A3B', '#EFC3A1'][i], hair: ['#5A3A22', '#2E1F17', '#1D1D24', '#D9B15A'][i], shirt: p[2], hairStyle: i % 4, beer: p[3], talk: !p[3] });
+  });
 
   // coloms
   var pigeons = [];
@@ -874,30 +957,6 @@ function buildPlaza(){
     mesh(STEN_G, BRAND_INK, 0, .79, -.27, b, false, false).scale.setScalar(.8);
   });
 
-  // el grup musical (surt quan s'obre el teló)
-  var band = new THREE.Group(); band.userData.keep = true; S.add(band);
-  var stageY = .83, musicians = [];
-  var guitarist = makePerson(band, people, { x: -2.1, y: stageY, z: -12.9, skin: SK[3], hair: HR[3], shirt: '#1F1A18', hairStyle: 2, rot: .25 });
-  var gtr = new THREE.Group(); gtr.position.set(.02, .62, .2); gtr.rotation.set(0, 0, .55); guitarist.add(gtr);
-  mesh(new THREE.CylinderGeometry(.17, .17, .07, 20), std('#B5562B', .4), 0, 0, 0, gtr).rotation.x = Math.PI / 2;
-  mesh(new THREE.CylinderGeometry(.06, .06, .075, 14), std('#1F1A18', .6), 0, 0, .005, gtr).rotation.x = Math.PI / 2;
-  bx(.045, .5, .03, std('#3B2A22', .6), 0, .33, 0, gtr);
-  var singer = makePerson(band, people, { x: 0, y: stageY, z: -12.5, skin: SK[1], hair: HR[4], shirt: '#C8102E', hairStyle: 3, logo: true, rot: 0 });
-  mesh(new THREE.CylinderGeometry(.015, .02, 1.25, 8), std('#2A2A2E', .4, .6), 0, stageY + .62, -12.12, band);
-  mesh(new THREE.SphereGeometry(.05, 10, 8), std('#3A3A3E', .3, .6), 0, stageY + 1.27, -12.12, band);
-  var drummer = makePerson(band, people, { x: 2.3, y: stageY, z: -13.4, skin: SK[4], hair: HR[0], shirt: '#F4EFE6', hairStyle: 0, logo: true, rot: -.2, seated: true });
-  var drumW = std('#F4EFE6', .5), drumR = std('#C8102E', .5), brass = std('#D9A93A', .3, .8);
-  mesh(new THREE.CylinderGeometry(.32, .32, .3, 20), drumR, 2.3, stageY + .32, -12.85, band).rotation.x = Math.PI / 2;
-  mesh(new THREE.CylinderGeometry(.33, .33, .02, 20), drumW, 2.3, stageY + .32, -12.69, band).rotation.x = Math.PI / 2;
-  mesh(new THREE.CylinderGeometry(.17, .17, .12, 18), drumW, 1.9, stageY + .62, -13, band);
-  mesh(new THREE.CylinderGeometry(.015, .015, 1, 6), std('#2A2A2E', .4, .6), 2.8, stageY + .5, -13, band);
-  mesh(new THREE.CylinderGeometry(.24, .24, .012, 20), brass, 2.8, stageY + 1, -13, band);
-  musicians.push(guitarist, singer, drummer);
-  // notes musicals que pugen de l'escenari
-  var NOTE = makeTex(64, 64, function(gg){ gg.clearRect(0, 0, 64, 64); gg.fillStyle = '#F2C14E'; gg.font = '700 52px Georgia, serif'; gg.textAlign = 'center'; gg.textBaseline = 'middle'; gg.fillText('♪', 32, 34); });
-  var notes = [];
-  for (var ni = 0; ni < 6; ni++) { var nsp = new THREE.Sprite(new THREE.SpriteMaterial({ map: NOTE, transparent: true, depthWrite: false })); nsp.scale.set(.7, .7, 1); band.add(nsp); notes.push({ s: nsp, ph: ni / 6, x: rr(-3, 3) }); }
-
   // focs artificials (partícules)
   var FW_B = 3, FW_P = 90, FWN = FW_B * FW_P;
   var fwPos = new Float32Array(FWN * 3), fwVel = new Float32Array(FWN * 3), fwCol = new Float32Array(FWN * 3), fwLife = new Float32Array(FW_B), fwBase = [];
@@ -906,7 +965,7 @@ function buildPlaza(){
   var fw = new THREE.Points(fwG, new THREE.PointsMaterial({ size: .95, map: T.glow, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
   fw.frustumCulled = false; fw.visible = false; S.add(fw);
   var FWC = [new THREE.Color('#FFD45C'), new THREE.Color('#FF4D5E'), new THREE.Color('#FFFFFF'), new THREE.Color('#7FD3FF')];
-  var fwOn = false, concertOn = false, openK = 0;
+  var fwOn = false;
   function fireworks(){
     if (RM) return;
     for (var b = 0; b < FW_B; b++) launch(b);
@@ -921,14 +980,8 @@ function buildPlaza(){
     }
   }
   anims.push(function(dt, t){
-    // teló: s'obre o es tanca suaument
-    openK += ((concertOn ? 1 : 0) - openK) * Math.min(1, dt * 1.5);
-    curtains.forEach(function(c){ c.scale.x = 1 - openK * .8; c.position.x = c.userData.side * (2.5 + openK * 2); });
-    if (concertOn && !RM) {
-      musicians.forEach(function(m, i){ m.userData.baseY = m.position.y = stageY + Math.abs(Math.sin(t * 5.2 + i)) * .07; });
-      singer.userData.P.shR.rotation.z = 2.2 + Math.sin(t * 3) * .3;
-      notes.forEach(function(n){ var L = (t * .3 + n.ph) % 1; n.s.position.set(n.x + Math.sin(L * 6 + n.ph * 9) * .4, 2.6 + L * 5, -12.6); n.s.material.opacity = Math.sin(L * Math.PI); });
-    }
+    // cambrers tirant canyes: el braç baixa cap al tirador i torna
+    if (!RM) bartenders.forEach(function(b, i){ var k = Math.max(0, Math.sin(t * 1.1 + i * 2.1)); b.userData.P.shR.rotation.x = -1.1 * k; b.userData.P.shL.rotation.x = -.4 * k; });
     if (!fwOn) return;
     for (var b = 0; b < FW_B; b++) {
       if (fwLife[b] <= 0) continue;
@@ -947,8 +1000,6 @@ function buildPlaza(){
   function setFesta(p){
     garland.visible = true;
     newBenches.visible = true;
-    concertOn = true; band.visible = concertOn;
-    if (RM) openK = concertOn ? 1 : 0;
   }
 
   // tu
@@ -1026,7 +1077,7 @@ function buildPlaza(){
       // la càmera no pot entrar dins dels edificis laterals ni del fons
       keepIn: function(p){ var mx = 15 + Math.max(0, p.z - 13) * 1.1; p.x = Math.min(Math.max(p.x, -mx), mx); if (p.z < -9) p.z = -9; if (p.y < 1.2) p.y = 1.2; } },
     bubbleAnchors: [V(-10.5, 2.35, 4.5), V(-5, 2.35, -7.6), V(3.6, 2.35, 6), V(12, 3.75, -9.1), V(11, 2.35, 4.8)],
-    anchors: { kiosk: V(-13, 5.2, -4.5), idea: V(15, 2.9, -2.5), stage: V(0, 5.6, -12.2), me: meAnchor } };
+    anchors: { kiosk: V(-13, 5.2, -4.5), idea: V(15, 2.9, -2.5), stage: V(0, 5.4, -12.2), me: meAnchor } };
 }
 
 // =====================================================
@@ -1785,7 +1836,7 @@ export function mountScene(container, kind, opts) {
   function addLabel(anchor, html) { var el = document.createElement('div'); el.className = 'lab'; el.innerHTML = html; overlay.appendChild(el); labels.push({ el: el, a: anchor }); return el; }
   function act(a) { if (opts.onAction) opts.onAction(a); }
   var stageBtn = null;
-  function paintStage() { if (stageBtn) { stageBtn.textContent = '♪ Concert en directe'; stageBtn.className = 'tag red'; } }
+  function paintStage() { if (stageBtn) { stageBtn.textContent = '🍺 La Barra · cerveses Damm'; stageBtn.className = 'tag red'; } }
   var zones = opts.zones || [], selected = null;
   function pinFor(k) {
     var dept = W.zoneDept && W.zoneDept[k];
