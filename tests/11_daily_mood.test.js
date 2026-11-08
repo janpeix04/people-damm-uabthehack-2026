@@ -19,9 +19,9 @@ test('Daily mood: one anonymous answer per day, optional department, current-day
   await db.exec('BEGIN');await submitMood(db,user,{day:state.day,mood:5,unspecified:true});await db.exec('COMMIT');
   await submitMood(db,user,{day:state.day,mood:1});
   assert.equal((await moodState(db,user)).answered,true);
-  await submitMood(db,user,{day:state.day,mood:2,edit:true,unspecified:true});
-  assert.equal((await moodState(db,user)).current_mood,2);
-  await submitMood(db,user,{day:state.day,mood:5,edit:true,unspecified:true});
+  await assert.rejects(submitMood(db,user,{day:state.day,mood:2,edit:true,unspecified:true}),/editar/);
+  assert.ok(!('current_mood' in await moodState(db,user)));
+  assert.ok(!('editable' in await moodState(db,user)));
   assert.equal((await db.query('select count(*)::int n from daily_moods')).rows[0].n,1);
   assert.equal((await departmentOverview(db)).find(d=>d.code==='others').score,null);
   const columns=(await db.query("select column_name from information_schema.columns where table_name='daily_moods'")).rows.map(r=>r.column_name);

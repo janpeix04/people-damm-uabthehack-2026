@@ -1,19 +1,26 @@
-# Estat d’ànim diari
+# Estat d’ànim: resposta separada del compte, sense edició
 
-Integració amb `main`: la vista corporativa resumeix avui; en seleccionar un centre es mostren els darrers 7 dies i la participació mitjana diària. El llindar exigeix almenys 10 participants acreditats: comptes diferents als comprovants privats o, per a dades històriques sense vincle d’edició, la cohort més gran d’un únic dia. No es sumen cohorts diàries per acreditar persones diferents. Les respostes repetides d’un grup petit durant la setmana no desbloquegen la nota.
+El treballador pot indicar com se sent una vegada al dia d’Europe/Madrid. La resposta és voluntària, no dona punts i no es pot recuperar ni editar des del compte. La pantalla permet triar la careta i confirmar abans d’enviar; després només mostra el comprovant de participació. El popup automàtic manté les cinc caretes i «Ara no».
 
-Adaptació selectiva de `feat/daily-checkin-worker-yellow` a `NewNew`: tema groc als espais del treballador, caretes SVG sense comentari, transicions de modals/preguntes/controls i accés permanent «Editar estat d’ànim» a la capçalera del treballador. La tria d’una cara desa immediatament.
+## Separació de dades
 
-Amb la migració `20261108220000_edit_daily_mood`, el comprovant privat conserva una referència a la resposta per permetre modificar-la. Aquesta referència no s’exposa a RRHH; l’API del treballador només retorna la seva cara actual i si és editable. L’edició substitueix la resposta del dia i no suma participació. Les respostes antigues no es vinculen retrospectivament i no són editables. La taula pública de respostes continua sense nom, usuari, moneder ni hora exacta; el comprovant privat sí permet relacionar la resposta amb el compte per donar suport a l’edició.
+- `public.daily_moods`: UUID aleatori, dia, centre, departament i careta. Sense usuari, moneder ni hora exacta.
+- `app_private.daily_mood_receipts`: només usuari i dia, per evitar respostes duplicades. Sense identificador de resposta, careta ni departament triat.
+- `POST /api/app/mood-state`: dia, departament assignat i si el compte ja ha participat. No retorna la resposta ni la careta.
+- `POST /api/app/mood`: accepta una resposta nova; un reintent no afegeix ni modifica res. Les peticions d’edició es rebutgen.
 
-Els treballadors veuen «Com et sents avui?» en entrar a l’app. Cinc caretes, resposta voluntària, una vegada per dia d’Europe/Madrid. «Ara no» tanca l’avís durant la sessió del navegador; la franja permet tornar-lo a obrir. Es comprova el canvi de dia amb la web oberta i en recuperar el focus.
+La migració `20261108250000_unlink_daily_mood` elimina el vincle tècnic `mood_id`, inclosos els vincles existents, preservant les respostes i els comprovants. Les migracions històriques d’edició es mantenen per reproduir l’esquema i acaben amb aquesta migració de separació.
 
-El centre i el departament provenen del compte al servidor. La persona pot seleccionar «Prefereixo no especificar el departament» per agregar la resposta a Altres, sense canviar l’assignació del compte. No s’atorguen punts ni recompenses.
+Centre i departament es resolen al servidor. Abans de respondre, la persona pot seleccionar Altres en lloc del departament assignat. Aquesta elecció només es guarda a la resposta; no al comprovant. Les dades de centre/dia/departament són quasiidentificadors: eliminar el vincle directe no és una garantia d’anonimat absolut davant inferències o accés privilegiat. La consulta de RRHH només mostra agregats amb el llindar mínim, mai la careta d’un compte.
 
-`POST /api/app/mood-state` consulta si s’ha respost avui; `POST /api/app/mood` rep `day`, `mood` (1–5) i `unspecified` (booleà). Només comptes de treballador autenticats, amb les proteccions CSRF existents. La transacció insereix un comprovant únic per usuari/dia i una resposta separada sense usuari, moneder ni hora exacta. Un duplicat no afegeix cap resposta.
+## Damm World
 
-Damm World i el mapa d’emocions consumeixen el resum de les respostes d’avui, filtrable per centre. No es barregen amb les enquestes anteriors. La mitjana transforma les caretes 1–5 a escala 0–10; els colors existents indiquen el resultat agregat. Amb menys de 10 respostes per departament i centre consultat, la nota i l’emoció queden ocultes. Cada dia comença sense resultats.
+La vista corporativa resumeix avui; un centre mostra els darrers set dies. Sense vincular respostes i comptes, no s’inventa un recompte de persones diferents al llarg de la setmana: per publicar la nota s’exigeix una cohort d’almenys deu respostes en un mateix dia, atès que el servidor permet una resposta per compte/dia. No se sumen participants diaris per superar aquest llindar.
 
-L’avís funciona dins la web. No hi ha push amb el navegador tancat, integració amb Teams ni planificació segons torns: falten els horaris de feina i la configuració del canal de notificacions.
+## Freqüència
 
-Validació: `node --test tests/09_departments.test.js tests/11_daily_mood.test.js`.
+L’estat d’ànim comparteix el límit d’un avís automàtic al dia amb els recordatoris de consultes. A «Estat d’ànim → Avisos i freqüència» es pot triar freqüència diària, setmanal o sense popup, i pausar els avisos. La participació manual continua disponible. Els avisos són dins la web: no s’han configurat push, Teams ni horaris de torn.
+
+## Validació
+
+`tests/11_daily_mood.test.js` verifica duplicats, agregació i bloqueig d’edició; `tests/14_mood_anonymity.test.js` verifica que s’elimina el vincle existent, que el comprovant només conserva usuari/dia i que una petició repetida no modifica ni duplica la resposta.

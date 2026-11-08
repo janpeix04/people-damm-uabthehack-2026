@@ -14,12 +14,11 @@ export async function departmentOverview(db,siteCode=null){
     from daily_moods m join sites s on s.id=m.site_id
     where m.day>(now() at time zone 'Europe/Madrid')::date-$2::int and m.day<=(now() at time zone 'Europe/Madrid')::date and ($1::text is null or s.code=$1)
   ), metrics as (
-    -- New receipts identify distinct participants privately. For older unlinked
-    -- answers, the largest single-day cohort is a safe lower bound because the
-    -- API accepts one answer per account/day. Never sum daily cohorts for privacy.
+    -- Without an identity/answer link, only the largest single-day cohort is a
+    -- lower bound for distinct participants. Never sum daily cohorts for privacy.
     select m.department_id,count(*)::int responses,avg((m.mood-1)*2.5) score,
-      greatest(count(distinct receipt.user_id),max(m.daily_count)) privacy_people
-    from daily m left join app_private.daily_mood_receipts receipt on receipt.mood_id=m.id
+      max(m.daily_count) privacy_people
+    from daily m
     group by m.department_id
   ) select d.code,d.name_ca name,
     (select count(*)::int from people p where p.department_id=d.id) headcount,

@@ -122,6 +122,9 @@ services:
       - ./supabase/migrations/20261108220000_edit_daily_mood.sql:/docker-entrypoint-initdb.d/17-edit-daily-mood.sql:ro
       - ./supabase/migrations/20261108210000_app_survey_any_locale.sql:/docker-entrypoint-initdb.d/18-app-survey-any-locale.sql:ro
       - ./supabase/migrations/20261108220000_point_grants.sql:/docker-entrypoint-initdb.d/19-point-grants.sql:ro
+      - ./supabase/migrations/20261108230000_listening_frequency.sql:/docker-entrypoint-initdb.d/20-listening-frequency.sql:ro
+      - ./supabase/migrations/20261108240000_restore_single_legacy_mood.sql:/docker-entrypoint-initdb.d/21-restore-single-legacy-mood.sql:ro
+      - ./supabase/migrations/20261108250000_unlink_daily_mood.sql:/docker-entrypoint-initdb.d/22-unlink-daily-mood.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-damm_pulse}"]
       interval: 10s

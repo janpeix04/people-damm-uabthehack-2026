@@ -5,6 +5,9 @@ import {appAction,hrPlazaAction} from './app.js';
 import {departmentOverview,siteList} from './departments.js';
 import {directoryOverview} from './directory.js';
 import {moodState,submitMood} from './mood.js';
+import {surveyAnalytics,analyticsCsv} from './analytics.js';
+import {representation,createReminder} from './representation.js';
+import {listeningAction} from './listening.js';
 import {login,currentUser,authorize,userWallet,sessionToken,sessionCookie,digest} from './auth.js';
 const pool=new pg.Pool({host:process.env.POSTGRES_HOST||'postgres',port:Number(process.env.POSTGRES_PORT||5432),database:process.env.POSTGRES_DB||'damm_pulse',user:process.env.POSTGRES_USER||'postgres',password:process.env.POSTGRES_PASSWORD});
 const secure=process.env.AUTH_COOKIE_SECURE==='true';
@@ -47,6 +50,20 @@ http.createServer(async(req,res)=>{
       res.statusCode=r.status;res.end(await r.text());return;
     }
     if(req.method==='GET'&&path==='/api/hr/surveys'){res.end(JSON.stringify(await listSurveys(db)));return;}
+    if(req.method==='GET'&&path==='/api/hr/representation'){
+      const query=new URL(req.url,'http://localhost').searchParams;
+      await db.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+      const data=await representation(db,query.get('survey')||'',query.get('site')||'');
+      await db.query('COMMIT');res.end(JSON.stringify(data));return;
+    }
+    if(req.method==='GET'&&['/api/hr/analytics','/api/hr/analytics.csv'].includes(path)){
+      await db.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+      const data=await surveyAnalytics(db,new URL(req.url,'http://localhost').searchParams);
+      const output=path.endsWith('.csv')?analyticsCsv(data):JSON.stringify(data);
+      await db.query('COMMIT');
+      if(path.endsWith('.csv')){res.setHeader('Content-Type','text/csv; charset=utf-8');res.setHeader('Content-Disposition','attachment; filename="damm-analytics.csv"');}
+      res.end(output);return;
+    }
     if(req.method==='GET'&&path==='/api/hr/departments'){const site=new URL(req.url,'http://localhost').searchParams.get('site');res.end(JSON.stringify(await departmentOverview(db,site&&/^[a-z0-9_]{2,60}$/.test(site)?site:site?'__invalid__':null)));return;}
     if(req.method==='GET'&&path==='/api/hr/sites'){res.end(JSON.stringify(await siteList(db)));return;}
     if(req.method==='GET'&&path==='/api/hr/directory'){res.end(JSON.stringify(await directoryOverview(db)));return;}
@@ -54,7 +71,9 @@ http.createServer(async(req,res)=>{
     await db.query('BEGIN');
     await db.query("select set_config('request.jwt.claim.sub',$1,true)",[user.id]);
     let data;
-    if(path==='/api/app/mood-state')data=await moodState(db,user);
+    if(path==='/api/app/listening')data=await listeningAction(db,user,body);
+    else if(path==='/api/hr/reminders')data=await createReminder(db,user,body);
+    else if(path==='/api/app/mood-state')data=await moodState(db,user);
     else if(path==='/api/app/mood')data=await submitMood(db,user,body);
     else if(path==='/api/hr/plaza')data=await hrPlazaAction(db,body,user);
     else if(path.startsWith('/api/app/'))data=await appAction(db,path.split('/').pop(),{...body,wallet:await userWallet(db,user)});
