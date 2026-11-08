@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Search, Sparkles } from 'lucide-react'
 import { AI_RECS, channelLabel, MOODS, zoneByKey } from '../../data/mock'
 import {useDepartments} from '../../api/departments'
@@ -6,7 +6,8 @@ import { useApp } from '../../store/AppContext'
 import { PlazaCard, fmt, Meter, PathIcon, MoodBadge } from '../../components/ui'
 
 export default function HRInici() {
-  const {departments,loading,error}=useDepartments()
+  const [params]=useSearchParams()
+  const {departments,loading,error}=useDepartments(params.get('centre')||null)
   const { hrSurveys: surveys, festa } = useApp()
   const open = surveys.filter(s => s.status === 'open')
   const kpis = [
