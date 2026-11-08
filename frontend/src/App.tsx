@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppProvider } from './store/AppContext'
 import { AuthProvider, RequireAuth, useAuth } from './store/AuthContext'
+import { I18nProvider, useT } from './i18n'
 import Login from './pages/public/Login'
 import HRLayout from './components/HRLayout'
 import WorkerLayout from './components/WorkerLayout'
@@ -23,8 +24,10 @@ const HRWorld = lazy(() => import('./pages/hr/World'))
 const HRPlaca = lazy(() => import('./pages/hr/Placa'))
 const WorkerPlaca = lazy(() => import('./pages/worker/Placa'))
 
-const Loading = () => (
-  <div className="min-h-[60vh] grid place-items-center px-6" role="status" aria-label="Carregant">
+function Loading() {
+  const t = useT()
+  return (
+  <div className="min-h-[60vh] grid place-items-center px-6" role="status" aria-label={t('common.loading')}>
     <div className="w-full max-w-sm rounded-[16px] border border-line bg-paper p-6 shadow-card">
       <div className="skeleton-bar h-4 w-24" />
       <div className="skeleton-bar mt-5 h-9 w-4/5" />
@@ -32,10 +35,11 @@ const Loading = () => (
       <div className="skeleton-bar mt-2 h-3 w-2/3" />
     </div>
   </div>
-)
+  )
+}
 
 export default function App() {
-  return <AuthProvider><AuthenticatedApp /></AuthProvider>
+  return <I18nProvider><AuthProvider><AuthenticatedApp /></AuthProvider></I18nProvider>
 }
 function AuthenticatedApp() {
   const {user}=useAuth()

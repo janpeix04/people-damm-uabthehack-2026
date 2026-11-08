@@ -424,6 +424,14 @@
   100% { visibility: visible; opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
+/* Selector d'idioma de la portada: apareix quan acaba la intro, com les targetes. */
+.people-lang { animation: people-lang-in 400ms var(--people-ease-out) 2.9s both; }
+@keyframes people-lang-in {
+  0% { visibility: hidden; opacity: 0; }
+  1% { visibility: visible; opacity: 0; }
+  100% { visibility: visible; opacity: 1; }
+}
+
 @keyframes people-card-in {
   0% { visibility: hidden; opacity: 0; transform: translate3d(0, 18px, 0); }
   1% { visibility: visible; opacity: 0; transform: translate3d(0, 18px, 0); }
@@ -517,5 +525,5 @@
   .people-logo-beer { transform: translate3d(0, 106%, 0); }
   .people-logo-foam, .people-logo-bubble, .people-logo-shine { display: none; }
   .people-intro { display: none; }
-  .people-options, .people-role-card { visibility: visible; opacity: 1; transform: none; }
+  .people-options, .people-role-card, .people-lang { visibility: visible; opacity: 1; transform: none; }
 }
