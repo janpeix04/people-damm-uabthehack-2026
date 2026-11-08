@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { ClipboardCheck, ClipboardList, Gift, Home, MessageCircle } from 'lucide-react'
+import { ClipboardCheck, ClipboardList, Gift, Heart, Home, MessageCircle } from 'lucide-react'
 import { cn, Logo } from './ui'
 import { useApp } from '../store/AppContext'
 import { SessionButton } from '../store/AuthContext'
@@ -12,6 +12,7 @@ const TABS: { to: string; label: string; Icon: typeof Home }[] = [
   { to: '/app', label: 'common.navHome', Icon: Home },
   { to: '/app/enquestes', label: 'common.navSurveys', Icon: ClipboardList },
   { to: '/app/placa', label: 'common.navPlaza', Icon: MessageCircle },
+  { to: '/app/estat-anim', label: 'Estat d’ànim', Icon: Heart },
   { to: '/app/recompenses', label: 'common.navRewards', Icon: Gift },
 ]
 
@@ -28,7 +29,7 @@ export default function WorkerLayout() {
   const answerNext = () => (pending.length ? nav(`/e/${pending[0].id}`) : toast(t('common.noPending')))
 
   return (
-    <div className={cn('worker-theme flex flex-col bg-cream', fullBleed ? 'h-[100dvh] overflow-hidden' : 'min-h-[100dvh]')}>
+    <DailyMood><div className={cn('worker-theme flex flex-col bg-cream', fullBleed ? 'h-[100dvh] overflow-hidden' : 'min-h-[100dvh]')}>
       <header className="sticky top-0 z-40 shrink-0 bg-paper/90 backdrop-blur border-b border-line">
         <div className="max-w-6xl mx-auto h-16 md:h-[72px] px-4 md:px-6 flex items-center gap-6">
           <Link to="/app" className="flex items-center gap-2.5 shrink-0" aria-label={t('common.homeAria')}>
@@ -56,7 +57,6 @@ export default function WorkerLayout() {
       </header>
       <div className="shrink-0 border-b border-line bg-paper px-4 md:px-6 py-2"><div className="max-w-6xl mx-auto flex items-center justify-between gap-3"><UserSite /><LanguageSegmented showLabel={false} className="md:hidden shrink-0 w-[132px]" /></div></div>
 
-      <div className="shrink-0"><DailyMood /></div>
       <main className={cn('flex-1 min-h-0', fullBleed ? 'overflow-hidden pb-[calc(76px+env(safe-area-inset-bottom,0px))] md:pb-0' : 'pb-[96px] md:pb-0')}>
         <div key={location.pathname} className="page-enter h-full"><Outlet /></div>
       </main>
@@ -73,7 +73,7 @@ export default function WorkerLayout() {
       </footer>
 
       <nav aria-label={t('common.nav')} className="md:hidden fixed inset-x-0 bottom-0 z-40 bg-paper border-t border-line" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-        <div className="max-w-[560px] mx-auto h-[76px] grid grid-cols-5 items-center px-1.5">
+        <div className="max-w-[560px] mx-auto h-[76px] grid grid-cols-6 items-center px-1.5">
           {TABS.slice(0, 2).map(t => <Tab key={t.to} {...t} />)}
           <button
             onClick={answerNext}
@@ -89,7 +89,7 @@ export default function WorkerLayout() {
           {TABS.slice(2).map(t => <Tab key={t.to} {...t} />)}
         </div>
       </nav>
-    </div>
+    </div></DailyMood>
   )
 }
 

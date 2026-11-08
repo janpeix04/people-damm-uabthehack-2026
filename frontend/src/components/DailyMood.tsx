@@ -1,4 +1,4 @@
-import {useCallback,useEffect,useState} from 'react'
+import {createContext,useContext,useCallback,useEffect,useState,type ReactNode} from 'react'
 import {Modal} from './ui'
 import {useAuth} from '../store/AuthContext'
 import {useApp} from '../store/AppContext'
@@ -19,7 +19,32 @@ const MOODS = [
   { value: 5, label: 'Molt bé', color: '#2F7A4E', soft: '#E6F2EA', mouth: 'M14 26 Q22 35 30 26' },
 ] as const
 
-export default function DailyMood(){
+type MoodContextValue={state:State|null;busy:boolean;error:string;unspecified:boolean;setUnspecified:(value:boolean)=>void;edit:()=>void;retry:()=>void}
+const MoodContext=createContext<MoodContextValue|null>(null)
+
+export function DailyMoodPage(){
+ const value=useContext(MoodContext)
+ if(!value)return null
+ const {state,busy,error,unspecified,setUnspecified,edit,retry}=value
+ const mood=MOODS.find(item=>item.value===state?.current_mood)
+ return <div className="max-w-2xl mx-auto px-4 py-8 md:py-12 flex flex-col gap-6">
+  <div><h1 className="serif text-3xl">El meu estat d’ànim</h1><p className="text-sm text-ink-muted mt-2">Comparteix com et sents avui. Pots modificar la resposta durant el mateix dia.</p></div>
+  <section className="card p-5 sm:p-6 flex flex-col gap-5">
+   <h2 className="serif text-2xl">Avui</h2>
+   {!state&&!error&&<p role="status">Carregant l’estat d’ànim…</p>}
+   {state&&<>
+    {mood?<div className="flex items-center gap-4"><svg width="64" height="64" viewBox="0 0 44 44" aria-hidden><circle cx="22" cy="22" r="20" fill={mood.color}/><circle cx="15.5" cy="18" r="2.2" fill="white"/><circle cx="28.5" cy="18" r="2.2" fill="white"/><path d={mood.mouth} stroke="white" strokeWidth="2.3" fill="none" strokeLinecap="round"/></svg><strong>{mood.label}</strong></div>:<p>{state.answered?'Ja has compartit el teu estat avui.':'Encara no has indicat com et sents avui.'}</p>}
+    <p className="text-sm">Departament: <strong>{unspecified?'Altres':state.department_name}</strong></p>
+    <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={unspecified} disabled={busy||state.answered&&!state.editable} onChange={event=>setUnspecified(event.target.checked)}/>Prefereixo no especificar el departament</label>
+    <p className="text-xs text-ink-muted">La selecció de departament es desa quan tries una careta. Damm World mostra resultats agregats amb almenys 10 respostes. Sense punts ni recompenses.</p>
+    {state.answered&&!state.editable?<p className="text-sm text-ink-muted">Aquesta resposta es va guardar abans d’activar l’edició. Podràs editar les respostes noves.</p>:<button className="btn-red self-start" disabled={busy} onClick={edit}>{state.answered?'Editar estat d’ànim':'Indicar estat d’ànim'}</button>}
+   </>}
+   {error&&<div role="alert" className="text-sm text-red-dk">{error}<button className="btn-line ml-2" onClick={retry}>Reintentar</button></div>}
+  </section>
+ </div>
+}
+
+export default function DailyMood({children}:{children:ReactNode}){
  const {user}=useAuth()
  const {toast}=useApp()
  const dismissKey=`mood-dismissed:${user?.id}`
@@ -31,13 +56,8 @@ export default function DailyMood(){
  },[dismissKey])
  useEffect(()=>{refresh();const timer=setInterval(refresh,60000);window.addEventListener('focus',refresh);document.addEventListener('visibilitychange',refresh);return()=>{clearInterval(timer);window.removeEventListener('focus',refresh);document.removeEventListener('visibilitychange',refresh)}},[refresh])
  const dismiss=()=>{if(state)sessionStorage.setItem(dismissKey,state.day);setOpen(false)}
- return <>
-  <div className="border-b border-line bg-paper px-4 py-2 text-sm flex flex-wrap justify-center items-center gap-3">
-   <span>{state?.answered?'El teu estat d’ànim d’avui': 'Com et sents avui?'}</span>
-   <button className="font-bold text-red-dk disabled:opacity-50" disabled={!!state?.answered&&!state.editable} title={state?.answered&&!state.editable?'Les respostes antigues no es poden editar. La de demà sí.':undefined} onClick={()=>{setOpen(true);if(!state)refresh()}}>{state?.answered?'Editar estat d’ànim':'Indicar estat d’ànim'}</button>
-   <details className="text-xs text-ink-muted"><summary className="cursor-pointer">Departament: {unspecified?'Altres':state?.department_name||'...'}</summary><label className="flex items-center gap-2 py-2"><input type="checkbox" checked={unspecified} disabled={busy} onChange={event=>setUnspecified(event.target.checked)}/>Prefereixo no especificar el departament</label></details>
-   {error&&!open&&<span role="alert" className="text-red-dk">{error}</span>}
-  </div>
+ return <MoodContext.Provider value={{state,busy,error,unspecified,setUnspecified,edit:()=>setOpen(true),retry:refresh}}>
+  {children}
   <Modal open={open} onClose={dismiss} title="Com et sents avui?">
    <div className="grid grid-cols-5 gap-1.5 sm:gap-2" aria-label="Estat d’ànim d’avui">
     {MOODS.map(item=><button key={item.value} type="button" disabled={busy||!state} aria-label={item.label} aria-pressed={state?.current_mood===item.value} className="mood-choice min-w-0 rounded-2xl border-2 px-1 py-3 grid place-items-center disabled:opacity-50" style={{background:item.soft,borderColor:state?.current_mood===item.value?item.color:'transparent'}} onClick={async()=>{
@@ -47,5 +67,5 @@ export default function DailyMood(){
    {error&&<p role="alert" className="text-sm text-red">{error}</p>}
    <button className="btn-line" disabled={busy} onClick={dismiss}>Ara no</button>
   </Modal>
- </>
+ </MoodContext.Provider>
 }

@@ -86,12 +86,14 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
   if (!rendered) return null
   return (
     <div data-open={visible} aria-hidden={!open||undefined} className="ui-modal-backdrop fixed inset-0 z-[90] grid place-items-center p-3 sm:p-4 bg-[rgba(25,15,10,.42)]" onMouseDown={e => e.target === e.currentTarget && onClose()} onKeyDown={e => e.key === 'Escape' && onClose()}>
-      <div ref={ref} data-open={visible} role="dialog" aria-modal="true" aria-label={title} className={cn('ui-modal-panel bg-paper rounded-[24px] shadow-lift w-full max-h-[calc(100%-24px)] overflow-y-auto scroll-thin p-6 flex flex-col gap-4', wide ? 'max-w-2xl' : 'max-w-[540px]')}>
-        <div className="flex justify-between items-center gap-3">
+      <div ref={ref} data-open={visible} role="dialog" aria-modal="true" aria-label={title} className={cn('ui-modal-panel bg-paper rounded-[24px] shadow-lift w-full max-h-[calc(100dvh-2rem)] overflow-hidden p-2 flex flex-col', wide ? 'max-w-2xl' : 'max-w-[540px]')}>
+        <div className="shrink-0 flex justify-between items-center gap-3 px-4 pt-4 pb-4">
           <h2 className="serif text-[28px] leading-tight">{title}</h2>
-          <button className="w-11 h-11 rounded-[14px] bg-cream grid place-items-center" onClick={onClose} aria-label={t('common.close')}><X size={20} /></button>
+          <button className="shrink-0 w-11 h-11 rounded-[14px] bg-cream grid place-items-center" onClick={onClose} aria-label={t('common.close')}><X size={20} /></button>
         </div>
-        {children}
+        <div className="min-h-0 overflow-y-auto overscroll-contain scroll-thin px-4 pb-4 flex flex-col gap-4">
+          {children}
+        </div>
       </div>
     </div>
   )

@@ -1,3 +1,4 @@
+import {DailyMoodPage} from './components/DailyMood'
 import { lazy, Suspense } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppProvider } from './store/AppContext'
@@ -67,6 +68,7 @@ function AuthenticatedApp() {
               <Route index element={<WorkerInici />} />
               <Route path="enquestes" element={<WorkerEnquestes />} />
               <Route path="placa" element={<WorkerPlaca />} />
+              <Route path="estat-anim" element={<DailyMoodPage />} />
               <Route path="recompenses" element={<Recompenses />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
