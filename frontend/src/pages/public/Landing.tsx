@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
+import { LanguageSegmented } from '../../components/LanguageSwitcher'
+import { useT } from '../../i18n'
 
 const BUBBLES = [
   ['8%', '8px', '1.8s', '-.4s', '-8px'],
@@ -43,8 +45,12 @@ function AnimatedPeopleLogo() {
 
 /** Accés als espais de People Damm. */
 export default function Landing() {
+  const t = useT()
   return (
     <main className="people-access min-h-[100dvh] overflow-x-hidden bg-cream text-ink">
+      <div className="people-lang fixed top-3 right-3 sm:top-5 sm:right-5 z-[70] rounded-[12px] bg-paper/90 backdrop-blur border border-line shadow-card p-1">
+        <LanguageSegmented showLabel={false} className="w-[132px]" />
+      </div>
       <div className="people-intro" aria-hidden="true">
         <div className="people-intro-glow" />
         <AnimatedPeopleLogo />
@@ -56,7 +62,7 @@ export default function Landing() {
           <img src="/logo-people-damm.png" alt="People Damm" width="1665" height="944" draggable={false} />
         </header>
 
-        <nav className="people-options-grid" aria-label="Accessos de People Damm">
+        <nav className="people-options-grid" aria-label={t('home.landingNavAria')}>
           <Link to="/rrhh" className="people-role-card people-role-card--rrhh" style={{ '--card-delay': '2.68s' } as CSSProperties}>
             <span className="people-role-visual" aria-hidden="true">
               <span className="people-role-halo" />
@@ -64,12 +70,12 @@ export default function Landing() {
             </span>
 
             <span className="people-role-copy">
-              <strong className="people-role-title" aria-label="Portal RRHH">
-                <span>Portal</span>
-                <span>RRHH</span>
+              <strong className="people-role-title" aria-label={t('home.landingHrAria')}>
+                <span>{t('home.landingHrTitle1')}</span>
+                <span>{t('home.landingHrTitle2')}</span>
               </strong>
               <span className="people-role-action">
-                Gestionar persones i equips
+                {t('home.landingHrAction')}
                 <ArrowRight className="people-role-arrow" size={22} strokeWidth={2} aria-hidden="true" />
               </span>
             </span>
@@ -82,12 +88,12 @@ export default function Landing() {
             </span>
 
             <span className="people-role-copy">
-              <strong className="people-role-title people-role-title--worker" aria-label="App del treballador">
-                <span>App del</span>
-                <span>treballador</span>
+              <strong className="people-role-title people-role-title--worker" aria-label={t('home.landingWorkerAria')}>
+                <span>{t('home.landingWorkerTitle1')}</span>
+                <span>{t('home.landingWorkerTitle2')}</span>
               </strong>
               <span className="people-role-action">
-                Participar, compartir i bescanviar punts
+                {t('home.landingWorkerAction')}
                 <ArrowRight className="people-role-arrow" size={22} strokeWidth={2} aria-hidden="true" />
               </span>
             </span>

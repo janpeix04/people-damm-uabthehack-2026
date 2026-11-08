@@ -2,9 +2,10 @@ import { useEffect, useRef, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { MOODS } from '../data/mock'
 import type { Mood } from '../data/types'
+import { getLocale, useT } from '../i18n'
 
 export const cn = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
-export const fmt = (n: number, d = 1) => n.toLocaleString('ca-ES', { minimumFractionDigits: d, maximumFractionDigits: d })
+export const fmt = (n: number, d = 1) => n.toLocaleString(getLocale(), { minimumFractionDigits: d, maximumFractionDigits: d })
 
 /** Logotip de People Damm. `light` el mostra en blanc sobre fons de color. */
 export function Logo({ size = 'md', light, className }: { size?: 'sm' | 'md' | 'lg' | 'full'; light?: boolean; className?: string }) {
@@ -54,7 +55,8 @@ export function Meter({ value, className, thin }: { value: number; className?: s
 
 /** Accés informatiu a les opinions, sense seguiment de participació. */
 export function PlazaCard() {
-  return <section className="card flex flex-col gap-2 p-5"><h2 className="serif text-[21px]">La Plaça</h2><p className="text-sm text-ink-muted">Un espai per compartir opinions i idees voluntàriament, sense punts ni recompenses. La barra de cerveses està sempre oberta.</p></section>
+  const t = useT()
+  return <section className="card flex flex-col gap-2 p-5"><h2 className="serif text-[21px]">{t('common.plazaCardTitle')}</h2><p className="text-sm text-ink-muted">{t('common.plazaCardBody')}</p></section>
 }
 
 export function PrivacyNote({ children, className }: { children: ReactNode; className?: string }) {
@@ -68,6 +70,7 @@ export function PrivacyNote({ children, className }: { children: ReactNode; clas
 
 export function Modal({ open, onClose, title, children, wide }: { open: boolean; onClose: () => void; title: string; children: ReactNode; wide?: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
+  const t = useT()
   useEffect(() => {
     if (!open) return
     const prev = document.activeElement as HTMLElement | null
@@ -80,7 +83,7 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
       <div ref={ref} role="dialog" aria-modal="true" aria-label={title} className={cn('bg-paper rounded-[24px] shadow-lift w-full max-h-[calc(100%-24px)] overflow-y-auto scroll-thin p-6 flex flex-col gap-4', wide ? 'max-w-2xl' : 'max-w-[540px]')}>
         <div className="flex justify-between items-center gap-3">
           <h2 className="serif text-[28px] leading-tight">{title}</h2>
-          <button className="w-11 h-11 rounded-[14px] bg-cream grid place-items-center" onClick={onClose} aria-label="Tancar"><X size={20} /></button>
+          <button className="w-11 h-11 rounded-[14px] bg-cream grid place-items-center" onClick={onClose} aria-label={t('common.close')}><X size={20} /></button>
         </div>
         {children}
       </div>
@@ -88,12 +91,13 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
   )
 }
 
+/** El primer element és la clau i18n de l'etiqueta: fes servir `t(FACES[i][0])`. */
 export const FACES: [string, string, string][] = [
-  ['Molt bé', '#D7F0DE', 'M13 26 Q22 35 31 26'],
-  ['Bé', '#E8F6EC', 'M15 27 Q22 31 29 27'],
-  ['Normal', '#F1EEE8', 'M15 29 L29 29'],
-  ['Malament', '#FBEEDD', 'M15 30 Q22 27 29 30'],
-  ['Molt malament', '#FBE3E6', 'M14 31 Q22 24 30 31'],
+  ['common.faceVeryGood', '#D7F0DE', 'M13 26 Q22 35 31 26'],
+  ['common.faceGood', '#E8F6EC', 'M15 27 Q22 31 29 27'],
+  ['common.faceNormal', '#F1EEE8', 'M15 29 L29 29'],
+  ['common.faceBad', '#FBEEDD', 'M15 30 Q22 27 29 30'],
+  ['common.faceVeryBad', '#FBE3E6', 'M14 31 Q22 24 30 31'],
 ]
 export function Face({ i, size = 40 }: { i: number; size?: number }) {
   const f = FACES[i]
@@ -111,8 +115,9 @@ export function StatusChip({ status }: { status: string }) {
   const map: Record<string, string> = {
     open: 'bg-ok-bg text-ok-ink', scheduled: 'bg-red-soft text-red-dk', draft: 'bg-cream-dk text-ink-soft', closed: 'bg-fog-bg text-fog',
   }
-  const label: Record<string, string> = { open: 'Oberta', scheduled: 'Programada', draft: 'Esborrany', closed: 'Tancada' }
-  return <span className={cn('chip', map[status])}>{label[status] ?? status}</span>
+  const t = useT()
+  const label: Record<string, string> = { open: 'common.statusOpen', scheduled: 'common.statusScheduled', draft: 'common.statusDraft', closed: 'common.statusClosed' }
+  return <span className={cn('chip', map[status])}>{label[status] ? t(label[status]) : status}</span>
 }
 
 export const toneBg = (t: 'pos' | 'neg' | 'neu') => (t === 'pos' ? '#E3ECF8' : t === 'neg' ? '#FBEEDD' : '#EFE9E1')

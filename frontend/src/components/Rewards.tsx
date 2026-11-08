@@ -3,6 +3,7 @@ import { Gift, Info } from 'lucide-react'
 import { AppApiError, ERROR_MESSAGES } from '../api/app'
 import { POINTS_PER_SURVEY, useApp } from '../store/AppContext'
 import { cn, Modal, PathIcon } from './ui'
+import { useT } from '../i18n'
 
 export function PointsCard({ className }: { className?: string }) {
   const { points, redeemed, rewards } = useApp()
@@ -37,6 +38,7 @@ export function RewardsNote() {
 /** Catàleg de recompenses amb bescanvi i llista de codis. */
 export function RewardsCatalog({ limit, className }: { limit?: number; className?: string }) {
   const { points, redeemReward, redeemed, rewards, toast } = useApp()
+  const t = useT()
   const [code, setCode] = useState<{ name: string; code: string } | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const list = limit ? rewards.slice(0, limit) : rewards
@@ -65,7 +67,7 @@ export function RewardsCatalog({ limit, className }: { limit?: number; className
               <div className="p-4 sm:p-5 flex flex-col gap-2 flex-1">
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="serif text-[21px] sm:text-[23px] font-bold leading-tight">{r.name}</h3>
-                  <div className="text-sm font-extrabold text-red-dk whitespace-nowrap pt-1">{r.cost} punts</div>
+                  <div className="text-sm font-extrabold text-red-dk whitespace-nowrap pt-1">{t('home.points', { count: r.cost })}</div>
                 </div>
                 <p className="text-[13.5px] leading-relaxed text-ink-muted flex-1">{r.description}</p>
                 <button
@@ -73,21 +75,21 @@ export function RewardsCatalog({ limit, className }: { limit?: number; className
                   onClick={() => redeem(r)}
                   className={ok ? 'btn-red !h-11 !text-sm mt-1' : 'btn !h-11 !text-sm mt-1 bg-cream-dk text-ink-muted !opacity-100'}
                 >
-                  {busy === r.id ? 'Bescanviant…' : ok ? 'Bescanviar' : `Et falten ${r.cost - points}`}
+                  {busy === r.id ? t('home.redeeming') : ok ? t('home.redeem') : t('home.missingPoints', { n: r.cost - points })}
                 </button>
               </div>
             </article>
           )
         })}
       </div>
-      <Modal open={!!code} onClose={() => setCode(null)} title="Bescanviat!">
-        <p className="text-ink-muted">Mostra aquest codi a la cafeteria per obtenir: <strong className="text-ink">{code?.name}</strong>.</p>
+      <Modal open={!!code} onClose={() => setCode(null)} title={t('home.redeemed')}>
+        <p className="text-ink-muted">{t('home.showCode')}<strong className="text-ink">{code?.name}</strong>.</p>
         <div className="serif text-[40px] text-center tracking-widest bg-cream rounded-[16px] py-4">{code?.code}</div>
-        <button className="btn-ink" onClick={() => setCode(null)}>Fet</button>
+        <button className="btn-ink" onClick={() => setCode(null)}>{t('home.done')}</button>
       </Modal>
       {!limit && redeemed.length > 0 && (
         <section className="card p-4 sm:p-5">
-          <h2 className="serif text-xl mb-2">Els teus codis</h2>
+          <h2 className="serif text-xl mb-2">{t('home.yourCodes')}</h2>
           {redeemed.map(r => (
             <div key={r.code} className="flex justify-between gap-3 text-sm py-2 border-t border-cream-dk first:border-0">
               <span>{r.name}</span><strong className="tabular-nums tracking-wider">{r.code}</strong>

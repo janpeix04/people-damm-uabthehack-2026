@@ -2,10 +2,12 @@ import { Link } from 'react-router-dom'
 import { Check, ChevronRight, Clock } from 'lucide-react'
 import type { Survey } from '../../data/types'
 import { POINTS_PER_SURVEY, useApp } from '../../store/AppContext'
+import { getLocale, useT } from '../../i18n'
 
-const fmtDate = (d: string) => new Date(d).toLocaleDateString('ca-ES', { day: 'numeric', month: 'short' })
+const fmtDate = (d: string) => new Date(d).toLocaleDateString(getLocale(), { day: 'numeric', month: 'short' })
 
 export function SurveyCard({ s }: { s: Survey }) {
+  const t = useT()
   const secs = Math.max(30, s.questions.reduce((a, q) => a + q.secs, 0))
   return (
     <Link to={`/e/${s.id}`} className={'card p-4 md:p-5 flex gap-4 items-center hover:shadow-card transition'}>
@@ -15,12 +17,12 @@ export function SurveyCard({ s }: { s: Survey }) {
       <span className="flex-1 min-w-0 flex flex-col gap-1">
         <strong className="text-[15px] md:text-base leading-snug">{s.title}</strong>
         <span className="text-[13px] text-ink-muted flex flex-wrap gap-x-3">
-          <span>{s.questions.length} preguntes</span>
+          <span>{t('home.questions', { count: s.questions.length })}</span>
           <span>≈ {secs} s</span>
-          <span>Tanca el {fmtDate(s.closesAt)}</span>
+          <span>{t('home.closesOn', { date: fmtDate(s.closesAt) })}</span>
         </span>
       </span>
-      <span className="hidden sm:inline-flex chip bg-ink text-white">+{POINTS_PER_SURVEY} punts</span>
+      <span className="hidden sm:inline-flex chip bg-ink text-white">{t('home.pointsPlus', { count: POINTS_PER_SURVEY })}</span>
       <ChevronRight size={18} className="text-ink-muted shrink-0" aria-hidden />
     </Link>
   )
