@@ -298,102 +298,113 @@ insert into public.campaigns (
   max_duration_seconds, privacy_threshold, target_population, opens_at, closes_at,
   created_by, approved_by, approved_by_label, approved_at, published_at
 ) values
-  ('pols-torns-novembre', 'Pols sobre torns i organització',
-   'Entendre com afecta el nou sistema de torns i quins ajustos cal prioritzar.',
-   'Microconsulta de menys de dos minuts per a tots els col·lectius.',
+  ('seguretat-industrial', 'Seguretat i Prevenció de Riscos a Planta',
+   'Auditoria de seguretat, EPIs, climatització i protocols operatius.',
+   'Diagnòstic de condicions ergonòmiques, equips de protecció i detecció de riscos.',
    array['rendiment individual', 'salut diagnosticada'], 'published',
-   '{"collectives":["fabriques","logistica","comercial","oficines"]}',
-   110, 10, 727, '2026-11-02 08:00+01', '2026-11-23 23:00+01',
+   '{"hr":{"zones":["envasat","logistica","coccio","malta","fermentacio","manteniment"],"channels":["qr","app","teams"],"locale":"ca","dimensions":{"q1":"Seguretat","q2":"EPIs","q3":"Prevenció","q4":"Condicions","q5":"Riscos"}}}',
+   53, 10, 332, '2026-10-20 08:00+02', '2026-11-15 23:00+01',
    '00000000-0000-4000-a000-000000000001'::uuid,
    '00000000-0000-4000-a000-000000000001'::uuid,
-   'Direcció de People & ESG (RRHH)', '2026-10-30 10:00+01', '2026-11-02 08:00+01'),
-  ('pols-clima-octubre', 'Pols de clima d’octubre',
-   'Mesurar benestar, lideratge i recursos abans del canvi de torns.',
-   'Període històric sintètic per comparar tendències.',
-   array['rendiment individual'], 'closed', '{}',
-   105, 10, 727, '2026-10-01 08:00+02', '2026-10-18 23:00+02',
+   'Direcció de People & ESG (RRHH)', '2026-10-18 10:00+02', '2026-10-20 08:00+02'),
+  ('pols-novembre', 'Pols mensual · Novembre 2026',
+   'Seguiment periòdic del benestar, descans i comunicació a fàbriques i oficines.',
+   'Enquesta periòdica general amb indicador de satisfacció, comunicació interna i suport.',
+   array['rendiment individual', 'salut diagnosticada'], 'published',
+   '{"hr":{"zones":["envasat","logistica","coccio","malta","fermentacio","oficines","comercial","manteniment"],"channels":["qr","app","teams","placa","world"],"locale":"ca"}}',
+   65, 10, 727, '2026-11-01 08:00+01', '2026-11-20 23:00+01',
    '00000000-0000-4000-a000-000000000001'::uuid,
    '00000000-0000-4000-a000-000000000001'::uuid,
-   'Direcció de People & ESG (RRHH)', '2026-09-29 10:00+02', '2026-10-01 08:00+02'),
-  ('seguiment-desembre', 'Seguiment de torns i descansos',
-   'Comprovar si les accions de novembre milloren la previsibilitat i els descansos.',
-   'Borrador de seguiment: encara no s’ha publicat.',
-   array['rendiment individual'], 'review', '{"collectives":["fabriques","logistica"]}',
-   75, 10, 512, null, null,
-   '00000000-0000-4000-a000-000000000002'::uuid,
-   null, null, null, null)
+   'Direcció de People & ESG (RRHH)', '2026-10-28 10:00+01', '2026-11-01 08:00+01'),
+  ('torns', 'Torns, Descans i Conciliació a Planta',
+   'Avaluar l’impacte dels torns rotatius de 8h i els temps de recuperació física.',
+   'Enquesta centrada en les línies de producció i magatzem sobre calendaris i sobrecàrrega.',
+   array['rendiment individual'], 'published',
+   '{"hr":{"zones":["envasat","logistica","coccio"],"channels":["qr","app","teams","placa"],"locale":"ca"}}',
+   58, 10, 347, '2026-11-04 08:00+01', '2026-11-25 23:00+01',
+   '00000000-0000-4000-a000-000000000001'::uuid,
+   '00000000-0000-4000-a000-000000000001'::uuid,
+   'Direcció de People & ESG (RRHH)', '2026-11-02 10:00+01', '2026-11-04 08:00+01'),
+  ('conciliacio-oficines', 'Flexibilitat, Eines Digitals i Oficines',
+   'Mesurar la conciliació en el model híbrid i la reducció de reunions.',
+   'Enquesta enfocada a la seu central, finances, màrqueting, IT i equips comercials.',
+   array['rendiment individual'], 'published',
+   '{"hr":{"zones":["oficines","comercial"],"channels":["teams","email","app"],"locale":"ca"}}',
+   57, 10, 215, '2026-10-25 08:00+02', '2026-11-18 23:00+01',
+   '00000000-0000-4000-a000-000000000001'::uuid,
+   '00000000-0000-4000-a000-000000000001'::uuid,
+   'Direcció de People & ESG (RRHH)', '2026-10-23 10:00+02', '2026-10-25 08:00+02'),
+  ('onboarding-talent', 'Experiència d’Acollida i Onboarding',
+   'Acompanyament i valoració de les incorporacions dels darrers mesos.',
+   'Enquesta breu als nous membres sobre rebuda, tutorització i recursos inicials.',
+   array['rendiment individual'], 'published',
+   '{"hr":{"zones":["envasat","logistica","coccio","oficines","comercial"],"channels":["app","teams","email","qr"],"locale":"ca"}}',
+   55, 10, 148, '2026-10-15 08:00+02', '2026-11-30 23:00+01',
+   '00000000-0000-4000-a000-000000000001'::uuid,
+   '00000000-0000-4000-a000-000000000001'::uuid,
+   'Direcció de People & ESG (RRHH)', '2026-10-13 10:00+02', '2026-10-15 08:00+02')
 on conflict (slug) do nothing;
 
 insert into public.questionnaire_versions (
   campaign_id, version, status, estimated_seconds, generated_by_ai,
   generation_rationale, approved_by, approved_by_label, approved_at
 )
-select c.id, 1,
-       case when c.slug = 'seguiment-desembre' then 'draft'::public.questionnaire_status else 'published'::public.questionnaire_status end,
-       case when c.slug = 'seguiment-desembre' then 65 else 95 end,
-       true,
+select c.id, 1, 'published'::public.questionnaire_status, c.max_duration_seconds, true,
        'Preguntes breus adaptades als canals mòbil, QR i Teams; revisades per una persona de RRHH.',
-       case when c.slug = 'seguiment-desembre' then null else '00000000-0000-4000-a000-000000000001'::uuid end,
-       case when c.slug = 'seguiment-desembre' then null else 'Direcció de People & ESG (RRHH)' end,
-       case when c.slug = 'seguiment-desembre' then null else '2026-09-29 11:00+02'::timestamptz end
+       '00000000-0000-4000-a000-000000000001'::uuid, 'Direcció de People & ESG (RRHH)', c.approved_at
 from public.campaigns c
-where c.slug in ('pols-torns-novembre', 'pols-clima-octubre', 'seguiment-desembre')
+where c.slug in ('seguretat-industrial', 'pols-novembre', 'torns', 'conciliacio-oficines', 'onboarding-talent')
 on conflict (campaign_id, version) do nothing;
 
 insert into public.questionnaire_translations (
   questionnaire_version_id, locale, title, introduction, closing_message, transparency_notice
 )
-select qv.id, t.locale, t.title, t.introduction, t.closing_message, t.transparency_notice
+select qv.id, 'ca', c.name, c.context, 'Gràcies. Tornarem amb el que hem après i què farem.', 'Les respostes són sintètiques i només es mostren agregades amb 10 o més persones.'
 from public.questionnaire_versions qv
 join public.campaigns c on c.id = qv.campaign_id
-cross join lateral (values
-  ('ca', 'Com estem vivint la feina?', 'Sis preguntes. Menys de dos minuts.', 'Gràcies. Tornarem amb el que hem après i què farem.', 'Les respostes són sintètiques i només es mostren agregades amb 10 o més persones.'),
-  ('es', '¿Cómo estamos viviendo el trabajo?', 'Seis preguntas. Menos de dos minutos.', 'Gracias. Volveremos con lo aprendido y lo que haremos.', 'Las respuestas son sintéticas y solo se muestran agregadas con 10 o más personas.'),
-  ('en', 'How is work feeling?', 'Six questions. Less than two minutes.', 'Thank you. We will share what we learned and what happens next.', 'Responses are synthetic and only shown in groups of 10 or more.')
-) as t(locale, title, introduction, closing_message, transparency_notice)
-where c.slug in ('pols-torns-novembre', 'pols-clima-octubre', 'seguiment-desembre')
+where c.slug in ('seguretat-industrial', 'pols-novembre', 'torns', 'conciliacio-oficines', 'onboarding-talent')
 on conflict (questionnaire_version_id, locale) do nothing;
 
 with question_templates(stable_key, position, dimension_code, question_type, scale_min, scale_max) as (values
-  ('benestar_general', 1::smallint, 'benestar', 'scale'::public.question_type, 1::smallint, 5::smallint),
-  ('acompanyament', 2::smallint, 'lideratge', 'scale'::public.question_type, 1::smallint, 5::smallint),
-  ('creixement', 3::smallint, 'desenvolupament', 'scale'::public.question_type, 1::smallint, 5::smallint),
-  ('orgull', 4::smallint, 'cultura', 'scale'::public.question_type, 1::smallint, 5::smallint),
-  ('recursos', 5::smallint, 'condicions', 'scale'::public.question_type, 1::smallint, 5::smallint),
-  ('comentari', 6::smallint, 'entorn', 'open_text'::public.question_type, null::smallint, null::smallint)
+  ('q1', 1::smallint, 'benestar', 'scale'::public.question_type, 1::smallint, 5::smallint),
+  ('q2', 2::smallint, 'lideratge', 'scale'::public.question_type, 1::smallint, 5::smallint),
+  ('q3', 3::smallint, 'desenvolupament', 'scale'::public.question_type, 1::smallint, 5::smallint),
+  ('q4', 4::smallint, 'cultura', 'scale'::public.question_type, 1::smallint, 5::smallint),
+  ('q5', 5::smallint, 'condicions', 'scale'::public.question_type, 1::smallint, 5::smallint),
+  ('q6', 6::smallint, 'entorn', 'open_text'::public.question_type, null::smallint, null::smallint)
 )
 insert into public.questions (
   questionnaire_version_id, dimension_id, stable_key, position, question_type,
   required, scale_min, scale_max
 )
 select qv.id, wd.id, qt.stable_key, qt.position, qt.question_type,
-       qt.stable_key <> 'comentari', qt.scale_min, qt.scale_max
+       qt.stable_key <> 'q6', qt.scale_min, qt.scale_max
 from public.questionnaire_versions qv
 join public.campaigns c on c.id = qv.campaign_id
 cross join question_templates qt
 join public.wellbeing_dimensions wd on wd.code = qt.dimension_code
-where c.slug in ('pols-torns-novembre', 'pols-clima-octubre', 'seguiment-desembre')
+where c.slug in ('seguretat-industrial', 'pols-novembre', 'torns', 'conciliacio-oficines', 'onboarding-talent')
 on conflict (questionnaire_version_id, stable_key) do nothing;
 
 with translations(stable_key, locale, prompt, help_text) as (values
-  ('benestar_general', 'ca', 'Com valores el teu benestar a la feina aquesta setmana?', 'De molt baix a molt alt'),
-  ('benestar_general', 'es', '¿Cómo valoras tu bienestar en el trabajo esta semana?', 'De muy bajo a muy alto'),
-  ('benestar_general', 'en', 'How would you rate your wellbeing at work this week?', 'From very low to very high'),
-  ('acompanyament', 'ca', 'Reps la informació i l’acompanyament que necessites?', null),
-  ('acompanyament', 'es', '¿Recibes la información y el apoyo que necesitas?', null),
-  ('acompanyament', 'en', 'Do you get the information and support you need?', null),
-  ('creixement', 'ca', 'Tens oportunitats reals d’aprendre i créixer?', null),
-  ('creixement', 'es', '¿Tienes oportunidades reales de aprender y crecer?', null),
-  ('creixement', 'en', 'Do you have real opportunities to learn and grow?', null),
-  ('orgull', 'ca', 'Et sents part de Damm i del que representa?', null),
-  ('orgull', 'es', '¿Te sientes parte de Damm y de lo que representa?', null),
-  ('orgull', 'en', 'Do you feel part of Damm and what it stands for?', null),
-  ('recursos', 'ca', 'Tens els recursos i l’organització necessaris per treballar bé?', null),
-  ('recursos', 'es', '¿Tienes los recursos y la organización necesarios para trabajar bien?', null),
-  ('recursos', 'en', 'Do you have the resources and organisation needed to work well?', null),
-  ('comentari', 'ca', 'Què canviaria més el teu dia a dia?', 'No incloguis noms ni dades personals.'),
-  ('comentari', 'es', '¿Qué cambiaría más tu día a día?', 'No incluyas nombres ni datos personales.'),
-  ('comentari', 'en', 'What one change would most improve your day?', 'Do not include names or personal information.')
+  ('q1', 'ca', 'Com valores el teu benestar a la feina aquesta setmana?', 'De molt baix a molt alt'),
+  ('q1', 'es', '¿Cómo valoras tu bienestar en el trabajo esta semana?', 'De muy bajo a muy alto'),
+  ('q1', 'en', 'How would you rate your wellbeing at work this week?', 'From very low to very high'),
+  ('q2', 'ca', 'Reps la informació i l’acompanyament que necessites?', null),
+  ('q2', 'es', '¿Recibes la información y el apoyo que necesitas?', null),
+  ('q2', 'en', 'Do you get the information and support you need?', null),
+  ('q3', 'ca', 'Tens oportunitats reals d’aprendre i créixer?', null),
+  ('q3', 'es', '¿Tienes oportunidades reales de aprender y crecer?', null),
+  ('q3', 'en', 'Do you have real opportunities to learn and grow?', null),
+  ('q4', 'ca', 'Et sents part de Damm i del que representa?', null),
+  ('q4', 'es', '¿Te sientes parte de Damm y de lo que representa?', null),
+  ('q4', 'en', 'Do you feel part of Damm and what it stands for?', null),
+  ('q5', 'ca', 'Tens els recursos i l’organització necessaris per treballar bé?', null),
+  ('q5', 'es', '¿Tienes los recursos y la organización necesarios para trabajar bien?', null),
+  ('q5', 'en', 'Do you have the resources and organisation needed to work well?', null),
+  ('q6', 'ca', 'Què canviaria més el teu dia a dia?', 'No incloguis noms ni dades personals.'),
+  ('q6', 'es', '¿Qué cambiaría más tu día a día?', 'No incluyas nombres ni datos personales.'),
+  ('q6', 'en', 'What one change would most improve your day?', 'Do not include names or personal information.')
 )
 insert into public.question_translations (question_id, locale, prompt, help_text)
 select q.id, t.locale, t.prompt, t.help_text
@@ -407,24 +418,21 @@ insert into public.audience_assignments (
 )
 select c.id, sp.id, sp.preferred_channel, sp.preferred_locale,
        case
-         when c.slug = 'pols-clima-octubre' and substring(sp.synthetic_code from 5)::integer <= 310 then 'responded'::public.assignment_status
-         when c.slug = 'pols-torns-novembre' and substring(sp.synthetic_code from 5)::integer <= 349 then 'responded'::public.assignment_status
+         when substring(sp.synthetic_code from 5)::integer <= 245 then 'responded'::public.assignment_status
          else 'invited'::public.assignment_status
        end,
        case
-         when c.slug = 'pols-clima-octubre' and substring(sp.synthetic_code from 5)::integer <= 310 then null
-         when c.slug = 'pols-torns-novembre' and substring(sp.synthetic_code from 5)::integer <= 349 then null
+         when substring(sp.synthetic_code from 5)::integer <= 245 then null
          else extensions.digest('demo-' || c.slug || '-' || sp.synthetic_code || '-2026', 'sha256')
        end,
-       case when c.slug = 'pols-clima-octubre' then '2026-10-01 09:00+02'::timestamptz else '2026-11-02 09:00+01'::timestamptz end,
+       '2026-10-20 09:00+02'::timestamptz,
        case
-         when c.slug = 'pols-clima-octubre' and substring(sp.synthetic_code from 5)::integer <= 310 then '2026-10-10 12:00+02'::timestamptz
-         when c.slug = 'pols-torns-novembre' and substring(sp.synthetic_code from 5)::integer <= 349 then '2026-11-06 12:00+01'::timestamptz
+         when substring(sp.synthetic_code from 5)::integer <= 245 then '2026-10-28 12:00+02'::timestamptz
          else null
        end
 from public.campaigns c
 cross join public.synthetic_people sp
-where c.slug in ('pols-torns-novembre', 'pols-clima-octubre')
+where c.slug = 'seguretat-industrial'
 on conflict (campaign_id, synthetic_person_id) do nothing;
 
 with selected_people as (
@@ -434,11 +442,11 @@ with selected_people as (
   join public.departments d on d.id = sp.department_id
 ), campaign_samples as (
   select c.id as campaign_id, c.slug, qv.id as questionnaire_version_id,
-         sp.*, case when c.slug = 'pols-clima-octubre' then date '2026-10-01' else date '2026-11-01' end as period_start
+         sp.*, date '2026-10-01' as period_start
   from public.campaigns c
   join public.questionnaire_versions qv on qv.campaign_id = c.id and qv.status = 'published'
-  join selected_people sp on sp.rn <= case when c.slug = 'pols-clima-octubre' then 310 else 349 end
-  where c.slug in ('pols-torns-novembre', 'pols-clima-octubre')
+  join selected_people sp on sp.rn <= 245
+  where c.slug = 'seguretat-industrial'
 )
 insert into public.survey_responses (
   campaign_id, questionnaire_version_id, submitted_at, period_start, channel, locale,
@@ -472,7 +480,6 @@ select sr.id, q.question_id,
            when 'oficines' then 3 + (extract(day from sr.submitted_at)::int % 3)
            else 3 + (extract(day from sr.submitted_at)::int % 2)
          end
-         + case when sr.period_start = date '2026-10-01' then 1 else 0 end
        ))::numeric
 from public.survey_responses sr
 join public.departments d on d.id = sr.department_id
@@ -485,18 +492,10 @@ with open_questions as (
   where q.question_type = 'open_text'
 ), comment_bank as (
   select * from (values
-    ('ca', 0, 'Els canvis de torn arriben massa tard i costa organitzar-se a casa.'),
-    ('ca', 1, 'L’equip s’ajuda molt, però ens falten descansos quan hi ha punta de producció.'),
-    ('ca', 2, 'La nova eina va bé; necessitem una explicació curta al canvi de torn.'),
-    ('ca', 3, 'M’agrada l’ambient i poder aprendre amb la gent que té més experiència.'),
-    ('es', 0, 'Los cambios de turno llegan tarde y cuesta organizarse fuera del trabajo.'),
-    ('es', 1, 'Buen equipo, aunque los viernes de carga fuerte faltan manos.'),
-    ('es', 2, 'La herramienta nueva ayuda, pero en el móvil tarda bastante.'),
-    ('es', 3, 'Valoro la flexibilidad; reduciría reuniones que no acaban en decisiones.'),
-    ('en', 0, 'The team is supportive, but shift changes need more notice.'),
-    ('en', 1, 'Training is useful and practical. More sessions on the new equipment would help.'),
-    ('en', 2, 'Busy Fridays need clearer coordination between packaging and logistics.'),
-    ('en', 3, 'I feel proud of the product and would like clearer feedback from my manager.')
+    ('ca', 0, 'Al moll de càrrega hi ha un punt cec amb les carretilles quan es creua el pas de vianants.'),
+    ('ca', 1, 'A la zona d’envasat fa molta calor a la tarda; caldria revisar la ventilació.'),
+    ('ca', 2, 'Les ulleres de protecció de recanvi s’acaben ràpid al torn de nit.'),
+    ('ca', 3, 'M’agrada l’ambient i poder aprendre amb la gent que té més experiència.')
   ) as bank(locale, variant, comment)
 )
 insert into public.response_answers(response_id, question_id, free_text_redacted)
@@ -504,7 +503,6 @@ select sr.id, oq.question_id, cb.comment
 from public.survey_responses sr
 join open_questions oq on oq.questionnaire_version_id = sr.questionnaire_version_id
 join comment_bank cb on cb.locale = sr.locale and cb.variant = (extract(day from sr.submitted_at)::int % 4)
-where extract(day from sr.submitted_at)::int % 5 <> 0
 on conflict (response_id, question_id) do nothing;
 
 insert into public.analysis_runs (
@@ -515,9 +513,7 @@ insert into public.analysis_runs (
 select c.id, 'approved', 'demo-local', 'aggregate-people-analytics-v1', 'damm-2026-11-v1',
        count(sr.id), count(sr.id)::numeric / nullif(c.target_population, 0),
        case when count(sr.id)::numeric / nullif(c.target_population, 0) >= 0.45 then 'high' else 'medium' end,
-       case when c.slug = 'pols-torns-novembre'
-            then 'La previsibilitat dels torns i la coordinació entre envasat i logística concentren el principal marge de millora. El sentiment de pertinença es manté estable.'
-            else 'El període anterior mostrava millor percepció de recursos i una participació més equilibrada.' end,
+       'La percepció de seguretat i EPIs a planta és sòlida. Els punts cecs a magatzem i la ventilació concentren les millores operatives proposades.',
        array['Dades 100% sintètiques', 'Les associacions no demostren causalitat', 'Els segments amb menys de 10 respostes no es publiquen'],
        encode(extensions.digest(c.slug || '-seed-v1', 'sha256'), 'hex'),
        '00000000-0000-4000-a000-000000000002'::uuid,
@@ -526,6 +522,7 @@ select c.id, 'approved', 'demo-local', 'aggregate-people-analytics-v1', 'damm-20
        max(sr.submitted_at), max(sr.submitted_at) + interval '2 minutes'
 from public.campaigns c
 join public.survey_responses sr on sr.campaign_id = c.id
+where c.slug = 'seguretat-industrial'
 group by c.id
 on conflict (campaign_id, input_fingerprint) do nothing;
 
@@ -536,7 +533,7 @@ insert into public.analytics_segments (
 select ar.id, ar.campaign_id, sr.department_id, sr.period_start, count(distinct sr.id), d.synthetic_headcount,
        count(distinct sr.id)::numeric / nullif(d.synthetic_headcount, 0),
        round((avg(ra.numeric_value) * 2)::numeric, 2),
-       case when sr.period_start = date '2026-11-01' then round((avg(ra.numeric_value) * 2 + 0.6)::numeric, 2) else null end,
+       round((avg(ra.numeric_value) * 2 + 0.4)::numeric, 2),
        round(((avg(ra.numeric_value) - 3) / 2)::numeric, 4),
        case when count(distinct sr.id) >= 40 then 'high' when count(distinct sr.id) >= 20 then 'medium' else 'low' end
 from public.analysis_runs ar
@@ -552,32 +549,16 @@ insert into public.analysis_insights (
   signal_type, priority, evidence, sample_size, human_validated, validated_by, validated_at
 )
 select ar.id, ar.campaign_id, d.id, wd.id,
-       'Previsió dels torns insuficient',
-       'Els comentaris d’envasat repeteixen que els canvis arriben amb poc marge i dificulten la conciliació.',
-       'risk', 5, '{"theme":"torns","trend":"down","source":"aggregate_comments"}',
+       'Millora de visibilitat al moll de càrrega',
+       'Els comentaris d’envasat i magatzem repeteixen la necessitat de senyalització clara per als passos de vianants.',
+       'risk', 5, '{"theme":"seguretat","trend":"stable","source":"aggregate_comments"}',
        greatest(10, least(ar.sample_size, 69)), true,
        '00000000-0000-4000-a000-000000000001'::uuid, now()
 from public.analysis_runs ar
-join public.campaigns c on c.id = ar.campaign_id and c.slug = 'pols-torns-novembre'
+join public.campaigns c on c.id = ar.campaign_id and c.slug = 'seguretat-industrial'
 join public.departments d on d.code = 'envasat'
 join public.wellbeing_dimensions wd on wd.code = 'condicions'
-where not exists (select 1 from public.analysis_insights ai where ai.analysis_run_id = ar.id and ai.title = 'Previsió dels torns insuficient');
-
-insert into public.analysis_insights (
-  analysis_run_id, campaign_id, department_id, dimension_id, title, summary,
-  signal_type, priority, evidence, sample_size, human_validated, validated_by, validated_at
-)
-select ar.id, ar.campaign_id, d.id, wd.id,
-       'El torn de nit continua infrarepresentat',
-       'La cobertura del torn de nit és sensiblement menor que el seu pes a la plantilla sintètica; cal reforçar el canal QR abans d’interpretar-ne el resultat.',
-       'representation_gap', 4, '{"segment":"night","recommended_channel":"mobile_qr"}',
-       14, true,
-       '00000000-0000-4000-a000-000000000002'::uuid, now()
-from public.analysis_runs ar
-join public.campaigns c on c.id = ar.campaign_id and c.slug = 'pols-torns-novembre'
-join public.departments d on d.code = 'envasat'
-join public.wellbeing_dimensions wd on wd.code = 'entorn'
-where not exists (select 1 from public.analysis_insights ai where ai.analysis_run_id = ar.id and ai.title = 'El torn de nit continua infrarepresentat');
+where not exists (select 1 from public.analysis_insights ai where ai.analysis_run_id = ar.id and ai.title = 'Millora de visibilitat al moll de càrrega');
 
 insert into public.action_recommendations (
   campaign_id, analysis_run_id, insight_id, department_id, dimension_id,
@@ -585,28 +566,13 @@ insert into public.action_recommendations (
   kpi, status, generated_by_ai
 )
 select ai.campaign_id, ai.analysis_run_id, ai.id, ai.department_id, ai.dimension_id,
-       'Publicar el calendari amb quatre setmanes d’antelació',
-       'Els canvis d’última hora dificulten la conciliació i afecten la percepció d’organització.',
-       'Fer un pilot de sis setmanes a envasat: calendari tancat amb quatre setmanes, canal únic de canvis i registre d’excepcions.',
-       'process_change', 'Planificació de producció + People (RRHH)', date '2026-12-15',
-       '≥90% de torns publicats amb quatre setmanes i +0,5 en organització', 'proposed', true
+       'Senyalitzar passos de vianants i instal·lar miralls convexos',
+       'Hi ha punts cecs amb trànsit de carretons quan es creua el moll.',
+       'Pintar passos reflectants i instal·lar dos miralls panoràmics al passadís principal de magatzem.',
+       'process_change', 'Prevenció de Riscos Laborals (PRL)', date '2026-12-15',
+       '100% punts cecs senyalitzats i zero incidències', 'proposed', true
 from public.analysis_insights ai
-where ai.title = 'Previsió dels torns insuficient'
-  and not exists (select 1 from public.action_recommendations a where a.insight_id = ai.id);
-
-insert into public.action_recommendations (
-  campaign_id, analysis_run_id, insight_id, department_id, dimension_id,
-  title, problem_statement, proposed_action, action_type, owner_role, due_date,
-  kpi, status, generated_by_ai
-)
-select ai.campaign_id, ai.analysis_run_id, ai.id, ai.department_id, ai.dimension_id,
-       'Reforçar la veu del torn de nit',
-       'La mostra actual no representa prou el torn de nit.',
-       'Preparar una targeta Teams per als caps de torn i un cartell QR a les zones de fitxatge; enviar un únic recordatori a l’inici del torn.',
-       'teams_message', 'People Analytics (RRHH) + caps de torn', date '2026-11-12',
-       'Arribar a 26 respostes del torn de nit sense superar dos impactes per persona', 'proposed', true
-from public.analysis_insights ai
-where ai.title = 'El torn de nit continua infrarepresentat'
+where ai.title = 'Millora de visibilitat al moll de càrrega'
   and not exists (select 1 from public.action_recommendations a where a.insight_id = ai.id);
 
 insert into public.integration_connections (provider, name, status, configuration, secret_reference, created_by) values

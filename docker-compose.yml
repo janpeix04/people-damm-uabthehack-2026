@@ -122,6 +122,7 @@ services:
       - ./supabase/migrations/20261108220000_edit_daily_mood.sql:/docker-entrypoint-initdb.d/17-edit-daily-mood.sql:ro
       - ./supabase/migrations/20261108210000_app_survey_any_locale.sql:/docker-entrypoint-initdb.d/18-app-survey-any-locale.sql:ro
       - ./supabase/migrations/20261108220000_point_grants.sql:/docker-entrypoint-initdb.d/19-point-grants.sql:ro
+      - ./supabase/demo_seed.sql:/docker-entrypoint-initdb.d/20-demo-seed.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-damm_pulse}"]
       interval: 10s

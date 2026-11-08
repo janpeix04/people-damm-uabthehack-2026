@@ -6,7 +6,7 @@ declare
   v_analysis_id uuid;
   segment_was_accepted boolean := false;
 begin
-  select c.id into v_campaign_id from public.campaigns c where c.slug = 'pols-torns-novembre';
+  select c.id into v_campaign_id from public.campaigns c where c.slug in ('seguretat-industrial', 'pols-novembre') order by c.created_at desc limit 1;
   select ar.id into v_analysis_id from public.analysis_runs ar where ar.campaign_id = v_campaign_id limit 1;
 
   if v_campaign_id is null then

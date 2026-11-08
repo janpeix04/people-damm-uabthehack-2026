@@ -18,6 +18,7 @@ import { Meter, cn } from '../../components/ui'
 import {
   exportResponsesCsv,
   filterAndAggregateForm,
+  ANALYTICS_FORMS,
   type AnalyticsFormConfig,
   type FilterOptions,
 } from '../../data/surveyAnalytics'
@@ -33,14 +34,19 @@ export default function Analisi() {
   const siteName=site?sites.find(s=>s.code===site)?.name??site:''
 
 
-  const allForms = useMemo<AnalyticsFormConfig[]>(() => hrSurveys.map(s => ({
-    ...s,
-    category: 'Operacions',
-    description: s.goal,
-    version: 'v1.0',
-    responses: s.responses ?? 0,
-    target: s.target ?? 0,
-  })), [hrSurveys])
+  const allForms = useMemo<AnalyticsFormConfig[]>(() => hrSurveys.map(s => {
+    const matched = ANALYTICS_FORMS.find(f => f.id === s.id)
+    return {
+      ...(matched || {}),
+      ...s,
+      category: matched?.category || 'Operacions',
+      description: s.goal || matched?.description || '',
+      version: matched?.version || 'v1.0',
+      responses: s.responses ?? matched?.responses ?? 0,
+      target: s.target ?? matched?.target ?? 0,
+      questions: (s.questions && s.questions.length > 0) ? s.questions : (matched?.questions || []),
+    } as AnalyticsFormConfig
+  }), [hrSurveys])
 
   // Formulari seleccionat (per defecte el de la query param o el primer)
   const selectedFormId = params.get('form') || allForms[0]?.id || 'pols-novembre'
