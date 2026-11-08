@@ -20,11 +20,14 @@ try{
   const restored=(await call('/api/auth/session',{cookie:worker.cookie})).data.user;
   assert.equal(restored.id,ids[0]);assert.ok(worker.data.user.site?.id);assert.equal(restored.site.id,worker.data.user.site.id);console.log('PASS login + session restore + automatic workplace');
   assert.equal((await call('/api/hr/surveys',{cookie:worker.cookie})).status,403);assert.equal((await call('/api/hr/automation/generate-survey',{cookie:worker.cookie,body:{}})).status,403);console.log('PASS worker cannot access HR or automation');
+  assert.equal((await call('/api/hr/directory',{cookie:worker.cookie})).status,403);
   assert.equal((await call('/api/app/wallet',{cookie:worker.cookie,body:{wallet:'ff'.repeat(32)}})).status,200);
   const pref={skin:4,hair:2,shirt:1,style:1,logo:false};assert.equal((await call('/api/app/avatar',{cookie:worker.cookie,body:{avatar:pref,wallet:'ff'.repeat(32)}})).status,200);
   assert.equal((await call('/api/app/state',{cookie:worker.cookie,body:{}})).data.avatar.skin,4);console.log('PASS account-bound wallet ignores client wallet');
   const hr=await call('/api/auth/login',{body:{email:`hr_admin.${suffix}@auth-test.invalid`,password}});assert.equal(hr.status,200);
   assert.equal((await call('/api/hr/surveys',{cookie:hr.cookie})).status,200);
+  const directory=await call('/api/hr/directory',{cookie:hr.cookie});assert.equal(directory.status,200);assert.ok(directory.data.users.some(u=>u.id===ids[0]));assert.ok(!/password_hash|wallet_token|token_digest/.test(JSON.stringify(directory.data)));console.log('PASS HR directory protected and secrets excluded');
+  const departments=await call('/api/hr/departments',{cookie:hr.cookie});assert.equal(departments.status,200);assert.deepEqual(departments.data.map(d=>d.code),['fabrica','logistica','comercial','oficina']);console.log('PASS official department overview');
   assert.equal((await call('/api/hr/plaza',{cookie:hr.cookie,body:{action:'state'}})).status,200);
   assert.equal((await call('/api/app/state',{cookie:hr.cookie,body:{}})).status,403);console.log('PASS HR access is separate');
   await call('/api/auth/logout',{cookie:worker.cookie,body:{}});assert.equal((await call('/api/auth/session',{cookie:worker.cookie})).data.user,null);assert.equal((await call('/api/app/state',{cookie:worker.cookie,body:{}})).status,401);console.log('PASS logout revokes server session');

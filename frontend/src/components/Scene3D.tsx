@@ -60,6 +60,10 @@ export const Scene3D = forwardRef<SceneHandle | null, Props>(function Scene3D({ 
   useEffect(() => { if (avatar && handle.current) handle.current.setAvatar(avatarColors(avatar)) }, [avatar])
   // la Festa de la setmana es reflecteix a l'escena en directe (garlandes, bancs, concert, focs)
   useEffect(() => { if (handle.current && opts.festa != null) handle.current.setFesta(opts.festa) }, [opts.festa, state])
+  useEffect(() => { if (state==='ready' && opts.initialZone) handle.current?.select(opts.initialZone) }, [opts.initialZone,state])
+  // Damm World: quan canvien les dades (p. ex. RRHH canvia de centre) es refan els fars i les etiquetes sense remuntar l'escena
+  const zonesKey = JSON.stringify(opts.zones ?? null)
+  useEffect(() => { if (state === 'ready' && opts.zones) handle.current?.setZones(opts.zones) }, [zonesKey, state]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     // La posició la decideix qui fa servir el component (normalment `absolute inset-0`):

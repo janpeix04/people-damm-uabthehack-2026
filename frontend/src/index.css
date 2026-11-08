@@ -496,6 +496,11 @@
 .lab .pin .w { width: 30px; height: 30px; border-radius: 99px; display: grid; place-items: center; }
 .lab .pin em { font-style: normal; color: #5C534E; }
 .lab .pin[aria-pressed="true"] { border-color: #171717; }
+.lab .pin.off { background: rgba(251,250,247,.72); color: #7A716B; box-shadow: 0 4px 10px rgba(10,30,40,.14); }
+.lab .pin.off .w { filter: grayscale(1); opacity: .6; }
+.lab .pin.off em { display: none; }
+.lab .pin.off { height: 32px; font-size: 12px; padding-right: 12px; }
+.lab .pin.off .w { width: 24px; height: 24px; }
 @media (max-width: 760px) {
   .lab .bubble { width: 160px; padding: 8px 10px; }
   .lab .bubble p { font-size: 12px; }

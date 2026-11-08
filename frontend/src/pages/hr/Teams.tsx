@@ -1,118 +1,45 @@
-import { useState } from 'react'
-import { BellRing, Check, FileCheck2, MessagesSquare, RefreshCw, ShieldCheck, UsersRound } from 'lucide-react'
-import { PageHead } from '../../components/HRLayout'
-import TeamsDeliveryPreview from '../../components/TeamsDeliveryPreview'
-import { useApp } from '../../store/AppContext'
-
-const deliveries = [
-  {
-    icon: MessagesSquare,
-    title: 'Invitació adaptativa',
-    body: 'Presenta el títol, el temps estimat, la data límit i l’accés directe a l’enquesta.',
-  },
-  {
-    icon: BellRing,
-    title: 'Recordatori segmentat',
-    body: 'Torna a avisar abans del tancament sense mostrar qui ha respost ni el contingut de les respostes.',
-  },
-  {
-    icon: FileCheck2,
-    title: 'Aprovació de persones',
-    body: 'Les accions proposades arriben a RRHH perquè una persona les revisi, les editi o les descarti.',
-  },
-]
-
-export default function Teams() {
-  const { toast } = useApp()
-  const [syncing, setSyncing] = useState(false)
-  const [synced, setSynced] = useState(false)
-  const [selected, setSelected] = useState(true)
-
-  const sync = () => {
-    setSyncing(true)
-    window.setTimeout(() => {
-      setSyncing(false)
-      setSynced(true)
-      toast('Directori sintètic sincronitzat')
-    }, 750)
-  }
-
-  return (
-    <div className="max-w-6xl flex flex-col gap-5 md:gap-7">
-      <PageHead
-        title="Microsoft Teams"
-        sub="Publica enquestes i recordatoris amb targetes adaptatives, mantenint l’anonimat i la identitat People Damm."
-        actions={<span className="chip bg-ok-bg text-ok-ink"><Check size={13} aria-hidden />Mode demo segur</span>}
-      />
-
-      <section className="rounded-[18px] bg-ink text-white overflow-hidden">
-        <div className="grid lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="p-5 sm:p-7 flex gap-4 items-start">
-            <span className="w-12 h-12 rounded-[14px] bg-[#6264A7] grid place-items-center shrink-0"><MessagesSquare size={24} aria-hidden /></span>
-            <div>
-              <h2 className="serif text-[27px] leading-tight">Escolta Damm, dins de Teams</h2>
-              <p className="mt-2 text-sm leading-relaxed text-white/75 max-w-2xl">El paquet del ZIP queda integrat amb manifest, bot de notificacions, targetes adaptatives i adaptador de directori. En local treballa exclusivament amb dades sintètiques.</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 border-t border-white/10 lg:border-t-0 lg:border-l">
-            {[
-              ['3', 'targetes'],
-              ['727', 'identitats demo'],
-              ['3', 'idiomes'],
-            ].map(([value, label]) => (
-              <div key={label} className="px-3 py-5 text-center border-l border-white/10 first:border-l-0">
-                <strong className="serif text-[28px] block leading-none">{value}</strong>
-                <span className="mt-1 block text-[11.5px] text-white/65">{label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <TeamsDeliveryPreview
-        selected={selected}
-        title="Pols d’equip i benestar"
-        questions={4}
-        closesAt="2026-11-21"
-        onToggle={() => setSelected(value => !value)}
-      />
-
-      <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-        <section className="card p-5 sm:p-6">
-          <h2 className="serif text-[24px]">Què rep cada persona</h2>
-          <div className="mt-4 grid gap-4">
-            {deliveries.map(({ icon: Icon, title, body }) => (
-              <div key={title} className="flex gap-3.5 items-start border-t border-line pt-4 first:border-t-0 first:pt-0">
-                <span className="w-10 h-10 rounded-[12px] bg-red-soft text-red-dk grid place-items-center shrink-0"><Icon size={19} aria-hidden /></span>
-                <div><h3 className="font-bold text-[15px]">{title}</h3><p className="mt-0.5 text-[13px] leading-relaxed text-ink-muted">{body}</p></div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="card p-5 sm:p-6 flex flex-col gap-4">
-          <div className="flex items-start gap-3">
-            <span className="w-10 h-10 rounded-[12px] bg-cream text-red-dk grid place-items-center shrink-0"><UsersRound size={20} aria-hidden /></span>
-            <div><h2 className="serif text-[24px] leading-tight">Directori i privacitat</h2><p className="mt-1 text-[13px] leading-relaxed text-ink-muted">El mode demo no consulta el tenant corporatiu ni envia notificacions reals.</p></div>
-          </div>
-          <div className="rounded-[14px] bg-cream px-4 py-3 text-[13px]">
-            <strong className="block">{synced ? '727 identitats demo sincronitzades' : '727 identitats sintètiques disponibles'}</strong>
-            <span className="text-ink-muted">Fàbrica, Logística, Comercial i Oficina</span>
-          </div>
-          <div className="flex gap-2 items-start text-[12.5px] leading-relaxed text-ink-muted">
-            <ShieldCheck size={17} className="text-red shrink-0 mt-px" aria-hidden />
-            <span>El token de Microsoft Graph és només de servidor. Mai arriba al navegador ni a les respostes.</span>
-          </div>
-          <button onClick={sync} disabled={syncing} className="btn-ink !h-11 mt-auto">
-            <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} aria-hidden />
-            {syncing ? 'Sincronitzant...' : 'Provar sincronització demo'}
-          </button>
-        </section>
-      </div>
-
-      <section className="rounded-[16px] border border-warn bg-warn-bg px-4 py-3 text-[13px] leading-relaxed text-warn-ink">
-        <strong>Activació real pendent:</strong> cal registrar l’app a Entra ID, obtenir consentiment administratiu per a Microsoft Graph, publicar el paquet al catàleg corporatiu i validar el DPIA.
-      </section>
-    </div>
-  )
+import {useEffect,useState} from 'react'
+import {RefreshCw,UsersRound,Plug,Search,ShieldCheck} from 'lucide-react'
+import {PageHead} from '../../components/HRLayout'
+import {cn} from '../../components/ui'
+interface DirectoryUser {id:string;name:string;email:string;role:string;department:string|null;department_code:string|null;site:string|null;location:string|null;source:'local'|'microsoft365';access:'active'|'inactive'|'pending';synced_at:string|null}
+interface SyncRun {id:string;status:'running'|'succeeded'|'failed';imported_count:number;updated_count:number;disabled_count:number;started_at:string;finished_at:string|null;error:string|null}
+interface DirectoryData {users:DirectoryUser[];integration:{state:string;lastSync:string|null;lastSuccess:string|null;importedUsers:number;history:SyncRun[]}}
+const roles:Record<string,string>={worker:'Treballador',hr_admin:'Administrador RRHH',hr_analyst:'Analista RRHH',manager:'Manager',integration:'Integració'}
+const accessLabels={active:'Actiu',inactive:'Inactiu',pending:'Accés pendent'}
+const integrationLabels:Record<string,string>={not_connected:'Microsoft 365 no connectat',pending_verification:'Connexió pendent de verificar',registered:'Connexió registrada',paused:'Connexió en pausa',error:'Error de connexió'}
+const normalized=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
+const date=(s:string|null)=>s?new Date(s).toLocaleString('ca-ES',{dateStyle:'medium',timeStyle:'short'}):'Encara no s’ha sincronitzat'
+export default function Directory(){
+ const [tab,setTab]=useState<'users'|'integrations'>('users'),[data,setData]=useState<DirectoryData|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState<string|null>(null)
+ const [search,setSearch]=useState(''),[source,setSource]=useState(''),[status,setStatus]=useState(''),[department,setDepartment]=useState(''),[page,setPage]=useState(0)
+ const load=async()=>{setLoading(true);setError(null);try{const r=await fetch('/api/hr/directory',{signal:AbortSignal.timeout(15000)});if(r.status===401)window.dispatchEvent(new Event('auth-expired'));const result=await r.json();if(!r.ok)throw new Error(result.error||'No s’ha pogut carregar el directori.');setData(result)}catch(e){setError(e instanceof Error?e.message:'Error de connexió')}finally{setLoading(false)}}
+ useEffect(()=>{void load()},[])
+ useEffect(()=>setPage(0),[search,source,status,department])
+ const users=data?.users||[]
+ const filtered=users.filter(u=>(!source||u.source===source)&&(!status||u.access===status)&&(!department||u.department_code===department)&&normalized([u.name,u.email,u.department,u.site,roles[u.role]].filter(Boolean).join(' ')).includes(normalized(search)))
+ const pages=Math.max(1,Math.ceil(filtered.length/20)),current=Math.min(page,pages-1)
+ return <div className="mx-auto w-full min-w-0 max-w-6xl flex flex-col gap-5">
+  <PageHead title="Directori i integracions" sub="Comptes amb accés, centre de treball i origen de les dades." actions={<button className="btn-line" disabled={loading} onClick={()=>void load()}><RefreshCw size={16} className={loading?'animate-spin':''}/>{loading?'Carregant…':'Actualitzar dades'}</button>}/>
+  <div role="tablist" aria-label="Directori i integracions" className="flex gap-2 border-b border-line pb-3">
+   {([{key:'users',label:'Usuaris',Icon:UsersRound},{key:'integrations',label:'Integracions',Icon:Plug}] as const).map(t=><button key={t.key} id={`tab-${t.key}`} role="tab" aria-selected={tab===t.key} aria-controls={`panel-${t.key}`} className={tab===t.key?'btn-ink':'btn-line'} onClick={()=>setTab(t.key)}><t.Icon size={17}/>{t.label}</button>)}
+  </div>
+  {error&&<div role="alert" className="card p-4 text-red-dk">{error} <button className="btn-line" disabled={loading} onClick={()=>void load()}>Reintentar</button></div>}
+  {loading&&!data&&<p role="status" className="card p-6">Carregant dades del directori…</p>}
+  {data&&tab==='users'&&<section id="panel-users" role="tabpanel" aria-labelledby="tab-users" className="flex flex-col gap-4">
+   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">{[[users.length,'Comptes al directori'],[users.filter(u=>u.source==='local').length,'Comptes locals'],[data.integration.importedUsers,'Importats de Microsoft 365']].map(([n,label])=><div key={label} className="card p-4"><strong className="serif text-3xl">{n}</strong><p className="text-sm text-ink-muted mt-1">{label}</p></div>)}</div>
+   <div className="card p-4 flex flex-wrap gap-3">
+    <label className="flex items-center gap-2 flex-1 min-w-[200px]"><Search size={17} className="text-ink-muted"/><span className="sr-only">Cercar usuaris</span><input type="search" className="input" placeholder="Nom, correu o centre…" value={search} onChange={e=>setSearch(e.target.value)}/></label>
+    <label><span className="sr-only">Origen</span><select className="input" value={source} onChange={e=>setSource(e.target.value)}><option value="">Tots els orígens</option><option value="local">Local</option><option value="microsoft365">Microsoft 365</option></select></label>
+    <label><span className="sr-only">Estat</span><select className="input" value={status} onChange={e=>setStatus(e.target.value)}><option value="">Tots els estats</option>{Object.entries(accessLabels).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
+    <label><span className="sr-only">Departament</span><select className="input" value={department} onChange={e=>setDepartment(e.target.value)}><option value="">Tots els departaments</option><option value="fabrica">Fàbrica</option><option value="logistica">Logística</option><option value="comercial">Comercial</option><option value="oficina">Oficina</option></select></label>
+   </div>
+   <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm min-w-[900px]"><thead className="bg-cream text-left text-xs text-ink-muted"><tr>{['Usuari','Departament','Centre','Rol','Estat','Origen'].map(x=><th key={x} className="p-4 font-semibold">{x}</th>)}</tr></thead><tbody>{filtered.slice(current*20,current*20+20).map(u=><tr key={u.id} className="border-t border-line"><td className="p-4"><strong className="block">{u.name}</strong><span className="text-xs text-ink-muted">{u.email}</span></td><td className="p-4">{u.department||'Sense assignar'}</td><td className="p-4">{u.site||(u.role==='worker'?'Sense assignar':'Àmbit corporatiu')}{u.location&&<span className="block text-xs text-ink-muted">{u.location}</span>}</td><td className="p-4">{roles[u.role]||u.role}</td><td className="p-4"><span className={cn('chip',u.access==='active'?'bg-ok-bg text-ok-ink':'bg-cream text-ink-muted')}>{accessLabels[u.access]}</span></td><td className="p-4">{u.source==='local'?'Local':'Microsoft 365'}{u.synced_at&&<span className="block text-xs text-ink-muted mt-1">{date(u.synced_at)}</span>}</td></tr>)}</tbody></table></div>{!filtered.length&&<p className="p-8 text-center text-ink-muted">{users.length?'No hi ha usuaris que coincideixin amb aquests filtres.':'Encara no hi ha comptes locals ni usuaris importats.'}</p>}<div className="p-3 border-t border-line flex justify-between items-center gap-3 text-xs"><span>{filtered.length} usuaris · pàgina {current+1} de {pages}</span><div className="flex gap-2"><button className="btn-line !h-8" disabled={!current} onClick={()=>setPage(current-1)}>Anterior</button><button className="btn-line !h-8" disabled={current+1>=pages} onClick={()=>setPage(current+1)}>Següent</button></div></div></div>
+   <p className="text-xs text-ink-muted flex gap-2 items-start"><ShieldCheck size={16} className="shrink-0"/>Aquest directori gestiona accés i invitacions. No mostra ni vincula el contingut de les respostes anònimes.</p>
+  </section>}
+  {data&&tab==='integrations'&&<section id="panel-integrations" role="tabpanel" aria-labelledby="tab-integrations" className="flex flex-col gap-5">
+   <div className="card p-5 sm:p-6"><div className="flex items-center gap-3 mb-3"><span className="w-11 h-11 grid place-items-center rounded-xl bg-cream"><Plug size={22}/></span><div><h2 className="serif text-2xl">Microsoft 365 / Teams</h2><p className="text-sm font-semibold text-ink-muted">{integrationLabels[data.integration.state]||'Estat pendent de revisar'}</p></div></div><p className="text-sm text-ink-muted max-w-2xl">El directori de Microsoft 365 proporciona els usuaris que també utilitzen Teams. La connexió del directori i l’enviament d’invitacions són funcions diferents.</p><div className="grid sm:grid-cols-3 gap-4 mt-5 pt-4 border-t border-line">{[['Usuaris importats',String(data.integration.importedUsers)],['Últim intent',date(data.integration.lastSync)],['Última sincronització completada',date(data.integration.lastSuccess)]].map(([label,value])=><div key={label}><p className="text-xs text-ink-muted">{label}</p><strong className="block text-sm mt-1">{value}</strong></div>)}</div>{data.integration.state==='not_connected'&&<p className="bg-cream rounded-xl p-3 mt-5 text-sm">La sincronització amb Microsoft 365 no està configurada. Pots consultar els comptes locals a la pestanya Usuaris. Per importar persones, cal configurar i autoritzar la connexió corporativa.</p>}</div>
+   <div className="card p-5"><h2 className="serif text-2xl mb-4">Historial de sincronitzacions</h2>{!data.integration.history.length?<p className="text-sm text-ink-muted">Encara no hi ha cap sincronització registrada.</p>:<div className="flex flex-col gap-3">{data.integration.history.map(r=><article key={r.id} className="border border-line rounded-xl p-4"><div className="flex flex-wrap justify-between gap-2"><strong className="text-sm">{r.status==='succeeded'?'Completada':r.status==='failed'?'Error':'En curs'}</strong><span className="text-xs text-ink-muted">{date(r.started_at)}</span></div><p className="text-sm mt-2">{r.imported_count} importats · {r.updated_count} actualitzats · {r.disabled_count} desactivats</p>{r.error&&<p className="text-sm text-red-dk mt-2">{r.error}</p>}</article>)}</div>}</div>
+  </section>}
+ </div>
 }

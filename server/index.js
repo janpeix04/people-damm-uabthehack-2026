@@ -2,6 +2,8 @@ import http from 'node:http';
 import pg from 'pg';
 import {createSurvey,listSurveys,changeStatus,InputError} from './surveys.js';
 import {appAction,hrPlazaAction} from './app.js';
+import {departmentOverview,siteList} from './departments.js';
+import {directoryOverview} from './directory.js';
 import {login,currentUser,authorize,userWallet,sessionToken,sessionCookie,digest} from './auth.js';
 const pool=new pg.Pool({host:process.env.POSTGRES_HOST||'postgres',port:Number(process.env.POSTGRES_PORT||5432),database:process.env.POSTGRES_DB||'damm_pulse',user:process.env.POSTGRES_USER||'postgres',password:process.env.POSTGRES_PASSWORD});
 const secure=process.env.AUTH_COOKIE_SECURE==='true';
@@ -44,6 +46,9 @@ http.createServer(async(req,res)=>{
       res.statusCode=r.status;res.end(await r.text());return;
     }
     if(req.method==='GET'&&path==='/api/hr/surveys'){res.end(JSON.stringify(await listSurveys(db)));return;}
+    if(req.method==='GET'&&path==='/api/hr/departments'){const site=new URL(req.url,'http://localhost').searchParams.get('site');res.end(JSON.stringify(await departmentOverview(db,site&&/^[a-z0-9_]{2,60}$/.test(site)?site:site?'__invalid__':null)));return;}
+    if(req.method==='GET'&&path==='/api/hr/sites'){res.end(JSON.stringify(await siteList(db)));return;}
+    if(req.method==='GET'&&path==='/api/hr/directory'){res.end(JSON.stringify(await directoryOverview(db)));return;}
     if(!['POST','PATCH','PUT'].includes(req.method))throw new InputError('Mètode no permès.',405);
     await db.query('BEGIN');
     await db.query("select set_config('request.jwt.claim.sub',$1,true)",[user.id]);

@@ -7,6 +7,8 @@ export interface AvatarColors {
 }
 
 export interface ZonePin {
+  sceneKey?: string
+  sourceZones?: string[]
   key: string
   name: string
   score: string
@@ -20,6 +22,8 @@ export interface ZonePin {
   participation?: number
   /** Nombre d'alertes: si n'hi ha, hi parpelleja un avís. */
   alerts?: number
+  /** El departament no té persones al centre triat: sense far i etiqueta atenuada. */
+  absent?: boolean
 }
 
 export interface MountOptions {
@@ -43,6 +47,8 @@ export interface MountOptions {
 export interface SceneHandle {
   burst(): void
   setFesta(pct: number): void
+  /** Damm World: refà els fars i les etiquetes amb dades noves. */
+  setZones(zones: ZonePin[]): void
   setAvatar(a: AvatarColors): void
   select(zone: string): void
   dispose(): void

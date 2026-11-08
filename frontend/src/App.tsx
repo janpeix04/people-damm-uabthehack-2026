@@ -54,7 +54,8 @@ function AuthenticatedApp() {
               <Route path="enquestes/:id" element={<Detall />} />
               <Route path="crear" element={<Crear />} />
               <Route path="analisi" element={<Analisi />} />
-              <Route path="teams" element={<Teams />} />
+              <Route path="directori" element={<Teams />} />
+              <Route path="teams" element={<Navigate to="/rrhh/directori" replace />} />
               <Route path="world" element={<HRWorld />} />
               <Route path="placa" element={<HRPlaca />} />
             </Route>

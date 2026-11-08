@@ -112,6 +112,8 @@ services:
       - ./supabase/migrations/20261108120000_local_auth.sql:/docker-entrypoint-initdb.d/07-local-auth.sql:ro
       - ./supabase/migrations/20261108130000_user_sites.sql:/docker-entrypoint-initdb.d/08-user-sites.sql:ro
       - ./supabase/migrations/20261108140000_four_departments.sql:/docker-entrypoint-initdb.d/09-four-departments.sql:ro
+      - ./supabase/migrations/20261108150000_directory_integrations.sql:/docker-entrypoint-initdb.d/10-directory-integrations.sql:ro
+      - ./supabase/migrations/20261108160000_response_sites.sql:/docker-entrypoint-initdb.d/11-response-sites.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-damm_pulse}"]
       interval: 10s
