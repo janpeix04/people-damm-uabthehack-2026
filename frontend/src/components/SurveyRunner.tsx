@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Sparkles, X } from 'lucide-react'
 import type { Question } from '../data/types'
 import { cn, Face, FACES } from './ui'
+import { useI18n } from '../i18n'
 
 interface Props {
   questions: Question[]
@@ -12,6 +13,7 @@ interface Props {
 
 /** Una pregunta per pantalla, botons grans, barra de progrés i un avís d'anonimat a les preguntes obertes. */
 export function SurveyRunner({ questions, onExit, onDone, preview }: Props) {
+  const { t } = useI18n()
   const [step, setStep] = useState(0)
   const [ans, setAns] = useState<Record<string, unknown>>({})
   const q = questions[Math.min(step, questions.length - 1)]
@@ -76,7 +78,7 @@ export function SurveyRunner({ questions, onExit, onDone, preview }: Props) {
                 className={cn(opt(cur === i), 'flex items-center gap-3')}
               >
                 <Face i={i} size={36} />
-                {f[0]}
+                {t(f[0])}
               </button>
             ))}
           </div>

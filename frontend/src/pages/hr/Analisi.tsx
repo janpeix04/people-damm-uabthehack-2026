@@ -67,8 +67,6 @@ export default function Analisi() {
     zone: 'all',
     shift: 'all',
     channel: 'all',
-    sentiment: 'all',
-    searchQuery: '',
   })
 
   // Dades reals agregades directament des de PostgreSQL
@@ -86,9 +84,7 @@ export default function Analisi() {
       zone: filters.zone !== 'all' ? filters.zone : undefined,
       shift: filters.shift !== 'all' ? filters.shift : undefined,
       channel: filters.channel !== 'all' ? filters.channel : undefined,
-      sentiment: filters.sentiment !== 'all' ? filters.sentiment : undefined,
       dateRange: filters.dateRange !== 'all' ? filters.dateRange : undefined,
-      searchQuery: filters.searchQuery || undefined,
     })
       .then(data => {
         if (active) {
@@ -105,7 +101,7 @@ export default function Analisi() {
         if (active) setLoading(false)
       })
     return () => { active = false }
-  }, [currentForm?.id, site, filters.zone, filters.shift, filters.channel, filters.sentiment, filters.dateRange, filters.searchQuery])
+  }, [currentForm?.id, site, filters.zone, filters.shift, filters.channel, filters.dateRange])
 
   // Descarregar dades en CSV
   const handleExportCsv = () => {

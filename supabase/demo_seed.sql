@@ -11,7 +11,8 @@
 
 begin;
 
-select setseed(0.4242);
+-- Les dades són aleatòries a cada creació de la BD. Per repetir-les: PGOPTIONS="-c demo.seed=0.4242"
+select case when nullif(current_setting('demo.seed', true), '') is not null then setseed(current_setting('demo.seed')::float8) end;
 
 -- ===== 0. Neteja de dades prèvies per a idempotència =====
 delete from public.response_answers where response_id in (
@@ -487,10 +488,15 @@ join public.questions q on q.questionnaire_version_id = qv.id and q.position = d
 on conflict (question_id, locale) do update set prompt = excluded.prompt, options = excluded.options;
 
 -- ===== 4. Audiència i Respostes Massives =====
+-- Participació de cada campanya: ±12% sobre la base, diferent a cada creació
+create temp table demo_participation on commit drop as
+select slug, 0.88 + random() * 0.24 as f
+from (values ('pols-novembre'), ('seguretat-industrial'), ('torns'), ('conciliacio-oficines'), ('onboarding-talent'), ('clima-tardor-2026'), ('sostenibilitat-esg')) v(slug);
+
 create temp table demo_audience on commit drop as
 select c.id as campaign_id, c.slug, c.opens_at, c.closes_at, p.*, d.collective,
-  row_number() over (partition by c.id order by md5(c.slug || p.synthetic_code)) as rn,
-  case c.slug
+  row_number() over (partition by c.id order by random()) as rn,
+  (case c.slug
     when 'pols-novembre' then 1420
     when 'seguretat-industrial' then 980
     when 'torns' then 780
@@ -498,7 +504,7 @@ select c.id as campaign_id, c.slug, c.opens_at, c.closes_at, p.*, d.collective,
     when 'onboarding-talent' then 390
     when 'clima-tardor-2026' then 1650
     when 'sostenibilitat-esg' then 1280
-  end as answered
+  end * (select f from demo_participation dp where dp.slug = c.slug))::int as answered
 from public.campaigns c
 cross join public.synthetic_people p
 join public.departments d on d.id = p.department_id

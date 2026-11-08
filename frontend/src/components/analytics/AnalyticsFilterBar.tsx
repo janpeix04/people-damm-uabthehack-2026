@@ -1,4 +1,4 @@
-import { Filter, RotateCcw, Search, X } from 'lucide-react'
+import { Filter, RotateCcw, X } from 'lucide-react'
 import type { AnalyticsFormConfig, FilterOptions, ShiftType } from '../../data/surveyAnalytics'
 import type { ChannelKey, ZoneKey } from '../../data/types'
 
@@ -57,8 +57,6 @@ export function AnalyticsFilterBar({
       zone: 'all',
       shift: 'all',
       channel: 'all',
-      sentiment: 'all',
-      searchQuery: '',
     })
   }
 
@@ -66,9 +64,7 @@ export function AnalyticsFilterBar({
     (filters.dateRange && filters.dateRange !== 'all') ||
     (filters.zone && filters.zone !== 'all') ||
     (filters.shift && filters.shift !== 'all') ||
-    (filters.channel && filters.channel !== 'all') ||
-    (filters.sentiment && filters.sentiment !== 'all') ||
-    (filters.searchQuery && filters.searchQuery.trim().length > 0)
+    (filters.channel && filters.channel !== 'all')
 
   return (
     <section aria-label="Filtres d'analítica" className="card p-4 sm:p-5 flex flex-col gap-4 bg-paper shadow-sm">
@@ -114,8 +110,8 @@ export function AnalyticsFilterBar({
         </div>
       </div>
 
-      {/* 2. Filtres interactius (Dates, Zona, Torn, Canal, Sentiment) */}
-      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 items-end">
+      {/* 2. Filtres interactius (Dates, Zona, Torn, Canal) */}
+      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 items-end">
         {/* Dates */}
         <div className="flex flex-col gap-1">
           <label htmlFor="filter-dates" className="eyebrow">
@@ -193,53 +189,6 @@ export function AnalyticsFilterBar({
             ))}
           </select>
         </div>
-
-        {/* Sentiment */}
-        <div className="flex flex-col gap-1">
-          <label htmlFor="filter-sentiment" className="eyebrow">
-            Sentiment
-          </label>
-          <select
-            id="filter-sentiment"
-            value={filters.sentiment || 'all'}
-            onChange={e => update({ sentiment: e.target.value as FilterOptions['sentiment'] })}
-            className="input !text-xs font-semibold bg-white"
-          >
-            <option value="all">Tots els tons</option>
-            <option value="positiu">Positiu</option>
-            <option value="neutre">Neutre</option>
-            <option value="negatiu">Negatiu / Crític</option>
-          </select>
-        </div>
-
-        {/* Cerca lliure */}
-        <div className="flex flex-col gap-1">
-          <label htmlFor="filter-search" className="eyebrow">
-            Cerca paraules
-          </label>
-          <div className="relative">
-            <input
-              id="filter-search"
-              type="text"
-              placeholder="ex. calor, torn..."
-              value={filters.searchQuery || ''}
-              onChange={e => update({ searchQuery: e.target.value })}
-              className="input !text-xs pr-7 bg-white"
-            />
-            {filters.searchQuery ? (
-              <button
-                type="button"
-                onClick={() => update({ searchQuery: '' })}
-                className="absolute right-2 top-2.5 text-ink-muted hover:text-ink"
-                title="Esborrar cerca"
-              >
-                <X size={13} />
-              </button>
-            ) : (
-              <Search size={13} className="absolute right-2.5 top-3 text-ink-muted pointer-events-none" />
-            )}
-          </div>
-        </div>
       </div>
 
       {/* 3. Píndoles de filtres actius & botó de reset */}
@@ -280,24 +229,6 @@ export function AnalyticsFilterBar({
             <span className="chip bg-cream text-ink flex items-center gap-1">
               Canal: {CHANNELS_LIST.find(c => c.key === filters.channel)?.label}
               <button onClick={() => update({ channel: 'all' })}>
-                <X size={12} />
-              </button>
-            </span>
-          )}
-
-          {filters.sentiment && filters.sentiment !== 'all' && (
-            <span className="chip bg-cream text-ink flex items-center gap-1">
-              Sentiment: {filters.sentiment}
-              <button onClick={() => update({ sentiment: 'all' })}>
-                <X size={12} />
-              </button>
-            </span>
-          )}
-
-          {filters.searchQuery && (
-            <span className="chip bg-cream text-ink flex items-center gap-1">
-              Cerca: &quot;{filters.searchQuery}&quot;
-              <button onClick={() => update({ searchQuery: '' })}>
                 <X size={12} />
               </button>
             </span>
