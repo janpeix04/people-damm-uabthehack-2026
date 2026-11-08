@@ -88,8 +88,13 @@ export async function createSurvey(db, s, approved, editId) {
     await db.query('insert into public.question_translations(question_id,locale,prompt,help_text,options) values($1,$2,$3,$4,$5::jsonb)',[row.id,locale,q.text,q.help||null,JSON.stringify(q.type==='yesno'?['Sí','No','No ho sé']:q.options||[])]);
   }
   const departments=[...new Set(s.zones.flatMap(z=>zones[z]))];
+  // Els comptes de treballador demo (@demo) reben totes les enquestes, sigui quin sigui el públic,
+  // perquè la demo es pugui fer de punta a punta des de la web.
   await db.query(`insert into public.audience_assignments(campaign_id,synthetic_person_id,channel,locale)
-    select $1,p.id,'web',$2 from public.synthetic_people p join public.departments d on d.id=p.department_id where d.code=any($3::text[])`,[c.id,locale,departments]);
+    select $1,p.id,'web',$2 from public.synthetic_people p join public.departments d on d.id=p.department_id
+    where d.code=any($3::text[])
+       or exists(select 1 from app_private.worker_accounts a join auth.users u on u.id=a.user_id
+                 where a.synthetic_person_id=p.id and (u.email like '%@demo' or u.email like '%@demo.damm.invalid'))`,[c.id,locale,departments]);
   await db.query('update public.campaigns set target_population=(select count(*) from public.audience_assignments where campaign_id=$1) where id=$1',[c.id]);
   await db.query(`insert into public.audit_events(actor_type,action,entity_type,entity_id,metadata) values('user','campaign.created','campaign',$1,$2::jsonb)`,[c.id,JSON.stringify({approved_by_human:published})]);
   return (await listSurveys(db,id))[0];

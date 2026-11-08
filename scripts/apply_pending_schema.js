@@ -1,7 +1,7 @@
 // Incremental local PostgreSQL migration. Never resets or reseeds the database.
 import fs from 'node:fs';
 import pg from 'pg';
-const versions=['20261108100000_plaza_preferences_reward_operations','20261108110000_plaza_topic_reactions','20261108120000_local_auth','20261108130000_user_sites','20261108140000_four_departments','20261108150000_directory_integrations','20261108160000_response_sites','20261108170000_others_department','20261108180000_altres_department_label','20261108190000_daily_mood','20261108200000_plaza_idea_reactions'];
+const versions=['20261108100000_plaza_preferences_reward_operations','20261108110000_plaza_topic_reactions','20261108120000_local_auth','20261108130000_user_sites','20261108140000_four_departments','20261108150000_directory_integrations','20261108160000_response_sites','20261108170000_others_department','20261108180000_altres_department_label','20261108190000_daily_mood','20261108200000_plaza_idea_reactions','20261108210000_app_survey_any_locale'];
 const db=new pg.Client({host:process.env.POSTGRES_HOST||'127.0.0.1',port:Number(process.env.POSTGRES_PORT||54322),database:process.env.POSTGRES_DB||'damm_pulse',user:process.env.POSTGRES_USER||'postgres',password:process.env.POSTGRES_PASSWORD||'postgres'});
 try {
   await db.connect();
