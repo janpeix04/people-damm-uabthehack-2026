@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-export interface DepartmentOverview {code:string;name:string;headcount:number;responses:number;threshold:number;score:number|null;participants:number;participation:number;mood:'happy'|'uneasy'|'stressed'|'nodata';period:string|null}
+export interface DepartmentOverview {code:string;name:string;headcount:number;responses:number;threshold:number;score:number|null;participants:number;participation:number;mood:'happy'|'uneasy'|'stressed'|'nodata';period:string|null;days:number}
 export interface SiteSummary {code:string;name:string;location:string;type:string;category:string;headcount:number}
 
 function useGet<T>(url:string,fallback:T,errorText:string){
