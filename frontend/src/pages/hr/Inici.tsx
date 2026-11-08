@@ -1,44 +1,50 @@
 import { Link, useSearchParams } from 'react-router-dom'
-import { Search, Sparkles } from 'lucide-react'
-import { AI_RECS, MOODS, zoneByKey } from '../../data/mock'
-import {useDepartments} from '../../api/departments'
+import { Sparkles } from 'lucide-react'
+import { MOODS, zoneByKey } from '../../data/mock'
+import { useDepartments } from '../../api/departments'
+import { useAuth } from '../../store/AuthContext'
 import { useApp } from '../../store/AppContext'
-import { PlazaCard, fmt, Meter, PathIcon, MoodBadge } from '../../components/ui'
+import { fmt, Meter, PathIcon, MoodBadge } from '../../components/ui'
 import { useI18n } from '../../i18n'
 
 export default function HRInici() {
   const [params]=useSearchParams()
-  const {departments,loading,error}=useDepartments(params.get('centre')||null)
-  const { hrSurveys: surveys, festa } = useApp()
+  const site=params.get('centre')||null
+  const {departments,loading,error}=useDepartments(site)
+  const {user}=useAuth()
+  const { hrSurveys: surveys } = useApp()
   const { t, locale } = useI18n()
   const shortDate = (iso: string) => new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short' })
   const open = surveys.filter(s => s.status === 'open')
+  // indicadors d'avui calculats a partir dels departaments (backend). El clima només fa servir
+  // els departaments que superen el llindar de privacitat, ponderats per respostes.
+  const headcount = departments.reduce((n, d) => n + d.headcount, 0)
+  const responses = departments.reduce((n, d) => n + d.responses, 0)
+  const scored = departments.filter(d => d.score != null)
+  const scoredResponses = scored.reduce((n, d) => n + d.responses, 0)
+  const climate = scoredResponses ? scored.reduce((n, d) => n + d.score! * d.responses, 0) / scoredResponses : null
+  const climateMood = climate == null ? 'nodata' : climate >= 7 ? 'happy' : climate >= 5 ? 'uneasy' : 'stressed'
+  // amb un centre el backend agrega diversos dies: la participació és la mitjana diària
+  const days = departments[0]?.days ?? 1
+  const participation = headcount ? Math.min(100, Math.round(100 * responses / (headcount * days))) : 0
+  const ready = !loading || departments.length > 0
+  const period = days === 1 ? t('home.periodToday') : t('home.periodDays', { n: days })
+  const dash = '–'
   const kpis = [
-    { label: t('home.kpiClimate'), value: fmt(6.5), note: t('home.kpiClimateNote'), noteCls: 'text-[#B4261E]', w: 'uneasy' as const },
-    { label: t('home.kpiParticipation'), value: `${Math.round(festa.pct)}%`, note: t('home.kpiParticipationNote'), noteCls: 'text-ink-muted', w: null },
-    { label: t('home.kpiResponses'), value: (892 + festa.responses).toLocaleString(locale), note: t('home.kpiResponsesNote'), noteCls: 'text-ok', w: null },
-    { label: t('home.kpiActive'), value: String(open.length), note: open.length ? t('home.kpiActiveFirstCloses', { date: shortDate(open.map(s => s.closesAt).sort()[0]) }) : t('home.kpiActiveNone'), noteCls: 'text-ink-muted', w: null },
+    { label: t('home.kpiClimate'), value: ready && climate != null ? fmt(climate) : dash, note: climate != null ? t('home.kpiClimateNote', { period, n: scored.length }) : t('home.kpiClimateHidden'), w: climateMood as keyof typeof MOODS },
+    { label: t('home.kpiParticipation'), value: ready ? `${participation}%` : dash, note: t('home.kpiParticipationNote', { headcount: headcount.toLocaleString(locale) }), w: null },
+    { label: t('home.kpiResponses'), value: ready ? responses.toLocaleString(locale) : dash, note: t('home.kpiResponsesNote', { period }), w: null },
+    { label: t('home.kpiActive'), value: String(open.length), note: open.length ? t('home.kpiActiveFirstCloses', { date: shortDate(open.map(s => s.closesAt).sort()[0]) }) : t('home.kpiActiveNone'), w: null },
   ]
+  const firstName = user?.name?.trim().split(/\s+/)[0]
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap justify-between items-center gap-3">
-        <label className="flex items-center gap-2.5 h-11 px-3.5 rounded-[14px] bg-paper border border-line flex-1 max-w-[380px] min-w-[200px]">
-          <Search size={18} className="text-ink-muted" aria-hidden />
-          <span className="sr-only">{t('home.hrSearch')}</span>
-          <input type="search" placeholder={t('home.hrSearchPlaceholder')} className="bg-transparent outline-none text-sm font-medium flex-1 min-w-0" />
-        </label>
-        <div className="flex items-center gap-3">
-          <span className="hidden sm:inline text-[13px] font-semibold text-ink-muted">{t('home.hrContext')}</span>
-          <Link to="/rrhh/crear" className="btn-red"><Sparkles size={18} aria-hidden />{t('home.hrCreate')}</Link>
-        </div>
-      </div>
-
-      <section className="flex flex-wrap gap-5 items-stretch">
-        <div className="flex-[999_1_460px] min-w-0 flex flex-col justify-center gap-2">
-          <h1 className="serif text-[34px] sm:text-[40px] leading-[1.05]">{t('home.hrGreeting')}</h1>
+      <section className="flex flex-wrap justify-between items-start gap-3">
+        <div className="min-w-0 flex flex-col gap-2">
+          <h1 className="serif text-[34px] sm:text-[40px] leading-[1.05]">{firstName ? t('home.hrGreeting', { name: firstName }) : t('home.hrGreetingAnon')}</h1>
           <p className="text-base leading-relaxed text-ink-muted max-w-[620px]">{t('home.hrSummary')}</p>
         </div>
-        <div className="flex-[1_1_340px] min-w-0"><PlazaCard /></div>
+        <Link to="/rrhh/crear" className="btn-red"><Sparkles size={18} aria-hidden />{t('home.hrCreate')}</Link>
       </section>
 
       <section aria-label={t('home.hrKpisAria')} className="grid gap-3.5 grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
@@ -48,14 +54,14 @@ export default function HRInici() {
             <div className="min-w-0">
               <div className="text-[12.5px] font-semibold text-ink-muted">{k.label}</div>
               <div className="serif text-[30px] leading-tight tabular-nums">{k.value}</div>
-              <div className={`text-xs font-semibold ${k.noteCls}`}>{k.note}</div>
+              <div className="text-xs font-semibold text-ink-muted">{k.note}</div>
             </div>
           </div>
         ))}
       </section>
 
       <div className="flex flex-wrap gap-5 items-start">
-        <section className="card p-5 flex-[999_1_560px] min-w-0 flex flex-col gap-3.5">
+        <section className="card p-5 flex-1 min-w-0 flex flex-col gap-3.5">
           <div className="flex flex-wrap justify-between items-end gap-2">
             <div><h2 className="serif text-2xl">{t('home.moodMap')}</h2><p className="text-[13px] text-ink-muted">{t('home.moodMapSub')}</p></div>
             <Link to="/rrhh/world" className="text-[13.5px] font-bold text-red-dk">{t('home.openWorld')}</Link>
@@ -78,22 +84,6 @@ export default function HRInici() {
           <p className="text-xs text-ink-muted">{t('home.deptFootnote')}</p>
         </section>
 
-        <aside className="flex-[1_1_320px] min-w-0 flex flex-col gap-4">
-          <section className="card p-4 flex flex-col gap-2.5">
-            <div className="flex justify-between items-center"><h2 className="serif text-[21px]">{t('home.aiProposals')}</h2><span className="chip bg-red-soft text-red-dk">{t('home.approvalNeeded')}</span></div>
-            {AI_RECS.map(r => (
-              <div key={r.id} className="border border-cream-dk rounded-[14px] p-3 flex flex-col gap-1.5">
-                <strong className="text-sm">{r.title}</strong>
-                <span className="text-[12.5px] leading-snug text-ink-muted">{r.why}</span>
-                <div className="flex gap-2 mt-0.5"><Link to={r.to} className="btn-ink !h-8 !px-3 !text-[12.5px] !rounded-[10px]">{r.cta}</Link><button className="btn-ghost !h-8 !px-2 !text-[12.5px]">{t('home.dismiss')}</button></div>
-              </div>
-            ))}
-          </section>
-          <section className="rounded-[20px] bg-warn-bg p-4 flex flex-col gap-1.5">
-            <strong className="text-sm text-warn-ink">{t('home.representativeness')}</strong>
-            <span className="text-[13px] leading-relaxed text-[#5A3A10]">{t('home.representativenessText')}</span>
-          </section>
-        </aside>
       </div>
 
       <section className="card p-5">
