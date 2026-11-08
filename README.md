@@ -1,209 +1,319 @@
-# 🍺 Damm Pulse IA — Plataforma de Escucha Activa, Continua e Inteligente
+<div align="center">
 
-> **Datos de demostración:** al crear un volumen PostgreSQL vacío, Docker aplica las migraciones y después `supabase/demo_seed.sql`, con cinco campañas y datos sintéticos. Reiniciar o reconstruir los contenedores con un volumen existente no ejecuta ese seed. `npm run db:demo` y `scripts/reseed_all.js` son operaciones manuales: también eliminan determinadas campañas antiguas y sus respuestas. No utilizarlos para actualizar una BD que deba conservar esos datos. La pantalla de análisis utiliza PostgreSQL; no recupera resultados simulados del frontend.
+**🌐 Català** · [Español](./README.es.md) · [English](./README.en.md)
 
-> **UAB THE HACK! 2026 · Reto Estrella Damm**  
-> *«¿Cómo podemos medir el clima laboral de manera ágil, continua e inteligente con IA? Escoltar millor, actuar abans.»*
+<br>
 
----
+<img src="./docs/screenshots/cover.jpg" alt="People Damm" width="820">
 
-## 🎯 Sobre el Proyecto
+# People Damm
 
-En una organización tan diversa como **Damm** —con personas trabajando en **fábricas** (producción y envasado por turnos), **logística** (almacenes y reparto), **equipos comerciales** (en ruta desde el móvil) y **oficinas**—, las encuestas anuales tradicionales presentan tres grandes barreras:
-1. **Participación poco representativa:** Planta y logística participan menos por falta de tiempo o acceso a un ordenador.
-2. **Talla única (*one-size-fits-all*):** Una misma encuesta larga no refleja las realidades tan distintas de un operario de turno de noche, un comercial o un manager.
-3. **Mucho texto, análisis tardío:** Cientos de comentarios abiertos se revisan a mano; cuando se detecta el problema, la oportunidad de actuar ya ha pasado.
+### Escoltar millor, actuar abans.
 
-**Damm Pulse IA** transforma la medición del clima laboral en un **ciclo continuo, ético y asistido por IA de principio a fin**, conectando una **Web Base para People/RRHH** con flujos automatizados de **IA y análisis de datos en n8n**, publicación directa en **Typeform** (con experiencia móvil/QR para planta) e integración con **Microsoft 365 (Teams)**.
+Plataforma d'escolta activa, contínua i intel·ligent del clima laboral, amb IA i privacitat per disseny.
 
----
+[![UAB THE HACK! 2026](https://img.shields.io/badge/UAB%20THE%20HACK!-2026-c8102e?style=for-the-badge)](#-hackathon)
+[![Repte Estrella Damm](https://img.shields.io/badge/Repte-Estrella%20Damm-f2b705?style=for-the-badge)](./docs/Repte-Estrella-Damm-UAB-THE-HACK-2026.pdf)
 
-## 🔄 El Ciclo de Escucha Continua (8 Pasos)
+![React](https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178c6?logo=typescript&logoColor=white)
+![Three.js](https://img.shields.io/badge/Three.js-3D-000000?logo=threedotjs&logoColor=white)
+![n8n](https://img.shields.io/badge/n8n-2.46-ea4b71?logo=n8n&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169e1?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ed?logo=docker&logoColor=white)
 
-Nuestra solución cubre de extremo a extremo el recorrido funcional en una única plataforma:
+[Problema](#-el-problema) · [Solució](#-la-solució) · [Captures](#-captures) · [Arquitectura](#️-arquitectura) · [Privacitat](#️-privacitat-i-ús-responsable) · [Posada en marxa](#-posada-en-marxa) · [Equip](#-equip)
 
-1. **Definir la Necesidad:** RRHH describe en lenguaje natural qué quiere entender, para qué colectivo (`Planta`, `Logística`, `Comercial`, `Oficina`, `Manager`), la duración máxima (< 2 min) y las restricciones.
-2. **Generar la Microconsulta con IA:** `n8n` + LLM diseñan una propuesta adaptada en tono, longitud e idioma (Catalán/Castellano), con 3–6 preguntas, lógica condicional y mensaje de transparencia.
-3. **Validación Humana (*Human-in-the-Loop*):** RRHH revisa, edita, reordena o elimina preguntas en la Web Base. **La IA nunca publica sin aprobación humana.**
-4. **Publicar en Typeform + QR:** Creación automática del formulario vía **Typeform API**, generando al instante un **Cartel QR imprimible** para planta/logística y notificaciones para **Microsoft Teams**.
-5. **Participación Representativa:** Experiencia móvil ultrarrápida (< 90 s) sin necesidad de ordenador, acompañada de un monitor que detecta sesgos de cobertura o baja respuesta en turnos específicos.
-6. **Recoger, Anonimizar y Analizar:** Ingesta vía API/Webhook, **eliminación automática de datos identificativos (PII)** en comentarios abiertos, clustering semántico por temas, análisis de sentimiento y detección de **señales débiles (*weak signals*)** entre períodos.
-7. **Visualizar con Privacidad por Diseño:** Dashboard de *People Analytics* con resultados **siempre agregados**, bloqueo automático de segmentos con muestra insuficiente (**umbral $k \ge 5$**) y panel de explicabilidad (tamaño muestral $N$, confianza y separación entre correlación y causalidad).
-8. **Recomendar y Cerrar el Ciclo:** Propuesta de **acciones concretas de bienestar y organización** (validadas por RRHH) y generación con un clic de la **microconsulta de seguimiento** para evaluar la evolución.
+</div>
 
 ---
 
-## 🏗️ Arquitectura Tecnológica
+## 🎯 El problema
 
-- **Frontend (Web Base):** Aplicación web interactiva para el equipo de People/RRHH y visualización de dashboards agregados.
-- **Orquestación, IA y Análisis Backend (`n8n`):** Instancia local de `n8n` (`http://localhost:5678`) automatizada y validada mediante el servidor MCP local [`mcp-n8n-local`](./mcp-n8n-local) y la skill [`n8n-architect`](./.agents/skills/n8n-architect/SKILL.md):
-  - `WF-01`: Diseño adaptativo de microconsultas con IA.
-  - `WF-02`: Publicación en Typeform API + Generador QR + Conector Microsoft Teams.
-  - `WF-03`: Ingesta de respuestas, sanitización PII multicapa y clustering NLP bilingüe (CA/ES).
-  - `WF-04`: Motor estadístico de $k$-anonimato, detector de sesgos de representatividad y recomendador de planes de acción.
-- **Formularios y Captura:** Integración con **Typeform API**.
-- **Datos:** Dataset **100% sintético** (entre 300 y 1.000 respuestas en múltiples períodos y colectivos, con ruido realista y sesgos controlados para validar los Escenarios A, B y C).
+Damm té persones a **fàbrica** (producció i envasat per torns), **logística** (magatzems i repartiment), **equips comercials** (en ruta, des del mòbil) i **oficines**. Les enquestes anuals de clima tradicionals topen amb tres barreres:
 
----
+| Barrera | Conseqüència |
+|---|---|
+| **Participació poc representativa** | Planta i logística responen menys per falta de temps o d'accés a un ordinador. |
+| **Talla única** | Una mateixa enquesta llarga no reflecteix la realitat d'un operari del torn de nit, d'un comercial o d'un manager. |
+| **Molt de text, anàlisi tardana** | Centenars de comentaris oberts es revisen a mà; quan es detecta el problema, ja és tard per actuar. |
 
-## 🛡️ Privacidad, Anonimato y Uso Responsable (Reglas de Oro)
+## 💡 La solució
 
-La confianza es la base para que las personas respondan con sinceridad. Nuestra plataforma garantiza por diseño:
+**People Damm** converteix la mesura del clima laboral en un **cicle continu, ètic i assistit per IA**, amb dues experiències connectades:
 
-- **100% Datos Sintéticos:** Ningún dato real de empleados ni información confidencial de Damm se utiliza o almacena en este proyecto.
-- **Agregación Estricta y Umbral Mínimo ($k \ge 5$):** Nunca se muestran respuestas individuales identificables. Si una segmentación tiene menos de 5 respuestas, el backend y el dashboard bloquean el desglose.
-- **Redacción Automática de PII:** Todo comentario abierto pasa por un filtro determinista y semántico que enmascara nombres propios, correos, teléfonos o referencias personales antes de ser analizado o mostrado.
-- **Supervisión Humana Obligatoria:** La IA propone preguntas y recomienda acciones, pero las personas de RRHH siempre validan y deciden.
-- **Zero Secrets Exposed:** Todas las credenciales se gestionan mediante variables de entorno (`.env` ignorado en Git).
+- 🧑‍💼 **Portal RRHH** — crear microconsultes amb IA, publicar-les, analitzar resultats agregats i decidir accions.
+- 👷 **App del treballador** — mobile-first, respondre en menys de 90 segons, compartir idees a La Plaça, registrar l'estat d'ànim i bescanviar punts.
 
----
+### El cicle d'escolta en 8 passos
 
-## 📂 Estructura del Repositorio
+```mermaid
+flowchart LR
+    A[1 · Definir<br>la necessitat] --> B[2 · Generar<br>amb IA]
+    B --> C[3 · Validació<br>humana]
+    C --> D[4 · Publicar<br>QR · Teams · App]
+    D --> E[5 · Participació<br>representativa]
+    E --> F[6 · Anonimitzar<br>i analitzar]
+    F --> G[7 · Visualitzar<br>k ≥ 5]
+    G --> H[8 · Recomanar<br>i tancar el cicle]
+    H -.-> A
+```
+
+1. **Definir la necessitat** — RRHH descriu en llenguatge natural què vol entendre, per a quin col·lectiu i amb quina durada màxima.
+2. **Generar la microconsulta amb IA** — un LLM orquestrat amb n8n proposa 3–6 preguntes adaptades en to, llargada i idioma (CA/ES/EN).
+3. **Validació humana** — RRHH revisa, edita, reordena o elimina preguntes. **La IA mai publica sense aprovació.**
+4. **Publicar** — a l'app, amb **cartell QR imprimible** per a planta i notificació a **Microsoft Teams** (Typeform opcional).
+5. **Participació representativa** — experiència mòbil ràpida i un monitor que detecta col·lectius infrarepresentats.
+6. **Anonimitzar i analitzar** — eliminació automàtica de **PII**, agrupació per temes, sentiment i senyals febles.
+7. **Visualitzar amb privacitat** — resultats sempre agregats, segments bloquejats si **n < 5**.
+8. **Recomanar i tancar el cicle** — accions concretes validades per RRHH i consulta de seguiment amb un clic.
+
+## 📸 Captures
+
+### Accés
+
+<table>
+  <tr>
+    <td width="50%"><img src="./docs/screenshots/landing.jpg" alt="Portada"><br><sub><b>Portada</b> — tria entre Portal RRHH i App del treballador.</sub></td>
+    <td width="50%"><img src="./docs/screenshots/login.jpg" alt="Inici de sessió"><br><sub><b>Inici de sessió</b> — comptes locals amb rols i sessions segures.</sub></td>
+  </tr>
+</table>
+
+### Portal RRHH
+
+<table>
+  <tr>
+    <td width="50%"><img src="./docs/screenshots/hr-home.jpg" alt="Inici"><br><sub><b>Inici</b> — KPI de clima, participació i mapa d'emocions per departament.</sub></td>
+    <td width="50%"><img src="./docs/screenshots/hr-surveys.jpg" alt="Enquestes"><br><sub><b>Enquestes</b> — actives, programades, esborranys i tancades, amb participació en directe.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="./docs/screenshots/hr-analytics.jpg" alt="Anàlisi i insights"><br><sub><b>Anàlisi i insights</b> — mètriques de PostgreSQL, filtres i representativitat.</sub></td>
+    <td width="50%"><img src="./docs/screenshots/hr-directory.jpg" alt="Directori i integracions"><br><sub><b>Directori i integracions</b> — comptes, centres, rols i origen de les dades.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="./docs/screenshots/hr-world.jpg" alt="Damm World 3D"><br><sub><b>Damm World 3D</b> — el clima de cada departament com un edifici viu.</sub></td>
+    <td width="50%"><img src="./docs/screenshots/hr-plaza.jpg" alt="La Plaça 3D"><br><sub><b>La Plaça 3D</b> — temes de la setmana i idees més votades.</sub></td>
+  </tr>
+</table>
+
+#### Crear una enquesta amb IA (4 passos)
+
+<table>
+  <tr>
+    <td width="50%"><img src="./docs/screenshots/hr-create.jpg" alt="1 · Objectiu"><br><sub><b>1 · Objectiu</b> — RRHH descriu què vol saber, durada, idioma i departaments.</sub></td>
+    <td width="50%"><img src="./docs/screenshots/hr-create-2.jpg" alt="2 · Preguntes"><br><sub><b>2 · Preguntes</b> — la IA proposa preguntes; RRHH les edita, regenera o descarta.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="./docs/screenshots/hr-create-3.jpg" alt="3 · Públic i canals"><br><sub><b>3 · Públic i canals</b> — zones amb k-anonimat i canals: QR, app, Teams, correu, Plaça i World.</sub></td>
+    <td width="50%"><img src="./docs/screenshots/hr-create-4.jpg" alt="4 · Revisió i publicació"><br><sub><b>4 · Revisió i publicació</b> — previsualització mòbil i aprovació humana obligatòria.</sub></td>
+  </tr>
+</table>
+
+#### La Plaça 3D
+
+<table>
+  <tr>
+    <td width="50%"><img src="./docs/screenshots/hr-plaza-ideas.jpg" alt="Bústia d'idees"><br><sub><b>Bústia d'idees</b> — moderació de RRHH abans de publicar, amb redacció automàtica de PII.</sub></td>
+    <td width="50%"><img src="./docs/screenshots/hr-plaza-bar.jpg" alt="La Barra"><br><sub><b>La Barra</b> — punt de trobada de la plaça.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="./docs/screenshots/hr-plaza-bar-menu.jpg" alt="Carta de cerveses Damm"><br><sub><b>Carta de cerveses Damm</b> — la barra de La Plaça, sempre oberta.</sub></td>
+    <td width="50%"><img src="./docs/screenshots/app-desktop-mood-prompt.jpg" alt="Estat d'ànim"><br><sub><b>Estat d'ànim</b> — pregunta diària opcional, d'un sol toc.</sub></td>
+  </tr>
+</table>
+
+<details>
+<summary><b>Veure l'anàlisi completa d'un formulari</b></summary>
+<br>
+<p align="center"><img src="./docs/screenshots/hr-analytics-full.jpg" alt="Analytics" width="720"></p>
+</details>
+
+### App del treballador · escriptori
+
+<table>
+  <tr>
+    <td width="50%"><img src="./docs/screenshots/app-desktop-home.jpg" alt="Inici"><br><sub><b>Inici</b> — enquestes pendents, punts i com funciona.</sub></td>
+    <td width="50%"><img src="./docs/screenshots/app-desktop-plaza.jpg" alt="La Plaça"><br><sub><b>La Plaça</b> — passeja, vota idees amb «+1 Jo també» i respon enquestes.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="./docs/screenshots/app-desktop-rewards.jpg" alt="Recompenses"><br><sub><b>Recompenses</b> — bescanvia punts per cafè, snacks o donacions.</sub></td>
+    <td width="50%"><img src="./docs/screenshots/app-desktop-mood.jpg" alt="El meu estat d'ànim"><br><sub><b>El meu estat d'ànim</b> — una vegada al dia, sense guardar quina cara has triat.</sub></td>
+  </tr>
+</table>
+
+### App del treballador · mòbil
+
+<table>
+  <tr>
+    <td width="25%"><img src="./docs/screenshots/app-home.jpg" alt="Inici"><br><sub><b>Inici</b> — enquestes i punts.</sub></td>
+    <td width="25%"><img src="./docs/screenshots/app-plaza.jpg" alt="La Plaça"><br><sub><b>La Plaça</b> — idees i vots.</sub></td>
+    <td width="25%"><img src="./docs/screenshots/app-mood.jpg" alt="Estat d'ànim"><br><sub><b>Estat d'ànim</b> — anònim.</sub></td>
+    <td width="25%"><img src="./docs/screenshots/app-rewards.jpg" alt="Recompenses"><br><sub><b>Recompenses</b> — punts per participar.</sub></td>
+  </tr>
+</table>
+
+## ✨ Funcionalitats
+
+| Portal RRHH | App del treballador |
+|---|---|
+| Generació de microconsultes amb IA (CA/ES/EN) | Enquestes curtes (< 90 s) des del mòbil o QR |
+| Editor amb validació humana obligatòria | La Plaça 3D: idees anònimes i vots |
+| Publicació amb cartell QR i Microsoft Teams | Estat d'ànim diari, desvinculat del compte |
+| Analítica amb filtres per període, zona, torn i canal | Moneder de punts i recompenses |
+| Detector de representativitat («a qui no estem escoltant?») | Interfície trilingüe |
+| Damm World 3D i mapa d'emocions | |
+| Directori d'usuaris i integracions | |
+| Exportació CSV i informe imprimible | |
+
+## 🏗️ Arquitectura
+
+```mermaid
+flowchart TB
+    subgraph Client
+        W[Portal RRHH<br>React · Vite · Tailwind]
+        M[App treballador<br>mobile-first · Three.js]
+    end
+    subgraph Docker Compose
+        N[nginx<br>frontend estàtic]
+        API[hr-api<br>Node.js · auth · analítica]
+        DB[(PostgreSQL 17)]
+        N8N[n8n 2.46<br>workflows d'IA]
+        R[n8n runners<br>nodes Code aïllats]
+    end
+    LLM[[LLM UAB THE HACK!]]
+    EXT[[Typeform · Microsoft Teams]]
+
+    W & M --> N
+    N -->|/api| API
+    API --> DB
+    API -->|/api/hr/automation| N8N
+    N8N --- R
+    N8N --> LLM
+    N8N --> EXT
+```
+
+| Capa | Tecnologia |
+|---|---|
+| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, Three.js, React Router, i18n propi (CA/ES/EN) |
+| **API** | Node.js (`server/`): autenticació amb sessions, analítica, enquestes, Plaça, directori |
+| **Dades** | PostgreSQL 17 amb migracions SQL i invariants de privacitat (`supabase/`) |
+| **IA i automatització** | n8n amb task runner extern; servidor MCP propi [`mcp-n8n-local`](./mcp-n8n-local) |
+| **Integracions** | Microsoft Teams ([`integrations/teams`](./integrations/teams)), Typeform (opcional) |
+
+### Workflows d'n8n
+
+| Workflow | Funció |
+|---|---|
+| `WF-01` | Disseny adaptatiu de microconsultes amb IA |
+| `WF-02` | Publicació (Typeform API), generació de QR i connector de Teams |
+| `WF-03` | Ingesta de respostes, sanitització PII multicapa i clustering bilingüe |
+| `WF-04` | Motor de k-anonimat, detector de biaixos i recomanador d'accions |
+
+## 🛡️ Privacitat i ús responsable
+
+> La confiança és el que fa que la gent respongui amb sinceritat.
+
+- **Dades 100% sintètiques** — no s'utilitza cap dada real d'empleats de Damm.
+- **Agregació estricta (k ≥ 5)** — cap segment amb menys de 5 respostes es mostra, ni al backend ni al dashboard.
+- **Redacció automàtica de PII** — noms, correus i telèfons s'emmascaren abans d'analitzar o mostrar comentaris.
+- **Identitat separada del contingut** — les respostes, idees i estat d'ànim no porten claus d'usuari ni de sessió. Els punts es guanyen per participar, mai pel que es respon.
+- **Humans al comandament** — la IA proposa; RRHH valida i decideix.
+- **Sense secrets al codi** — credencials a `.env` (ignorat per Git) i test d'auditoria de filtracions.
+- **Entorn endurit** — serveis només a `127.0.0.1`, execucions d'n8n purgades a les 72 h, telemetria desactivada.
+
+## 🚀 Posada en marxa
+
+**Requisits:** Docker (Desktop o Engine amb Compose), Node.js ≥ 20 i Git.
+
+```bash
+# 1. Clonar i configurar
+git clone <URL_DEL_REPOSITORI> damm && cd damm
+cp .env.example .env    # omple N8N_RUNNERS_AUTH_TOKEN, LLM_API_KEY, POSTGRES_PASSWORD…
+
+# 2. Aixecar tota la plataforma
+npm run build:mcp       # compila mcp-n8n-local
+npm run n8n:up          # n8n, runners, PostgreSQL, hr-api i frontend
+
+# 3. Crear els comptes de demo
+node --env-file=.env scripts/auth_accounts.js --demo
+
+# 4. Desplegar els workflows (cal N8N_API_KEY, es crea a n8n → Settings → n8n API)
+npm run setup:workflows
+```
+
+| Servei | URL |
+|---|---|
+| Web (Portal RRHH + App) | http://localhost:8080 |
+| n8n | http://localhost:5678 |
+| PostgreSQL | `localhost:54322` |
+
+> En un volum PostgreSQL buit, Docker aplica les migracions i el seed de demo (`supabase/demo_seed.sql`) amb cinc campanyes sintètiques. Les contrasenyes dels comptes de demo es generen aleatòriament i es desen a `auth-accounts.local` (ignorat per Git).
+
+<details>
+<summary><b>Ordres útils</b></summary>
+
+| Acció | Ordre |
+|---|---|
+| Aturar | `npm run n8n:down` |
+| Logs | `npm run n8n:logs` · `npm run frontend:logs` · `npm run postgres:logs` |
+| Estat de la BD | `npm run db:status` |
+| Aplicar migracions pendents | `npm run db:migrate` |
+| Desenvolupament amb hot-reload | `npm --prefix frontend install && npm --prefix frontend run dev` |
+| Esborrar-ho tot | `docker compose down -v` |
+
+</details>
+
+### Tests
+
+```bash
+npm test                # suite completa (node:test)
+npm run test:security   # auditoria de filtració de secrets i PII
+npm run test:schemas    # validació dels workflows d'n8n
+npm run test:logic      # PII, k-anonimat i filtres anti-biaix
+npm run test:e2e        # webhooks reals d'n8n
+```
+
+## 📂 Estructura del repositori
 
 ```text
-├── .agents/
-│   └── skills/
-│       └── n8n-architect/       # Skill de arquitectura y validación de flujos n8n
-├── docs/
-│   ├── REQUISITOS.md            # Análisis detallado de requisitos funcionales, éticos y de evaluación
-│   ├── PLANIFICACION.md         # Arquitectura técnica, diseño de workflows n8n, módulos web y roadmap
-│   ├── 20261102 - Guia participants.pdf
-│   └── Repte-Estrella-Damm-UAB-THE-HACK-2026.pdf
-├── mcp-n8n-local/               # Servidor MCP local para diseñar, validar y desplegar workflows en n8n
-├── ANTIGRAVITY_SETUP.md         # Guía de configuración del servidor MCP en Google Antigravity
-├── .gitignore                   # Protección contra subida de secretos (.env), bases de datos y artefactos
-└── README.md                    # Documentación general del proyecto
+├── frontend/          # Portal RRHH i App del treballador (React + Vite + Three.js)
+├── server/            # hr-api: autenticació, enquestes, analítica, Plaça, directori
+├── supabase/          # Migracions SQL, seeds i tests d'invariants de privacitat
+├── mcp-n8n-local/     # Servidor MCP per dissenyar, validar i desplegar workflows
+├── integrations/teams # App i targetes per a Microsoft Teams
+├── scripts/           # Desplegament de workflows, seeds i smoke tests
+├── tests/             # Seguretat, esquemes, lògica, auth, analítica i anonimat
+├── docs/              # Requisits, arquitectura de dades i documentació tècnica
+└── docker-compose.yml
 ```
 
----
+## 📚 Documentació
 
-## 🚀 Puesta en Marcha (macOS, Windows y Linux)
+- [Requisits](./docs/REQUISITOS.md) · [Planificació](./docs/PLANIFICACION.md) · [Arquitectura de dades](./docs/DATA_ARCHITECTURE.md)
+- [Autenticació](./docs/AUTH.md) · [Analítica](./docs/ANALYTICS_POSTGRES.md) · [Representativitat](./docs/REPRESENTATION.md)
+- [La Plaça](./docs/PLAZA_SCHEMA.md) · [Departaments](./docs/DEPARTMENTS.md) · [Directori](./docs/DIRECTORY.md)
 
-Todo el backend corre en **Docker** (n8n + task runner aislado). En tu equipo solo necesitas Docker, Node.js y Git.
+## 🏆 Hackathon
 
-### 0. Requisitos previos
+Projecte desenvolupat a **UAB THE HACK! 2026** per al **Repte Estrella Damm**:
 
-| Herramienta | macOS | Windows 10/11 | Linux (Ubuntu/Debian) |
-|---|---|---|---|
-| **Docker** | [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/) o `brew install --cask docker` | [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) (activa **WSL 2** cuando lo pida y reinicia) | [Docker Engine + plugin compose](https://docs.docker.com/engine/install/ubuntu/), luego `sudo usermod -aG docker $USER` y vuelve a iniciar sesión |
-| **Node.js ≥ 20** (solo scripts y tests) | `brew install node` | [nodejs.org](https://nodejs.org) (LTS) o `winget install OpenJS.NodeJS.LTS` | [nodejs.org](https://nodejs.org/en/download/package-manager) o `nvm install --lts` |
-| **Git** | `xcode-select --install` | `winget install Git.Git` | `sudo apt install git` |
+> *Com podem mesurar el clima laboral de manera àgil, contínua i intel·ligent amb IA?*
 
-Comprueba que todo está listo (Docker Desktop debe estar **abierto** en macOS/Windows):
+- [x] Cicle complet: de la necessitat de RRHH a l'acció i la nova consulta.
+- [x] Validació humana obligatòria abans de publicar i d'aprovar accions.
+- [x] Dades 100% sintètiques.
+- [x] Llindar mínim d'agregació (k ≥ 5) i sanitització de PII.
+- [x] Cap secret exposat al repositori.
 
-```bash
-docker --version && docker compose version && node --version
-```
+## 👥 Equip
 
-> No hace falta instalar n8n: la imagen Docker ya fija la versión (`n8nio/n8n:2.46.6`), igual en todos los equipos.
-
-### 1. Clonar y configurar `.env`
-
-```bash
-git clone <URL_DEL_REPOSITORIO> damm && cd damm
-cp .env.example .env          # Windows (PowerShell): Copy-Item .env.example .env
-```
-
-Edita `.env` y rellena:
-
-| Variable | De dónde sale |
+| | |
 |---|---|
-| `N8N_RUNNERS_AUTH_TOKEN` | Genera uno: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
-| `LLM_API_KEY` | Clave del LLM de la UAB The Hack! |
-| `TYPEFORM_TOKEN` | Typeform → Account → Personal tokens (opcional: sin él WF-02 usa un modo simulado) |
-| `TEAMS_WEBHOOK_URL` | Opcional |
-| `N8N_API_KEY` | Se crea en el paso 3 |
-
-> `.env` está en `.gitignore`: **nunca** lo subas ni lo compartas por chat. Cada persona usa sus propias claves.
-
-### 2. Arrancar n8n
-
-```bash
-npm run build:mcp      # instala y compila mcp-n8n-local (lo usan scripts y tests)
-npm run n8n:up         # levanta n8n + task runner → http://localhost:5678
-                       # y el frontend → http://localhost:8080
-```
-
-> El frontend se sirve como build estático (se reconstruye en cada `npm run n8n:up`). Para desarrollo con hot-reload: `npm --prefix frontend install && npm --prefix frontend run dev`.
-
-### 3. Crear la API key de n8n (solo la primera vez)
-
-1. Abre `http://localhost:5678` y crea la cuenta owner (es local, no se envía a ningún sitio).
-2. **Settings → n8n API → Create API Key** y pégala en `.env` como `N8N_API_KEY`.
-
-### 4. Desplegar y activar los workflows
-
-```bash
-npm run setup:workflows   # crea WF-01..04 (si faltan), los actualiza y los activa
-```
-
-Webhooks disponibles en `http://localhost:5678/webhook/{generate-survey,publish-survey,ingest-responses,analytics}`.
-
-### Comandos útiles
-
-| Acción | Comando |
-|---|---|
-| Parar | `npm run n8n:down` (los datos persisten en el volumen `n8n_data`) |
-| Ver logs | `npm run n8n:logs` (frontend: `npm run frontend:logs`) |
-| Estado | `docker compose ps` |
-| Borrar todo (cuenta, workflows, ejecuciones) | `docker compose down -v` |
-
-### Acceso desde otros dispositivos de la red (opcional)
-
-Por defecto n8n **solo escucha en `127.0.0.1`**, así nadie más en tu red (p. ej. la wifi del hackathon) puede verlo. Para probar desde el móvil u otro portátil en la misma red, añade a `.env`:
-
-```env
-N8N_BIND=0.0.0.0
-N8N_PUBLIC_URL=http://<IP_DE_TU_EQUIPO>:5678/
-```
-
-y ejecuta `npm run n8n:up`. Ciérralo de nuevo (borra esas líneas) cuando termines. Los scripts y tests se ejecutan siempre en el equipo que tiene n8n (`mcp-n8n-local` solo permite `localhost` como protección SSRF).
-
-### Privacidad del entorno Docker
-
-- Al contenedor solo se le pasan las variables que usan los workflows (`LLM_API_KEY`, `TYPEFORM_TOKEN`, `TEAMS_WEBHOOK_URL`), no todo `.env`.
-- Los nodos *Code* se ejecutan en un contenedor *runner* separado.
-- Los datos de ejecución (que incluyen comentarios antes de anonimizar) se **purgan a las 72 h**.
-- Telemetría, plantillas y paquetes comunitarios no verificados están desactivados.
-
-*(Para conectar el agente con `mcp-n8n-local`, consulta [`ANTIGRAVITY_SETUP.md`](./ANTIGRAVITY_SETUP.md)).*
-
-### 5. Ejecución de la Batería de Tests Automatizados
-El proyecto cuenta con una suite completa de pruebas unitarias, de validación de esquemas Zod, auditoría de seguridad y pruebas de integración E2E en vivo con `n8n`:
-
-```bash
-# Ejecutar toda la suite de tests (19 tests)
-npm test
-
-# O ejecutar por categorías individuales:
-npm run test:security  # Auditoría Git: Cero fugas de tokens, PII o claves
-npm run test:schemas   # Validación de grafos y esquemas Zod de los workflows
-npm run test:logic     # Pruebas unitarias de filtros anti-sesgo, PII y k-anonimato
-npm run test:e2e       # Invocación real a los webhooks activos de n8n
-```
+| **Phoebe Iglesias** | **Carles Peiró** |
+| **Jan Peix** | **Joan Marc Samó** |
 
 ---
 
-## 📚 Documentación Detallada
-
-- 📋 **[Requisitos del Proyecto (`docs/REQUISITOS.md`)](./docs/REQUISITOS.md):** Necesidades de negocio, los 8 pasos del ciclo funcional, escenarios de demostración (A, B y C), esquema de datos sintéticos, reglas de privacidad y criterios de evaluación.
-- 🗺️ **[Planificación y Arquitectura (`docs/PLANIFICACION.md`)](./docs/PLANIFICACION.md):** Diseño de la Web Base, topología de los 4 workflows en `n8n`, estrategia de sanitización PII y $k$-anonimato, y planificación por fases del hackathon.
-- ⚙️ **[Configuración MCP n8n (`ANTIGRAVITY_SETUP.md`)](./ANTIGRAVITY_SETUP.md):** Guía de conexión del servidor `mcp-n8n-local`.
-
----
-
-- Phoebe Iglesias
-- Carles Peiró
-- Jan Peix
-- Joan Marc Samó
-
----
-
-## ✅ Checklist de Entrega (UAB THE HACK! 2026)
-
-- [x] El flujo cubre desde la necesidad de RRHH hasta la recomendación de acción y nueva consulta.
-- [x] Existe validación humana obligatoria antes de publicar encuestas y al aprobar acciones.
-- [x] Los datos utilizados son 100% sintéticos.
-- [x] Se aplica umbral mínimo de agregación ($k \ge 5$) y sanitización de PII en comentarios abiertos.
-- [x] Ningún token ni secreto está expuesto en el código ni en la documentación (`.gitignore` configurado).
-- [x] Documentación completa (`README.md`, `docs/REQUISITOS.md`, `docs/PLANIFICACION.md`).
+<div align="center">
+<sub>Fet amb 🍺 a la UAB · Totes les dades són sintètiques · Projecte no oficial de Damm</sub>
+</div>
