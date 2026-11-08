@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus } from 'lucide-react'
-import { channelLabel, MIN_SAMPLE, SURVEY_ZONES, TEMPLATES, zoneByKey } from '../../data/mock'
+import { channelLabel, MIN_SAMPLE, SURVEY_ZONES, zoneByKey } from '../../data/mock'
 import type { SurveyStatus } from '../../data/types'
 import { useApp } from '../../store/AppContext'
 import { PageHead } from '../../components/HRLayout'
@@ -42,7 +42,7 @@ export default function Enquestes() {
       </div>
 
       <div className="flex flex-wrap gap-5 items-start">
-        <section aria-label="Llista" className="flex-[999_1_560px] min-w-0 flex flex-col gap-3">
+        <section aria-label="Llista" className="w-full min-w-0 flex flex-col gap-3">
           {list.length === 0 && <div className="card p-8 text-center text-ink-muted">No hi ha cap enquesta en aquest estat. <Link to="/rrhh/crear" className="font-bold text-red-dk">Crea’n una</Link>.</div>}
           {list.map(s => {
             const pct = s.target ? Math.round((s.responses / s.target) * 100) : 0
@@ -82,27 +82,6 @@ export default function Enquestes() {
             )
           })}
         </section>
-
-        <aside className="flex-[1_1_300px] min-w-0 flex flex-col gap-4">
-          <section className="card p-4 flex flex-col gap-2.5">
-            <h2 className="serif text-[21px]">Calendari de pols</h2>
-            <p className="text-[12.5px] text-ink-muted">Una enquesta curta cada 2 setmanes. Màxim una de nova alhora per persona.</p>
-            <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-ink-muted">
-              {['Dl', 'Dt', 'Dc', 'Dj', 'Dv', 'Ds', 'Dg'].map(x => <span key={x}>{x}</span>)}
-              {Array.from({ length: 28 }, (_, i) => i + 2).map(n => {
-                const open = n <= 16, plan = n >= 24
-                return <span key={n} className={cn('h-[30px] rounded-lg grid place-items-center text-xs', open ? 'bg-red text-white' : plan ? 'bg-[#F2C6CD] text-ink' : 'bg-cream text-ink')}>{n}</span>
-              })}
-            </div>
-            <div className="flex gap-3 text-[11.5px] text-ink-muted"><span className="flex gap-1.5 items-center"><span className="w-2.5 h-2.5 rounded-[3px] bg-red" />Oberta</span><span className="flex gap-1.5 items-center"><span className="w-2.5 h-2.5 rounded-[3px] bg-[#F2C6CD]" />Programada</span></div>
-          </section>
-          <section className="card p-4 flex flex-col gap-2">
-            <h2 className="serif text-[21px]">Plantilles</h2>
-            {TEMPLATES.map((t, i) => (
-              <Link key={t.name} to={`/rrhh/crear?plantilla=${i}`} className="flex justify-between items-center gap-2 px-3 py-2.5 rounded-[12px] bg-cream hover:bg-cream-dk"><span><strong className="block text-sm">{t.name}</strong><span className="text-xs text-ink-muted">Proposta d’IA a partir d’aquest objectiu</span></span><span aria-hidden>→</span></Link>
-            ))}
-          </section>
-        </aside>
       </div>
     </div>
   )

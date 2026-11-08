@@ -45,7 +45,7 @@ function validate(s, approved) {
   if (!s || typeof s.title !== 'string' || !s.title.trim() || s.title.length > 200 || typeof s.goal !== 'string' || !s.goal.trim()) throw new InputError('Cal indicar títol i objectiu.');
   if (!['draft','open','scheduled'].includes(s.status)) throw new InputError('Estat no vàlid.');
   if (s.status !== 'draft' && approved !== true) throw new InputError('Cal l’aprovació humana abans de publicar.',403);
-  if (!Array.isArray(s.questions) || s.questions.length < 3 || s.questions.length > 12) throw new InputError('Calen entre 3 i 12 preguntes.');
+  if (!Array.isArray(s.questions) || s.questions.length < 3) throw new InputError('Calen almenys 3 preguntes.');
   if (!Array.isArray(s.zones) || !s.zones.length || s.zones.some(z => !zones[z])) throw new InputError('Selecciona un públic vàlid.');
   if (!Array.isArray(s.channels) || !s.channels.length || s.channels.some(c => !channels.includes(c))) throw new InputError('Selecciona canals vàlids.');
   if (!Number.isFinite(Date.parse(s.opensAt)) || !Number.isFinite(Date.parse(s.closesAt)) || Date.parse(s.closesAt) <= Date.parse(s.opensAt)) throw new InputError('La data de tancament ha de ser posterior a l’obertura.');

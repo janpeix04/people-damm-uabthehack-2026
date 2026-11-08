@@ -590,8 +590,8 @@ begin
   if p_locale not in ('ca', 'es', 'en') then
     raise exception 'Unsupported locale';
   end if;
-  if jsonb_typeof(p_answers) <> 'array' or jsonb_array_length(p_answers) = 0 or jsonb_array_length(p_answers) > 12 then
-    raise exception 'Answers must be a non-empty array with at most 12 items';
+  if jsonb_typeof(p_answers) <> 'array' or jsonb_array_length(p_answers) = 0 then
+    raise exception 'Answers must be a non-empty array';
   end if;
 
   select aa.id as assignment_id, aa.campaign_id, sp.department_id, d.collective,

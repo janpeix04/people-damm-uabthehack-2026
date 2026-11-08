@@ -56,14 +56,22 @@ export default function Detall() {
       <div className="flex flex-wrap gap-5 items-start">
         <section className="card p-5 flex-[1_1_320px] min-w-0 flex flex-col gap-4">
           <h2 className="serif text-2xl">Enllaç únic</h2>
-          <div className="flex gap-4 items-center flex-wrap">
-            <div className="bg-white p-3 rounded-[14px] border border-line"><QRCodeSVG value={url} size={148} fgColor="#1F1A18" level="M" /></div>
-            <div className="flex flex-col gap-2 min-w-0 flex-1">
+          <div className="flex flex-col items-center gap-4">
+            <div className="bg-white p-3.5 rounded-[16px] border border-line shadow-xs">
+              <QRCodeSVG value={url} size={156} fgColor="#1F1A18" level="M" />
+            </div>
+            <div className="flex flex-col gap-2 min-w-0 w-full">
               <label htmlFor="url" className="eyebrow">Adreça</label>
               <input id="url" readOnly value={url} className="input !text-[13px]" onFocus={e => e.currentTarget.select()} />
               <div className="flex gap-2 flex-wrap">
-                <button className="btn-ink !h-10" onClick={() => copy(url, 'Enllaç copiat')}><Copy size={16} aria-hidden />Copiar enllaç</button>
-                <Link to={`/cartell/${s.id}`} className="btn-line !h-10"><Printer size={16} aria-hidden />Cartell A4</Link>
+                <button className="btn-ink !h-10 flex-1 justify-center" onClick={() => copy(url, 'Enllaç copiat')}>
+                  <Copy size={16} aria-hidden />
+                  Copiar enllaç
+                </button>
+                <Link to={`/cartell/${s.id}`} className="btn-line !h-10 flex-1 justify-center">
+                  <Printer size={16} aria-hidden />
+                  Imprimir cartell
+                </Link>
               </div>
             </div>
           </div>

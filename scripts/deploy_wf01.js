@@ -24,7 +24,8 @@ const collectiveRules = {
 const validColectius = ["Fàbrica", "Logística", "Comercial", "Oficina"];
 const primaryKey = validColectius.find(c => c.toLowerCase() === colectiuRaw.toLowerCase()) || "Fàbrica";
 const perfil = collectiveRules[primaryKey];
-const hasApiKey = Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim().length > 10);
+const geminiKey = (typeof $env !== 'undefined' && $env.GEMINI_API_KEY) || (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) || "";
+const hasApiKey = Boolean(geminiKey && geminiKey.trim().length > 10);
 
 const systemPrompt = \`You are the expert People Analytics and Employee Experience AI assistant for Damm brewery.
 Your mission is to design a pulse survey for employees in '\${colectiuRaw}'.
@@ -35,9 +36,10 @@ CRITICAL INSTRUCTIONS & CONSTRAINTS:
    - LANGUAGE: Strictly neutral and inclusive language ("lenguaje neutro e inclusivo"). Avoid gender biases, avoid exclusive terms, use collective or neutral forms (e.g., 'el equipo', 'la plantilla', 'cada persona', 'tu experiencia', 'les persones' instead of gendered terms).
    - SIMPLICITY: Short, clear, natural sentences suitable for factory floor, logistics, commercial, or office workers. No complex corporate jargon.
 
-2. NUMBER OF QUESTIONS:
-   - MINIMUM 3 QUESTIONS.
-   - NO MAXIMUM LIMIT (no existe límite máximo): propose as many questions as necessary to properly explore the HR goal thoroughly (at least 3 questions).
+2. NUMBER OF QUESTIONS & ESTIMATED RESPONSE TIME:
+   - TARGET TIME: The survey is expected to take approximately \${duradaMax} seconds (~Math.round(\${duradaMax}/60) minutes).
+   - NUMBER OF QUESTIONS: Propose the appropriate number of questions so that the total response time closely approaches \${duradaMax} seconds (roughly ~10-12s per scale/list question and ~20s per open question). You MUST generate approximately Math.max(3, Math.round(\${duradaMax} / 13)) questions (minimum 3). For example: for 60s (~1 min) generate 4-5 questions; for 120s (~2 min) generate 8-10 questions; for 180s (~3 min) generate 12-14 questions.
+   - NO MAXIMUM LIMIT: Explore all relevant dimensions to thoroughly cover the HR goal.
 
 3. CORRECTNESS & ALIGNMENT WITH OBJECTIVE:
    - The questions must accurately address what is being requested in the HR objective: "\${objetivo}".
@@ -50,7 +52,7 @@ CRITICAL INSTRUCTIONS & CONSTRAINTS:
    Do NOT mix languages.
 
 5. ESTIMATED RESPONSE TIME:
-   - Accurately estimate the total response time in seconds based on question types (~10s for scale/faces, ~12s for multiple choice, ~20s for open text).
+   - Accurately estimate the total response time in seconds based on question types (~10s for scale/faces, ~12s for multiple choice, ~20s for open text) so that it closely approaches \${duradaMax} seconds.
 
 Return EXCLUSIVELY a single valid JSON object without markdown fences, formatted as:
 {
@@ -85,7 +87,7 @@ Objetivo de RRHH: "\${objetivo}"
 Restricciones adicionales: "\${restriccions}"
 Tono exigido (por defecto): \${tono} (cercano, comprensible, con lenguaje neutro e inclusivo).
 REQUISITOS ESTRICTOS:
-- MÍNIMO 3 PREGUNTAS (sin límite máximo: genera todas las necesarias para cubrir a fondo lo pedido).
+- TIEMPO ESTIMADO Y NÚMERO DE PREGUNTAS: La duración solicitada es de \${duradaMax} segundos (~Math.round(\${duradaMax}/60) minutos). Genera aproximadamente Math.max(3, Math.round(\${duradaMax} / 13)) preguntas (mínimo 3) para que el tiempo estimado total de respuesta se acerque estrechamente a \${duradaMax} segundos.
 - ANÁLISIS DE CONFORMIDAD: analiza y asegura que el contenido sea fiel a lo pedido en el objetivo, en el idioma '\${idioma}' y calcula el tiempo estimado de respuesta.\`;
 
 return [
@@ -118,82 +120,152 @@ let titulo = "";
 let intro = "";
 let preguntes = [];
 
-if (objetivo.toLowerCase().includes("torn") || objetivo.toLowerCase().includes("turno") || colectiu === "Fàbrica") {
-  titulo = isCat 
-    ? "Pols d'Opinió: Adaptació i Benestar en l'Equip"
-    : isEng
-    ? "Pulse Survey: Adaptation and Team Wellbeing"
-    : "Pulso de Opinión: Adaptación y Bienestar en el Equipo";
-  intro = isCat
-    ? "Aquesta consulta és 100% anònima i confidencial (k-anonimat garantit). La teva participació ens ajuda a conèixer com viu l'equip els torns i els descansos. Temps estimat: 65 segons."
-    : isEng
-    ? "This survey is 100% anonymous and confidential (k-anonymity guaranteed). Your feedback helps improve shifts and balance for everyone. Estimated time: 65 seconds."
-    : "Esta consulta es 100% anónima y confidencial (k-anonimato garantizado). Tu participación nos ayuda a conocer cómo vive el equipo los turnos y descansos. Tiempo estimado: 65 segundos.";
-  preguntes = [
-    {
-      id: "p1_claredat",
-      enunciat: isCat ? "Comptes amb la informació i previsió necessària sobre els teus horaris i torns amb prou antelació?" : isEng ? "Do you have adequate advance notice and clear information regarding your work shifts?" : "¿Cuentas con la información y previsión necesaria sobre tus horarios y turnos con suficiente antelación?",
-      tipus: "escala_1_5",
-      escala: { min: 1, max: 5 },
-      obligatoria: true
-    },
-    {
-      id: "p2_descans",
-      enunciat: isCat ? "La distribució dels descansos i torns et permet una recuperació adequada entre jornades?" : isEng ? "Does the schedule distribution allow you adequate recovery and rest between shifts?" : "¿La distribución de descansos y turnos te permite una recuperación adecuada entre jornadas?",
-      tipus: "escala_1_5",
-      escala: { min: 1, max: 5 },
-      obligatoria: true
-    },
-    {
-      id: "p3_suport",
-      enunciat: isCat ? "Quan sorgeix un canvi imprevist o incidència, reps suport proper i col·laboratiu en l'equip?" : isEng ? "When unexpected events arise, do you receive helpful and supportive guidance within the team?" : "¿Cuando surge un cambio imprevisto o incidencia, recibes apoyo cercano y colaborativo en el equipo?",
-      tipus: "escala_1_5",
-      escala: { min: 1, max: 5 },
-      obligatoria: true
-    },
-    {
-      id: "p4_millora_oberta",
-      enunciat: isCat ? "Quina millora constructiva o proposta ajudaria més al dia a dia de l'equip? (Opcional)" : isEng ? "What constructive suggestion would help our daily teamwork the most? (Optional)" : "¿Qué mejora constructiva o propuesta ayudaría más al día a día del equipo? (Opcional)",
-      tipus: "text_obert",
-      obligatoria: false
-    }
-  ];
-} else {
-  titulo = isCat 
-    ? \`Pols d'Opinió: \${objetivo.slice(0, 45)}\` 
-    : isEng
-    ? \`Pulse Survey: \${objetivo.slice(0, 45)}\`
-    : \`Pulso de Opinión: \${objetivo.slice(0, 45)}\`;
-  intro = isCat
-    ? \`Consulta confidencial i propera per a l'equip de \${colectiu} a \${centre_tipus}. Temps estimat: 65 segons.\`
-    : isEng
-    ? \`Confidential and inclusive survey for the \${colectiu} team at \${centre_tipus}. Estimated time: 65 seconds.\`
-    : \`Consulta confidencial y cercana para el equipo de \${colectiu} en \${centre_tipus}. Tiempo estimado: 65 segundos.\`;
-  preguntes = [
-    {
-      id: "p1_general",
-      enunciat: isCat ? "Sents que la teva aportació és escoltada i recolzada en el dia a dia de l'equip?" : isEng ? "Do you feel your contribution is listened to and supported within your team?" : "¿Sientes que tu aportación es escuchada y respaldada en el día a día del equipo?",
-      tipus: "escala_1_5",
-      escala: { min: 1, max: 5 },
-      obligatoria: true
-    },
-    {
-      id: "p2_prioritats",
-      enunciat: isCat ? "Comptes amb claredat sobre les prioritats i els recursos necessaris per desenvolupar la teva feina?" : isEng ? "Do you have clear priorities and adequate resources to perform your work effectively?" : "¿Cuentas con claridad sobre las prioridades y recursos necesarios para desarrollar tu trabajo?",
-      tipus: "escala_1_5",
-      escala: { min: 1, max: 5 },
-      obligatoria: true
-    },
-    {
-      id: "p3_feedback",
-      enunciat: isCat ? "Comentaris o propostes constructives per al benestar i la col·laboració en l'equip (Opcional):" : isEng ? "Constructive comments or proposals to improve wellbeing and team collaboration (Optional):" : "Comentarios o propuestas constructivas para el bienestar y la colaboración en el equipo (Opcional):",
-      tipus: "text_obert",
-      obligatoria: false
-    }
-  ];
+const targetSeconds = Number(durada_max) || 90;
+const isTurn = objetivo.toLowerCase().includes("torn") || objetivo.toLowerCase().includes("turno");
+
+const candidateQuestions = [
+  {
+    id: "p1_claredat",
+    enunciat: isCat ? "Comptes amb la informació i previsió necessària sobre els teus horaris i torns amb prou antelació?" : isEng ? "Do you have adequate advance notice and clear information regarding your work shifts?" : "¿Cuentas con la información y previsión necesaria sobre tus horarios y turnos con suficiente antelación?",
+    tipus: "escala_1_5",
+    escala: { min: 1, max: 5 },
+    secs: 10,
+    obligatoria: true
+  },
+  {
+    id: "p2_descans",
+    enunciat: isCat ? "La distribució dels descansos i torns et permet una recuperació adequada entre jornades?" : isEng ? "Does the schedule distribution allow you adequate recovery and rest between shifts?" : "¿La distribución de descansos y turnos te permite una recuperación adecuada entre jornadas?",
+    tipus: "escala_1_5",
+    escala: { min: 1, max: 5 },
+    secs: 10,
+    obligatoria: true
+  },
+  {
+    id: "p3_suport",
+    enunciat: isCat ? "Quan sorgeix un canvi imprevist o incidència, reps suport proper i col·laboratiu en l'equip?" : isEng ? "When unexpected events arise, do you receive helpful and supportive guidance within the team?" : "¿Cuando surge un cambio imprevisto o incidencia, recibes apoyo cercano y colaborativo en el equipo?",
+    tipus: "escala_1_5",
+    escala: { min: 1, max: 5 },
+    secs: 10,
+    obligatoria: true
+  },
+  {
+    id: "p4_antelacio",
+    enunciat: isCat ? "Amb quanta antelació coneixes habitualment els teus horaris o torns de feina?" : isEng ? "How far in advance do you usually receive your work schedule?" : "¿Con cuánta antelación conoces habitualmente tus horarios o turnos de trabajo?",
+    tipus: "opcion_multiple",
+    opciones: isCat ? ["Amb més de 2 setmanes", "Amb 1 setmana", "Amb pocs dies", "Sense previsió"] : isEng ? ["Over 2 weeks", "About 1 week", "A few days", "No advance notice"] : ["Con más de 2 semanas", "Con 1 semana", "Con pocos días", "Sin previsión"],
+    secs: 12,
+    obligatoria: true
+  },
+  {
+    id: "p5_conciliacio",
+    enunciat: isCat ? "Del 0 al 10, com valores l'equilibri entre la teva jornada de feina i la teva vida personal?" : isEng ? "From 0 to 10, how well does your work schedule balance with your personal life?" : "Del 0 al 10, ¿cómo valoras el equilibrio entre tu jornada laboral y tu vida personal?",
+    tipus: "escala_1_5",
+    escala: { min: 1, max: 5 },
+    secs: 10,
+    obligatoria: true
+  },
+  {
+    id: "p6_recursos",
+    enunciat: isCat ? "Comptes amb les eines, equips i informació necessaris per fer la teva feina amb eficàcia i seguretat?" : isEng ? "Do you have the necessary equipment, tools, and information to work safely and effectively?" : "¿Cuentas con las herramientas, equipos e información necesarios para trabajar con eficacia y seguridad?",
+    tipus: "escala_1_5",
+    escala: { min: 1, max: 5 },
+    secs: 10,
+    obligatoria: true
+  },
+  {
+    id: "p7_comunicacio",
+    enunciat: isCat ? "Reps amb prou claredat i agilitat la comunicació de novetats i prioritats del teu departament?" : isEng ? "Do you clearly and promptly receive communication regarding department priorities?" : "¿Recibes con suficiente claridad y agilidad la comunicación de prioridades en tu departamento?",
+    tipus: "escala_1_5",
+    escala: { min: 1, max: 5 },
+    secs: 10,
+    obligatoria: true
+  },
+  {
+    id: "p8_carrega",
+    enunciat: isCat ? "Consideres que el volum i ritme de treball actual són sostenibles en el dia a dia?" : isEng ? "Do you consider your current workload and work pace to be manageable?" : "¿Consideras que el volumen y ritmo de trabajo actual son sostenibles en el día a día?",
+    tipus: "escala_1_5",
+    escala: { min: 1, max: 5 },
+    secs: 10,
+    obligatoria: true
+  },
+  {
+    id: "p9_reconeixement",
+    enunciat: isCat ? "Sents que la teva aportació i esforç són valorats i escoltats a l'equip?" : isEng ? "Do you feel your contribution and effort are valued and listened to in your team?" : "¿Sientes que tu aportación y esfuerzo son valorados y escuchados en el equipo?",
+    tipus: "escala_1_5",
+    escala: { min: 1, max: 5 },
+    secs: 10,
+    obligatoria: true
+  },
+  {
+    id: "p10_coordinacio",
+    enunciat: isCat ? "Com valores la coordinació i col·laboració operativa entre els diferents torns i àrees?" : isEng ? "How would you rate operational coordination between shifts and departments?" : "¿Cómo valoras la coordinación y colaboración operativa entre diferentes turnos y áreas?",
+    tipus: "escala_1_5",
+    escala: { min: 1, max: 5 },
+    secs: 10,
+    obligatoria: true
+  },
+  {
+    id: "p11_distribucio",
+    enunciat: isCat ? "Com qualificaries la distribució de la càrrega de feina al llarg de la teva setmana?" : isEng ? "How would you describe your workload distribution throughout the week?" : "¿Cómo calificarías la distribución de la carga de trabajo durante tu semana?",
+    tipus: "opcion_multiple",
+    opciones: isCat ? ["Equilibrada", "Puntualment alta", "Freqüentment sobrecarregada", "Irregular"] : isEng ? ["Balanced", "Occasionally intense", "Frequently heavy", "Irregular"] : ["Equilibrada", "Puntualmente alta", "Frecuentemente sobrecargada", "Irregular"],
+    secs: 12,
+    obligatoria: true
+  },
+  {
+    id: "p12_seguretat",
+    enunciat: isCat ? "Com valores les condicions físiques i d'ergonomia del teu lloc o espai de treball?" : isEng ? "How do you rate ergonomic and physical conditions in your workspace?" : "¿Cómo valoras las condiciones físicas y de ergonomía de tu puesto o espacio de trabajo?",
+    tipus: "escala_1_5",
+    escala: { min: 1, max: 5 },
+    secs: 10,
+    obligatoria: true
+  },
+  {
+    id: "p13_agilitat",
+    enunciat: isCat ? "Quan detectes un obstacle o anomalia operativa, es resol amb prou rapidesa?" : isEng ? "When you spot an operational obstacle, is it resolved promptly?" : "¿Cuando detectas un obstáculo o anomalía operativa, se resuelve con suficiente rapidez?",
+    tipus: "escala_1_5",
+    escala: { min: 1, max: 5 },
+    secs: 10,
+    obligatoria: true
+  },
+  {
+    id: "p14_participacio",
+    enunciat: isCat ? "Sents que pots expressar propostes de millora amb confiança i llibertat?" : isEng ? "Do you feel comfortable suggesting improvements openly?" : "¿Sientes que puedes expresar propuestas de mejora con confianza y libertad?",
+    tipus: "escala_1_5",
+    escala: { min: 1, max: 5 },
+    secs: 10,
+    obligatoria: true
+  },
+  {
+    id: "p15_millora_oberta",
+    enunciat: isCat ? "Quina millora constructiva o proposta ajudaria més al dia a dia de l'equip? (Opcional)" : isEng ? "What constructive suggestion would help our daily teamwork the most? (Optional)" : "¿Qué mejora constructiva o propuesta ayudaría más al día a día del equipo? (Opcional)",
+    tipus: "text_obert",
+    secs: 20,
+    obligatoria: false
+  }
+];
+
+let accSecs = 0;
+for (const q of candidateQuestions) {
+  if (preguntes.length < 3 || accSecs + q.secs <= targetSeconds + 8) {
+    preguntes.push(q);
+    accSecs += q.secs;
+  }
 }
 
-const tiempoEstimadoCalc = preguntes.reduce((acc, p) => acc + (p.tipus === "text_obert" ? 20 : 10), 0);
+titulo = isCat 
+  ? (isTurn ? "Pols d'Opinió: Adaptació i Benestar en l'Equip" : \`Pols d'Opinió: \${objetivo.slice(0, 45)}\`)
+  : isEng
+  ? (isTurn ? "Pulse Survey: Adaptation and Team Wellbeing" : \`Pulse Survey: \${objetivo.slice(0, 45)}\`)
+  : (isTurn ? "Pulso de Opinión: Adaptación y Bienestar en el Equipo" : \`Pulso de Opinión: \${objetivo.slice(0, 45)}\`);
+
+intro = isCat
+  ? \`Consulta confidencial de clima laboral (k-anonimat garantit). La teva veu ens ajuda a millorar. Temps estimat: \${accSecs} segons.\`
+  : isEng
+  ? \`Confidential workplace pulse (k-anonymity guaranteed). Your feedback helps improve our workplace. Estimated time: \${accSecs} seconds.\`
+  : \`Consulta confidencial de clima laboral (k-anonimato garantizado). Tu voz nos ayuda a mejorar. Tiempo estimado: \${accSecs} segundos.\`;
+
+const tiempoEstimadoCalc = accSecs;
 
 const surveyProposal = {
   titulo,
@@ -313,6 +385,43 @@ survey.preguntas = survey.preguntas.map((p, idx) => {
     obligatoria: p.obligatoria !== false
   };
 });
+
+// Asegurar que las preguntas cubran el tiempo solicitado por RRHH
+const targetDur = Number(prevContext.durada_max) || 90;
+let totalCurrentSecs = survey.preguntas.reduce((acc, p) => {
+  if (p.tipo === "text_obert" || p.tipo === "texto_abierto") return acc + 20;
+  if (p.tipo === "opcion_multiple") return acc + 12;
+  return acc + 10;
+}, 0);
+
+if (totalCurrentSecs < targetDur * 0.85 || survey.preguntas.length < 3) {
+  const extraPool = [
+    { id: "pe_conciliacio", enunciado: isEsp ? "¿Cómo valoras el equilibrio entre tus jornadas de trabajo y tu vida personal?" : "¿Com valores l'equilibri entre la teva jornada de feina i la teva vida personal?", tipo: "escala_1_5", escala: { min: 1, max: 5 }, secs: 10, obligatoria: true },
+    { id: "pe_comunicacio", enunciado: isEsp ? "¿Recibes con suficiente antelación y claridad la información para desempeñar tu labor?" : "¿Reps amb prou antelació i claredat la informació per desenvolupar la teva feina?", tipo: "escala_1_5", escala: { min: 1, max: 5 }, secs: 10, obligatoria: true },
+    { id: "pe_recursos", enunciado: isEsp ? "¿Cuentas con las herramientas e instalaciones adecuadas para realizar tus tareas con seguridad?" : "¿Comptes amb les eines i instal·lacions adequades per fer les tasques amb seguretat?", tipo: "escala_1_5", escala: { min: 1, max: 5 }, secs: 10, obligatoria: true },
+    { id: "pe_carga", enunciado: isEsp ? "¿Consideras que el ritmo y volumen de tareas asignadas son adecuados y sostenibles?" : "¿Consideres que el ritme i volum de tasques assignades són adequats i sostenibles?", tipo: "escala_1_5", escala: { min: 1, max: 5 }, secs: 10, obligatoria: true },
+    { id: "pe_apoyo", enunciado: isEsp ? "¿Sientes cercanía y apoyo por parte de tu equipo y mandos cuando surge una dificultad?" : "¿Sents proximitat i suport per part del teu equip i comandaments quan sorgeix una dificultat?", tipo: "escala_1_5", escala: { min: 1, max: 5 }, secs: 10, obligatoria: true },
+    { id: "pe_reconocimiento", enunciado: isEsp ? "¿Sientes que tu esfuerzo diario y aportaciones son valorados en el departamento?" : "¿Sents que el teu esforç diari i aportacions són valorats al departament?", tipo: "escala_1_5", escala: { min: 1, max: 5 }, secs: 10, obligatoria: true },
+    { id: "pe_horarios", enunciado: isEsp ? "¿Con cuánta antelación conoces habitualmente tus turnos o calendarios?" : "¿Amb quanta antelació coneixes habitualment els teus torns o calendaris?", tipo: "opcion_multiple", opciones: isEsp ? ["Más de 2 semanas", "1 semana", "Pocos días", "Sin previsión"] : ["Més de 2 setmanes", "1 setmana", "Pocs dies", "Sense previsió"], secs: 12, obligatoria: true },
+    { id: "pe_agilidad", enunciado: isEsp ? "¿Con qué rapidez y eficacia se resuelven las incidencias operativas en el día a día?" : "¿Amb quanta rapidesa i eficàcia es resolen les incidències operatives en el dia a dia?", tipo: "escala_1_5", escala: { min: 1, max: 5 }, secs: 10, obligatoria: true },
+    { id: "pe_mejora", enunciado: isEsp ? "¿Qué mejora práctica o sugerencia constructiva te gustaría proponer? (Opcional)" : "¿Quina millora pràctica o suggeriment constructiu t'agradaria proposar? (Opcional)", tipo: "text_obert", secs: 20, obligatoria: false }
+  ];
+
+  for (const ep of extraPool) {
+    if (totalCurrentSecs >= targetDur - 5 && survey.preguntas.length >= 3) break;
+    if (!survey.preguntas.some(q => q.enunciado.toLowerCase() === ep.enunciado.toLowerCase())) {
+      survey.preguntas.push({
+        id: ep.id,
+        enunciado: ep.enunciado,
+        tipo: ep.tipo,
+        escala: ep.escala,
+        opciones: ep.opciones,
+        obligatoria: ep.obligatoria
+      });
+      totalCurrentSecs += ep.secs;
+    }
+  }
+}
 
 // Análisis de calidad y adecuación
 const objRaw = String(prevContext.objetivo || "Clima general y adaptación");
