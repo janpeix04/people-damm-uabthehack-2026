@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Check, Mail } from 'lucide-react'
 import { HAIR_STYLES, HAIRS, IDEA_CATEGORIES, SHIRTS, SKINS, MOODS, zoneByKey } from '../data/mock'
 import type { Avatar, ZoneKey } from '../data/types'
+import { DAMM_BEERS, type Beer } from '../data/beers'
 import { useApp } from '../store/AppContext'
 import { cn, fmt, Meter, Modal, PrivacyNote, toneBg, MoodBadge } from './ui'
 
@@ -233,6 +234,28 @@ export function AvatarModal({ open, onClose }: { open: boolean; onClose: () => v
       </div>
       <PrivacyNote>El personatge es desa al servidor amb el moneder d’aquest dispositiu. No es vincula a les respostes anònimes.</PrivacyNote>
       <button className="btn-red !h-[52px]" disabled={saving} onClick={async () => { setSaving(true); try { await setAvatar(a); onClose(); toast('Personatge desat') } catch (e) { toast(e instanceof Error ? e.message : 'No s’ha pogut desar') } finally { setSaving(false) } }}>{saving ? 'Desant…' : 'Fet'}</button>
+    </Modal>
+  )
+}
+
+/** Carta de la barra de La Plaça: totes les cerveses pròpies de Damm (noms en tipografia genèrica, sense logotips). */
+export function BeerMenuModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const taps = DAMM_BEERS.filter(b => b.tap), bottles = DAMM_BEERS.filter(b => !b.tap)
+  const row = (b: Beer) => (
+    <li key={b.key} className="flex items-center gap-3 py-2 border-b border-line last:border-0">
+      <span className="w-9 h-9 shrink-0 rounded-full grid place-items-center text-[11px] font-extrabold ring-2 ring-white shadow" style={{ background: b.label, color: b.ink }} aria-hidden>
+        {b.name.replace(/[^A-Za-zÀ-ÿ ]/g, '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+      </span>
+      <span className="min-w-0"><strong className="block text-[15px] leading-tight">{b.name}</strong><span className="text-xs text-ink-muted">{b.style} · {b.desc}</span></span>
+    </li>
+  )
+  return (
+    <Modal open={open} onClose={onClose} title="La Barra · cerveses Damm">
+      <p className="text-sm text-ink-muted -mt-1">Totes les cerveses pròpies del grup Damm. Tria-la, però amb moderació.</p>
+      <h3 className="eyebrow mt-3">De barril</h3>
+      <ul>{taps.map(row)}</ul>
+      <h3 className="eyebrow mt-3">En ampolla</h3>
+      <ul>{bottles.map(row)}</ul>
     </Modal>
   )
 }

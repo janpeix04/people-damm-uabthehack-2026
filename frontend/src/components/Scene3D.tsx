@@ -58,7 +58,7 @@ export const Scene3D = forwardRef<SceneHandle | null, Props>(function Scene3D({ 
   }, [kind])
 
   useEffect(() => { if (avatar && handle.current) handle.current.setAvatar(avatarColors(avatar)) }, [avatar])
-  // la Festa de la setmana es reflecteix a l'escena en directe (garlandes, bancs, concert, focs)
+  // la Festa de la setmana es reflecteix a l'escena en directe (garlandes, bancs i focs)
   useEffect(() => { if (handle.current && opts.festa != null) handle.current.setFesta(opts.festa) }, [opts.festa, state])
   useEffect(() => { if (state==='ready' && opts.initialZone) handle.current?.select(opts.initialZone) }, [opts.initialZone,state])
   const topicsKey = JSON.stringify(opts.topics ?? [])

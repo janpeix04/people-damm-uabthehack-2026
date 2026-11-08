@@ -218,7 +218,6 @@ export const HAIR_STYLES = ['Curt', 'Melena', 'Arrissat', 'Monyo']
 export const PLAZA_MILESTONES = [
   { at: 25, label: 'Garlandes', mark: '✓' },
   { at: 40, label: 'Bancs nous', mark: '✓' },
-  { at: 60, label: 'Concert', mark: '♪' },
   { at: 75, label: 'Focs', mark: '★' },
 ]
 /** Persones úniques que han participat a la Plaça aquesta setmana (dada sintètica de la demo, sense comptar-te a tu). */

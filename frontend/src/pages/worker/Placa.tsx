@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClipboardCheck, Mail, MessageCircle, UserRound } from 'lucide-react'
 import { Scene3D } from '../../components/Scene3D'
-import { AvatarModal, IdeaModal, TopicsModal } from '../../components/Panels'
+import { AvatarModal, IdeaModal, TopicsModal, BeerMenuModal } from '../../components/Panels'
 import { useApp } from '../../store/AppContext'
 import type { SceneHandle } from '../../three/engine.js'
 
@@ -11,14 +11,14 @@ export default function WorkerPlaca() {
   const nav = useNavigate()
   const { pending, avatar, ideas, reactTopic, toast } = useApp()
   const scene = useRef<SceneHandle | null>(null)
-  const [modal, setModal] = useState<'idea' | 'topics' | 'avatar' | null>(null)
+  const [modal, setModal] = useState<'idea' | 'topics' | 'avatar' | 'bar' | null>(null)
   const next = pending[0]
   const goSurvey = () => (next ? nav(`/e/${next.id}`) : toast('No tens cap enquesta pendent. Gràcies!'))
-  const onStage = () => toast('Concert en directe a La Plaça!')
+  const onStage = () => setModal('bar')
 
   return (
     <div className="relative h-full">
-      <Scene3D ref={scene} kind="plaza" avatar={avatar} className="absolute inset-0" ariaLabel="La Plaça en 3D: font, terrassa, escenari i persones conversant"
+      <Scene3D ref={scene} kind="plaza" avatar={avatar} className="absolute inset-0" ariaLabel="La Plaça en 3D: font, terrassa, barra de cerveses i persones conversant"
         topics={ideas} onReact={reactTopic}
         surveyTag={next ? `Enquesta nova · ${next.questions.reduce((a, q) => a + q.secs, 0)} s` : undefined}
         onAction={a => (a === 'survey' ? goSurvey() : a === 'idea' ? setModal('idea') : onStage())} />
@@ -38,6 +38,7 @@ export default function WorkerPlaca() {
 
       <IdeaModal open={modal === 'idea'} onClose={() => setModal(null)} />
       <TopicsModal open={modal === 'topics'} onClose={() => setModal(null)} />
+      <BeerMenuModal open={modal === 'bar'} onClose={() => setModal(null)} />
       <AvatarModal open={modal === 'avatar'} onClose={() => setModal(null)} />
     </div>
   )

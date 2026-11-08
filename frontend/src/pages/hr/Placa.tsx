@@ -3,7 +3,7 @@ import { hrPlazaCall } from '../../api/plaza'
 import type { Idea } from '../../data/types'
 import { Inbox, MessageCircle } from 'lucide-react'
 import { Scene3D } from '../../components/Scene3D'
-import { TopicsModal } from '../../components/Panels'
+import { BeerMenuModal, TopicsModal } from '../../components/Panels'
 import { Modal } from '../../components/ui'
 import { useApp } from '../../store/AppContext'
 
@@ -23,15 +23,15 @@ export default function HRPlaca() {
     catch (e) { setError(e instanceof Error ? e.message : 'Error') }
     finally { setBusy(false) }
   }
-  const [modal, setModal] = useState<'topics' | 'ideas' | null>(null)
+  const [modal, setModal] = useState<'topics' | 'ideas' | 'bar' | null>(null)
   useEffect(() => { void refreshIdeas() }, [modal])
   const moderant = ideas.filter(i => i.status === 'moderant').length
 
   return (
     <div className="relative h-full min-h-0 overflow-hidden">
-      <Scene3D kind="plaza" className="absolute inset-0" ariaLabel="La Plaça en 3D: font, terrassa, escenari, parada de l’enquesta i persones conversant"
+      <Scene3D kind="plaza" className="absolute inset-0" ariaLabel="La Plaça en 3D: font, terrassa, barra de cerveses, parada de l’enquesta i persones conversant"
         topics={publishedIdeas} readOnly
-        onAction={a => (a === 'stage' ? toast('Concert en directe a La Plaça!') : a === 'idea' ? setModal('ideas') : toast('Vista de RRHH: les enquestes les responen els treballadors'))} />
+        onAction={a => (a === 'stage' ? setModal('bar') : a === 'idea' ? setModal('ideas') : toast('Vista de RRHH: les enquestes les responen els treballadors'))} />
 
       <div className="absolute left-3 right-3 bottom-3 sm:bottom-4 flex flex-wrap justify-center gap-2">
         <button onClick={() => setModal('topics')} className="btn-line !h-[52px] !rounded-[18px] shadow-lift"><MessageCircle size={18} className="text-rain" aria-hidden /><span>Temes<span className="hidden sm:inline"> de la setmana</span></span></button>
@@ -44,6 +44,7 @@ export default function HRPlaca() {
       <p className="hidden xl:block absolute left-4 bottom-4 max-w-[250px] text-[11.5px] leading-snug text-ink-soft bg-paper/85 rounded-[12px] px-2.5 py-2">Personatges il·lustratius: no representen ningú real. Les bafarades mostren temes agregats i moderats. Dades sintètiques.</p>
 
       <TopicsModal open={modal === 'topics'} onClose={() => setModal(null)} />
+      <BeerMenuModal open={modal === 'bar'} onClose={() => setModal(null)} />
       <Modal open={modal === 'ideas'} onClose={() => setModal(null)} title="Bústia d’idees">
         <p className="text-sm text-ink-muted -mt-2">Correus i telèfons es redacten automàticament. Revisa noms i altres detalls abans de publicar.{moderant > 0 && ` ${moderant} en moderació.`}</p>
         {error && <p role="alert">{error}</p>}
