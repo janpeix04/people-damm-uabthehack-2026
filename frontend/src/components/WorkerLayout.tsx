@@ -28,11 +28,11 @@ export default function WorkerLayout() {
   const answerNext = () => (pending.length ? nav(`/e/${pending[0].id}`) : toast(t('common.noPending')))
 
   return (
-    <div className={cn('flex flex-col bg-cream', fullBleed ? 'h-[100dvh] overflow-hidden' : 'min-h-[100dvh]')}>
+    <div className={cn('worker-theme flex flex-col bg-cream', fullBleed ? 'h-[100dvh] overflow-hidden' : 'min-h-[100dvh]')}>
       <header className="sticky top-0 z-40 shrink-0 bg-paper/90 backdrop-blur border-b border-line">
         <div className="max-w-6xl mx-auto h-16 md:h-[72px] px-4 md:px-6 flex items-center gap-6">
           <Link to="/app" className="flex items-center gap-2.5 shrink-0" aria-label={t('common.homeAria')}>
-            <Logo />
+            <Logo yellow />
           </Link>
           <nav aria-label={t('common.mainNav')} className="hidden md:flex items-center gap-1 flex-1">
             {TABS.map(({ to, label }) => (
@@ -81,7 +81,7 @@ export default function WorkerLayout() {
             className="flex flex-col items-center gap-1 text-[10.5px] font-bold text-red active:scale-95 transition-transform"
           >
             <span className="relative w-14 h-14 -mt-7 rounded-full bg-red grid place-items-center shadow-red">
-              <ClipboardCheck size={24} color="#fff" aria-hidden />
+              <ClipboardCheck size={24} color="#171717" aria-hidden />
               {pending.length > 0 && <span className="absolute -right-0.5 -top-0.5 w-5 h-5 rounded-full bg-ink text-white text-[10.5px] font-extrabold grid place-items-center border-2 border-paper">{pending.length}</span>}
             </span>
             {t('common.answer')}

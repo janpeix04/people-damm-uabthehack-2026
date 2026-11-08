@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { MOODS } from '../data/mock'
 import type { Mood } from '../data/types'
@@ -8,10 +8,10 @@ export const cn = (...c: (string | false | null | undefined)[]) => c.filter(Bool
 export const fmt = (n: number, d = 1) => n.toLocaleString(getLocale(), { minimumFractionDigits: d, maximumFractionDigits: d })
 
 /** Logotip de People Damm. `light` el mostra en blanc sobre fons de color. */
-export function Logo({ size = 'md', light, className }: { size?: 'sm' | 'md' | 'lg' | 'full'; light?: boolean; className?: string }) {
+export function Logo({ size = 'md', light, yellow, className }: { size?: 'sm' | 'md' | 'lg' | 'full'; light?: boolean; yellow?: boolean; className?: string }) {
   return (
     <img
-      src="/logo-people-damm.png"
+      src={yellow ? '/logo-people-damm-yellow.png' : '/logo-people-damm.png'}
       alt="People Damm"
       draggable={false}
       className={cn(
@@ -70,6 +70,12 @@ export function PrivacyNote({ children, className }: { children: ReactNode; clas
 
 export function Modal({ open, onClose, title, children, wide }: { open: boolean; onClose: () => void; title: string; children: ReactNode; wide?: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
+  const [rendered,setRendered]=useState(open)
+  const [visible,setVisible]=useState(false)
+  useEffect(()=>{
+    if(open){setRendered(true);const frame=requestAnimationFrame(()=>setVisible(true));return()=>cancelAnimationFrame(frame)}
+    setVisible(false);const timer=setTimeout(()=>setRendered(false),220);return()=>clearTimeout(timer)
+  },[open])
   const t = useT()
   useEffect(() => {
     if (!open) return
@@ -77,10 +83,10 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
     setTimeout(() => ref.current?.querySelector<HTMLElement>('button, textarea, input, a')?.focus(), 30)
     return () => prev?.focus?.()
   }, [open])
-  if (!open) return null
+  if (!rendered) return null
   return (
-    <div className="fixed inset-0 z-[90] grid place-items-center p-3 sm:p-4 bg-[rgba(25,15,10,.42)]" onMouseDown={e => e.target === e.currentTarget && onClose()} onKeyDown={e => e.key === 'Escape' && onClose()}>
-      <div ref={ref} role="dialog" aria-modal="true" aria-label={title} className={cn('bg-paper rounded-[24px] shadow-lift w-full max-h-[calc(100%-24px)] overflow-y-auto scroll-thin p-6 flex flex-col gap-4', wide ? 'max-w-2xl' : 'max-w-[540px]')}>
+    <div data-open={visible} aria-hidden={!open||undefined} className="ui-modal-backdrop fixed inset-0 z-[90] grid place-items-center p-3 sm:p-4 bg-[rgba(25,15,10,.42)]" onMouseDown={e => e.target === e.currentTarget && onClose()} onKeyDown={e => e.key === 'Escape' && onClose()}>
+      <div ref={ref} data-open={visible} role="dialog" aria-modal="true" aria-label={title} className={cn('ui-modal-panel bg-paper rounded-[24px] shadow-lift w-full max-h-[calc(100%-24px)] overflow-y-auto scroll-thin p-6 flex flex-col gap-4', wide ? 'max-w-2xl' : 'max-w-[540px]')}>
         <div className="flex justify-between items-center gap-3">
           <h2 className="serif text-[28px] leading-tight">{title}</h2>
           <button className="w-11 h-11 rounded-[14px] bg-cream grid place-items-center" onClick={onClose} aria-label={t('common.close')}><X size={20} /></button>

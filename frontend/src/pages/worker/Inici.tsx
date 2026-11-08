@@ -31,7 +31,7 @@ export default function WorkerInici() {
         </div>
 
         {next ? (
-          <Link to={`/e/${next.id}`} className="flex flex-col gap-4 bg-red text-white rounded-[28px] p-5 md:p-7 shadow-[0_18px_40px_rgba(200,16,46,.32)] hover:bg-red-dk transition">
+          <Link to={`/e/${next.id}`} className="flex flex-col gap-4 bg-red text-brand-on rounded-[28px] p-5 md:p-7 shadow-[0_18px_40px_rgba(200,16,46,.32)] hover:bg-red-dk transition">
             <div className="flex justify-between items-center gap-2">
               <span className="text-[11.5px] font-extrabold tracking-[.12em] uppercase bg-white/20 rounded-full px-2.5 py-1">{t('home.youHaveSurveys', { count: pending.length })}</span>
               <span className="text-[12.5px] font-bold opacity-90">{t('home.closesOn', { date: new Date(next.closesAt).toLocaleDateString(locale, { day: 'numeric', month: 'short' }) })}</span>

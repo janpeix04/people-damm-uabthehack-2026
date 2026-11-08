@@ -4,8 +4,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        red: { DEFAULT: '#C8102E', dk: '#9E0C24', soft: '#FBECEF' },
-        wine: '#730D20',
+        red: {
+          DEFAULT: 'rgb(var(--brand-primary) / <alpha-value>)',
+          dk: 'rgb(var(--brand-dark) / <alpha-value>)',
+          soft: 'rgb(var(--brand-soft) / <alpha-value>)',
+        },
+        wine: 'rgb(var(--brand-wine) / <alpha-value>)',
         gold: '#B68B38',
         paper: '#FBFAF7',
         cream: { DEFAULT: '#F2F0EA', dk: '#E8E4DC' },
@@ -23,7 +27,7 @@ export default {
       boxShadow: {
         card: '0 1px 2px rgba(23,23,23,.04), 0 12px 34px rgba(23,23,23,.06)',
         lift: '0 2px 5px rgba(23,23,23,.08), 0 24px 56px rgba(23,23,23,.14)',
-        red: '0 10px 24px rgba(200,16,46,.28)',
+        red: '0 10px 24px rgb(var(--brand-shadow) / .28)',
       },
     },
   },

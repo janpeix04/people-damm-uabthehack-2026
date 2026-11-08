@@ -273,7 +273,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [st, toast, remote, backend, refreshWallet, hrSurveys, hrLoading, hrError, refreshHr, plazaRemote, plazaError, plazaLoading, refreshPlaza])
 
-  return <AppCtx.Provider value={value}>{children}<div className="fixed left-1/2 -translate-x-1/2 bottom-28 md:bottom-8 z-[100] flex flex-col items-center gap-2 pointer-events-none" aria-live="polite">{toasts.map(t => <div key={t.id} className="rounded-[14px] bg-ink text-white px-4 py-3 text-sm font-semibold shadow-lift max-w-[90vw]">{t.msg}</div>)}</div></AppCtx.Provider>
+  return <AppCtx.Provider value={value}>{children}<div className="fixed left-1/2 -translate-x-1/2 bottom-28 md:bottom-8 z-[100] flex flex-col items-center gap-2 pointer-events-none" aria-live="polite">{toasts.map(t => <div key={t.id} className="app-toast rounded-[14px] bg-ink text-white px-4 py-3 text-sm font-semibold shadow-lift max-w-[90vw]">{t.msg}</div>)}</div></AppCtx.Provider>
 }
 export function useApp() {
   const c = useContext(AppCtx)

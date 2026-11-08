@@ -166,10 +166,10 @@ export default function Enquesta() {
 /** Capçalera mínima: durant l’enquesta no hi ha distraccions. */
 function Shell({ children, fullOnMobile }: { children: ReactNode; fullOnMobile?: boolean }) {
   return (
-    <div className="min-h-full flex flex-col bg-cream" style={{ minHeight: '100dvh' }}>
+    <div className="worker-theme min-h-full flex flex-col bg-cream" style={{ minHeight: '100dvh' }}>
       <header className={fullOnMobile ? 'hidden md:block border-b border-line bg-paper' : 'border-b border-line bg-paper'}>
         <div className="max-w-6xl mx-auto h-16 px-4 md:px-6 flex items-center justify-between gap-4">
-          <Link to="/app" className="flex items-center gap-2.5" aria-label="People Damm, inici"><Logo size="sm" /></Link>
+          <Link to="/app" className="flex items-center gap-2.5" aria-label="People Damm, inici"><Logo size="sm" yellow /></Link>
           <Link to="/app" className="btn-ghost"><ArrowLeft size={16} aria-hidden />Inici</Link>
         </div>
       </header>

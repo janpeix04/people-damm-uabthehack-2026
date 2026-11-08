@@ -26,7 +26,7 @@ export default function WorkerPlaca() {
       <button onClick={() => setModal('avatar')} aria-label="El teu personatge" className="absolute right-3 top-3 w-12 h-12 rounded-[16px] bg-paper/95 border border-line shadow-lift grid place-items-center"><UserRound size={22} /></button>
 
       <div className="absolute left-3 right-3 bottom-3 flex flex-wrap justify-center gap-2">
-        <button onClick={goSurvey} aria-label={next ? 'Respon l’enquesta' : 'Cap enquesta pendent'} className="btn-line lg:!bg-red lg:!text-white lg:!border-red !h-[52px] !rounded-[18px] shadow-lift">
+        <button onClick={goSurvey} aria-label={next ? 'Respon l’enquesta' : 'Cap enquesta pendent'} className="btn-line lg:!bg-red lg:!text-ink lg:!border-red !h-[52px] !rounded-[18px] shadow-lift">
           <ClipboardCheck size={19} aria-hidden /><span className="hidden lg:inline">{next ? 'Respon l’enquesta' : 'Cap enquesta pendent'}</span>
         </button>
         <button onClick={() => setModal('idea')} aria-label="Deixa una idea" className="btn-line !h-[52px] !rounded-[18px] shadow-lift"><Mail size={18} className="text-red" aria-hidden /><span className="hidden sm:inline">Deixa una idea</span></button>

@@ -3,6 +3,15 @@ import { Gift, Info } from 'lucide-react'
 import { AppApiError, ERROR_MESSAGES } from '../api/app'
 import { POINTS_PER_SURVEY, useApp } from '../store/AppContext'
 import { cn, Modal, PathIcon } from './ui'
+
+const REWARD_IMAGES:Record<string,string>={
+  cafe:'/images/rewards/cafe.jpg',
+  snack:'/images/rewards/snack.jpg',
+  beguda:'/images/rewards/beguda-yellow.png',
+  esmorzar:'/images/rewards/esmorzar.jpg',
+  visita:'/images/rewards/visita-yellow.png',
+  solidari:'/images/rewards/solidari-yellow.png',
+}
 import { useT } from '../i18n'
 
 export function PointsCard({ className }: { className?: string }) {
@@ -60,8 +69,8 @@ export function RewardsCatalog({ limit, className }: { limit?: number; className
           return (
             <article key={r.id} className="group card overflow-hidden flex flex-col shadow-[0_12px_34px_rgba(71,42,31,.08)]">
               <div className="aspect-[16/10] overflow-hidden bg-cream-dk">
-                {r.image
-                  ? <img src={r.image} alt={r.imageAlt || ''} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.025]" />
+                {(REWARD_IMAGES[r.id]||r.image)
+                  ? <img src={REWARD_IMAGES[r.id]||r.image} alt={r.imageAlt || r.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.025]" />
                   : <div className="h-full grid place-items-center" style={{ background: r.tint }}><PathIcon d={r.icon} size={44} color={r.ink} stroke={1.7} /></div>}
               </div>
               <div className="p-4 sm:p-5 flex flex-col gap-2 flex-1">
@@ -84,7 +93,7 @@ export function RewardsCatalog({ limit, className }: { limit?: number; className
       </div>
       <Modal open={!!code} onClose={() => setCode(null)} title={t('home.redeemed')}>
         <p className="text-ink-muted">{t('home.showCode')}<strong className="text-ink">{code?.name}</strong>.</p>
-        <div className="serif text-[40px] text-center tracking-widest bg-cream rounded-[16px] py-4">{code?.code}</div>
+        <div className="reward-code serif text-[40px] text-center tracking-widest bg-cream rounded-[16px] py-4">{code?.code}</div>
         <button className="btn-ink" onClick={() => setCode(null)}>{t('home.done')}</button>
       </Modal>
       {!limit && redeemed.length > 0 && (

@@ -47,7 +47,7 @@ export default function HRPlaca() {
         <button onClick={() => setModal('topics')} className="btn-line !h-[52px] !rounded-[18px] shadow-lift"><MessageCircle size={18} className="text-rain" aria-hidden /><span>Temes<span className="hidden sm:inline"> de la setmana</span></span></button>
         <button onClick={() => { void refreshIdeas(); setModal('ideas') }} className="btn-ink !h-[52px] !rounded-[18px] shadow-lift">
           <Inbox size={18} aria-hidden />Bústia d’idees
-          {ideas.length > 0 && <span className="min-w-[22px] h-[22px] px-1.5 rounded-full bg-red text-white text-xs font-bold grid place-items-center">{ideas.length}</span>}
+          {moderant > 0 && <span aria-label={`${moderant} idees pendents de moderació`} className="min-w-[22px] h-[22px] px-1.5 rounded-full bg-red text-white text-xs font-bold grid place-items-center">{moderant}</span>}
         </button>
       </div>
 

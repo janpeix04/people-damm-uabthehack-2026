@@ -24,7 +24,7 @@ export function SurveyRunner({ questions, onExit, onDone, preview }: Props) {
 
   const opt = (on: boolean) =>
     cn(
-      'w-full min-h-[56px] px-4 rounded-[16px] border-2 text-left font-bold text-base transition',
+      'choice-option w-full min-h-[56px] px-4 rounded-[16px] border-2 text-left font-bold text-base transition',
       on ? 'border-red bg-red-soft' : 'border-line bg-white hover:border-ink-muted'
     )
 
@@ -46,7 +46,7 @@ export function SurveyRunner({ questions, onExit, onDone, preview }: Props) {
         </div>
         <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${questions.length}, minmax(0,1fr))` }}>
           {questions.map((x, i) => (
-            <div key={x.id} className={cn('h-1.5 rounded-full', i <= step ? 'bg-red' : 'bg-cream-dk')} />
+            <div key={x.id} className={cn('survey-progress-step h-1.5 rounded-full', i <= step ? 'bg-red' : 'bg-cream-dk')} />
           ))}
         </div>
       </header>
@@ -69,7 +69,7 @@ export function SurveyRunner({ questions, onExit, onDone, preview }: Props) {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-5 flex flex-col gap-4">
+      <div key={q.id} className="question-stage flex-1 overflow-y-auto px-4 sm:px-5 py-5 flex flex-col gap-4">
         <div className="eyebrow !text-red">{q.dim}</div>
         <h1 className="serif text-[26px] sm:text-[28px] leading-[1.15] -mt-1 text-ink">{q.text}</h1>
         {q.help && <p className="text-sm text-ink-muted -mt-2">{q.help}</p>}
