@@ -11,6 +11,7 @@
     "postgres:logs": "docker compose logs -f postgres",
     "db:init": "node scripts/init_postgres_db.js --reset",
     "db:status": "node scripts/init_postgres_db.js",
+    "db:demo": "docker exec -i damm-postgres psql -v ON_ERROR_STOP=1 -U postgres -d damm_pulse < supabase/demo_seed.sql",
     "db:migrate": "node --env-file=.env scripts/apply_pending_schema.js",
     "build:mcp": "npm --prefix mcp-n8n-local ci && npm --prefix mcp-n8n-local run build",
     "setup:workflows": "node scripts/setup_local.js",
