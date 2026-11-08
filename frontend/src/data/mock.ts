@@ -3,9 +3,9 @@ import type { ChannelKey, Initiative, Question, Reward, Survey, Mood, Zone, Zone
 /** Totes les dades d'aquest fitxer són sintètiques. */
 
 export const MIN_SAMPLE = 10
-export const TOTAL_HEADCOUNT = 727
+export const TOTAL_HEADCOUNT = 2500
 export const FESTA_GOAL = 0.6
-export const BASE_RESPONSES = 392
+export const BASE_RESPONSES = 1420
 
 export const MOODS: Record<Mood, { bg: string; ink: string; label: string; path: string }> = {
   // Emoció predominant de cada equip, calculada sobre respostes agregades (mínim 10). Mai s'infereix l'emoció d'una persona.

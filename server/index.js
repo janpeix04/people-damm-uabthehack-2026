@@ -1,6 +1,7 @@
 import http from 'node:http';
 import pg from 'pg';
 import {createSurvey,listSurveys,changeStatus,InputError} from './surveys.js';
+import {getSurveyAnalytics} from './analytics.js';
 import {appAction,hrPlazaAction} from './app.js';
 import {departmentOverview,siteList} from './departments.js';
 import {directoryOverview} from './directory.js';
@@ -47,6 +48,7 @@ http.createServer(async(req,res)=>{
       res.statusCode=r.status;res.end(await r.text());return;
     }
     if(req.method==='GET'&&path==='/api/hr/surveys'){res.end(JSON.stringify(await listSurveys(db)));return;}
+    if(req.method==='GET'&&path==='/api/hr/analytics'){const qObj=Object.fromEntries(new URL(req.url,'http://localhost').searchParams.entries());res.end(JSON.stringify(await getSurveyAnalytics(db,qObj)));return;}
     if(req.method==='GET'&&path==='/api/hr/departments'){const site=new URL(req.url,'http://localhost').searchParams.get('site');res.end(JSON.stringify(await departmentOverview(db,site&&/^[a-z0-9_]{2,60}$/.test(site)?site:site?'__invalid__':null)));return;}
     if(req.method==='GET'&&path==='/api/hr/sites'){res.end(JSON.stringify(await siteList(db)));return;}
     if(req.method==='GET'&&path==='/api/hr/directory'){res.end(JSON.stringify(await directoryOverview(db)));return;}
