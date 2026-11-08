@@ -10,11 +10,9 @@ export function QuestionCard({
   metric,
   index,
   totalResponses,
-  protectedResult = false,
 }: {
   metric: QuestionMetric
   index: number
-  protectedResult?: boolean
   totalResponses: number
 }) {
   const { question, totalAnswers, avgScore, optionsBreakdown, scaleDistribution, shiftComparison } = metric
@@ -22,7 +20,7 @@ export function QuestionCard({
   const [scaleGranularity, setScaleGranularity] = useState<'points' | 'bins'>('points')
 
   const qTypeLabels: Record<string, string> = {
-    scale: 'Escala normalitzada',
+    scale: 'Escala (0–10)',
     faces: 'Emocional',
     list: 'Selecció d’opcions',
     yesno: 'Binària (Sí / No)',
@@ -142,14 +140,14 @@ export function QuestionCard({
 
       {/* Cos amb el gràfic seleccionat */}
       <div className="pt-1">
-        {protectedResult ? <p className="text-sm text-ink-muted">Resultat protegit: mostra insuficient.</p> : question.type === 'text' ? (
+        {question.type === 'text' ? (
           <div className="flex flex-col gap-3 text-xs text-ink-soft bg-cream/60 rounded-[14px] p-4">
             <div className="flex items-center gap-2 text-ink-muted">
               <MessageSquare size={16} />
               <span>{totalAnswers} persones han aportat comentaris de millora en aquesta pregunta.</span>
             </div>
             <div className="text-[12px] text-ink-muted italic">
-              Només es mostra el recompte agregat. No s’exposen comentaris individuals.
+              Els comentaris individuals s’anonimitzen per complet i s’agrupen a la secció inferior d’insights de text.
             </div>
           </div>
         ) : viewMode === 'donut' ? (
@@ -208,9 +206,9 @@ export function QuestionCard({
       <div className="flex items-center justify-between text-[11px] text-ink-muted pt-2 border-t border-line/60">
         <span className="flex items-center gap-1">
           <ShieldCheck size={13} className="text-ok" />
-          Resultats agregats amb llindar de privacitat
+          K-anonimat garantit (respostes agregades, identificadors eliminats)
         </span>
-
+        <span>Temps estimat: {question.secs}s</span>
       </div>
     </article>
   )

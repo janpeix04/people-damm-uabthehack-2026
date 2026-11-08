@@ -1,3 +1,4 @@
+import {getSurveyAnalytics} from './enquestes-analytics.js';
 import http from 'node:http';
 import pg from 'pg';
 import {createSurvey,listSurveys,changeStatus,InputError} from './surveys.js';
@@ -54,6 +55,11 @@ http.createServer(async(req,res)=>{
       const query=new URL(req.url,'http://localhost').searchParams;
       await db.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
       const data=await representation(db,query.get('survey')||'',query.get('site')||'');
+      await db.query('COMMIT');res.end(JSON.stringify(data));return;
+    }
+    if(req.method==='GET'&&path==='/api/hr/enquestes-analytics'){
+      await db.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+      const data=await getSurveyAnalytics(db,Object.fromEntries(new URL(req.url,'http://localhost').searchParams));
       await db.query('COMMIT');res.end(JSON.stringify(data));return;
     }
     if(req.method==='GET'&&['/api/hr/analytics','/api/hr/analytics.csv'].includes(path)){

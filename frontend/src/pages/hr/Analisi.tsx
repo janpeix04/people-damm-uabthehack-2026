@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import RepresentationPanel from '../../components/analytics/RepresentationPanel'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import {
   Download,
@@ -12,41 +13,129 @@ import {
   ShieldCheck,
   RefreshCw,
 } from 'lucide-react'
-import RepresentationPanel from '../../components/analytics/RepresentationPanel'
-import {useSurveyAnalytics,downloadAnalytics} from '../../api/analytics'
-import type {ShiftType} from '../../data/surveyAnalytics'
+import { useApp } from '../../store/AppContext'
+import { useSites } from '../../api/departments'
+import { fetchSurveyAnalytics } from '../../api/hr'
 import { PageHead } from '../../components/HRLayout'
-import { Meter } from '../../components/ui'
-
-import { DonutChart, GroupedBarChart, HorizontalBarChart } from '../../components/analytics/AnalyticsCharts'
+import { Meter, cn } from '../../components/ui'
+import {
+  exportResponsesCsv,
+  type AnalyticsFormConfig,
+  type AggregateStats,
+  type FilterOptions,
+} from '../../data/surveyAnalytics'
+import { DonutChart, GroupedBarChart, RadarChart, TimelineChart } from '../../components/analytics/AnalyticsCharts'
+import { AnalyticsFilterBar } from '../../components/analytics/AnalyticsFilterBar'
 import { QuestionCard } from '../../components/analytics/QuestionCard'
 
 export default function Analisi() {
-  const [params,setParams]=useSearchParams()
-  const site=params.get('centre')||''
-  const filters={survey:params.get('form')||'',site,department:params.get('departament')||'',shift:params.get('torn')||'',channel:params.get('canal')||'',dateRange:params.get('periode')||'all'}
-  const {data,error,loading,refresh}=useSurveyAnalytics(filters)
-  const [exportError,setExportError]=useState('')
-  const currentForm=data?.form
-  const stats=data?.stats
-  const update=(key:string,value:string)=>setParams(prev=>{const next=new URLSearchParams(prev);if(value)next.set(key,value);else next.delete(key);return next},{replace:true})
-  const handleExportCsv=async()=>{setExportError('');try{await downloadAnalytics({...filters,survey:currentForm?.id||filters.survey})}catch(e){setExportError(e instanceof Error?e.message:'Error CSV')}}
-  const handlePrint=()=>window.print()
+  const [params, setParams] = useSearchParams()
+  const { hrSurveys, hrLoading, hrError, refreshHr } = useApp()
+  const site = params.get('centre') || ''
+  const { sites } = useSites()
+  const siteName = site ? sites.find(s => s.code === site)?.name ?? site : ''
+
+  const allForms = useMemo<AnalyticsFormConfig[]>(() => hrSurveys.map(s => {
+    return {
+      ...s,
+      category: s.id.includes('seguretat') ? 'Seguretat'
+        : s.id.includes('clima') || s.id.includes('pols') ? 'Clima'
+        : s.id.includes('talent') ? 'Talent'
+        : 'Operacions',
+      description: s.goal || '',
+      version: 'v1.0',
+      responses: s.responses ?? 0,
+      target: s.target ?? 0,
+      questions: (s.questions && s.questions.length > 0) ? s.questions : [],
+    } as AnalyticsFormConfig
+  }), [hrSurveys])
+
+  // Formulari seleccionat (per defecte el de la query param o el primer)
+  const selectedFormId = params.get('form') || allForms[0]?.id || 'pols-novembre'
+  const setSelectedFormId = (id: string) => {
+    setParams(prev => {
+      prev.set('form', id)
+      return prev
+    })
+  }
+
+  const currentForm = allForms.find(f => f.id === selectedFormId) || allForms[0]
+
+  // Estat dels filtres
+  const [filters, setFilters] = useState<FilterOptions>({
+    dateRange: 'all',
+    zone: 'all',
+    shift: 'all',
+    channel: 'all',
+    sentiment: 'all',
+    searchQuery: '',
+  })
+
+  // Dades reals agregades directament des de PostgreSQL
+  const [stats, setStats] = useState<AggregateStats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    if (!currentForm?.id) return
+    setLoading(true)
+    fetchSurveyAnalytics({
+      form: currentForm.id,
+      site: site || undefined,
+      zone: filters.zone !== 'all' ? filters.zone : undefined,
+      shift: filters.shift !== 'all' ? filters.shift : undefined,
+      channel: filters.channel !== 'all' ? filters.channel : undefined,
+      sentiment: filters.sentiment !== 'all' ? filters.sentiment : undefined,
+      dateRange: filters.dateRange !== 'all' ? filters.dateRange : undefined,
+      searchQuery: filters.searchQuery || undefined,
+    })
+      .then(data => {
+        if (active) {
+          setStats(data)
+          setError(null)
+        }
+      })
+      .catch(err => {
+        if (active) {
+          setError(err instanceof Error ? err.message : 'Error carregant dades reals.')
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => { active = false }
+  }, [currentForm?.id, site, filters.zone, filters.shift, filters.channel, filters.sentiment, filters.dateRange, filters.searchQuery])
+
+  // Descarregar dades en CSV
+  const handleExportCsv = () => {
+    if (currentForm && stats) exportResponsesCsv(currentForm, stats, site)
+  }
+
+  // Imprimir informe
+  const handlePrint = () => {
+    window.print()
+  }
+
+  if (hrLoading && !allForms.length) return <p role="status">Carregant enquestes...</p>
+  if (hrError) return <div role="alert">{hrError}<button className="btn-line ml-2" onClick={() => void refreshHr()}>Reintentar</button></div>
+  if (!currentForm) return <div className="card p-6">Encara no hi ha enquestes a la base de dades.</div>
+
   return (
     <div className="flex flex-col gap-6">
       {/* Capçalera de la pàgina */}
       <PageHead
         eyebrow="People Analytics · Escolta Activa"
-        title="Anàlisi i Insights de Formularis"
-        sub="Escolta activa: resultats agregats, participació i cobertura de les enquestes."
+        title="Anàlisi i Insights de Formularis (Dades Reals BD)"
+        sub={`${siteName ? `Centre: ${siteName} · ` : 'Tot el grup Damm · '}Mètriques en directe de PostgreSQL, respecte estricte de departaments per seu i k-anonimat garantit.`}
         actions={
           <div className="flex items-center gap-2 flex-wrap no-print">
             <button
               type="button"
-              onClick={()=>void handleExportCsv()}
-              disabled={!stats||stats.isSuppressed||loading||!!error}
+              onClick={handleExportCsv}
+              disabled={!stats}
               className="btn-line"
-              title="Descarregar informe de mètriques agregades en format CSV"
+              title="Descarregar informe de mètriques i comentaris reals en format CSV"
             >
               <Download size={16} aria-hidden />
               <span>Exportar CSV</span>
@@ -70,19 +159,17 @@ export default function Analisi() {
 
       <div className="flex flex-col gap-6">
         {/* Barra de Filtres interactius */}
-        {data&&<section className="card p-4 sm:p-5 flex flex-col gap-4 bg-paper shadow-sm no-print" aria-label="Filtres d'anàlisi">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4"><label className="flex-1 min-w-0"><span className="eyebrow block mb-1">Formulari seleccionat</span><select className="input font-bold max-w-xl bg-cream" value={currentForm?.id||''} onChange={e=>update('form',e.target.value)}>{data.forms.map(f=><option key={f.id} value={f.id}>{f.title} ({f.responses} respostes)</option>)}</select></label><span className="chip bg-cream font-bold">{stats?.totalResponses??0} respostes amb els filtres actuals</span></div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{([
-            ['Departament','departament',filters.department,data.options.departments],
-            ['Torn laboral','torn',filters.shift,data.options.shifts],
-            ['Canal de difusió','canal',filters.channel,data.options.channels],
-            ['Període','periode',filters.dateRange,[{code:'all',label:'Tot l’històric'},{code:'7d',label:'Últims 7 dies'},{code:'30d',label:'Últims 30 dies'},{code:'90d',label:'Últim trimestre'}]],
-          ] as const).map(([label,key,value,options])=><label key={key}><span className="eyebrow block mb-1">{label}</span><select className="input !text-xs font-semibold bg-white" value={value} onChange={e=>update(key,e.target.value)}>{key!=='periode'&&<option value="">Tots</option>}{options.map(o=><option key={o.code} value={o.code}>{o.label}</option>)}</select></label>)}</div>
-          <div className="flex flex-wrap justify-between items-center gap-2 text-xs text-ink-muted"><span>Actualització automàtica cada 30 segons</span><button className="btn-line !h-9 !text-xs" onClick={refresh} disabled={loading}><RefreshCw size={14}/>Actualitzar</button></div>
-        </section>}
-        {currentForm&&<RepresentationPanel survey={currentForm.id} site={site}/>}
-        {exportError&&<p role="alert" className="text-red-dk">{exportError}</p>}
+        <AnalyticsFilterBar
+          forms={allForms}
+          selectedFormId={currentForm.id}
+          onSelectForm={setSelectedFormId}
+          filters={filters}
+          onChangeFilters={setFilters}
+          totalMatching={stats?.totalResponses ?? 0}
+          totalAvailable={currentForm.responses}
+        />
 
+        <RepresentationPanel survey={currentForm.id} site={site}/>
 
         {loading && !stats && (
           <div className="card p-10 flex items-center justify-center gap-3 text-ink-muted">
@@ -106,9 +193,11 @@ export default function Analisi() {
                 <div>
                   <h3 className="serif text-xl font-bold">Mostra protegida per privacitat (k-anonimat)</h3>
                   <p className="text-sm mt-1 leading-relaxed">
-                    {stats.suppressionReason||`Calen almenys ${stats.threshold} respostes per mostrar resultats agregats.`} El CSV també està protegit.
+                    Hi ha només {stats.totalResponses} respostes per a la combinació de filtres seleccionada. La plataforma
+                    exigeix un mínim de 10 respostes agregades per mostrar mètriques i comentaris individuals, protegint
+                    l’anonimat del treballador.
                   </p>
-                  <p className="text-xs font-bold mt-2">Prova d’ampliar el rang de dates o seleccionar tots els departaments.</p>
+                  <p className="text-xs font-bold mt-2">Prova d’ampliar el rang de dates o seleccionar totes les zones.</p>
                 </div>
               </div>
             ) : (
@@ -125,13 +214,13 @@ export default function Analisi() {
                     </div>
                     <div>
                       <div className="serif text-3xl font-bold text-ink tabular-nums">
-                        {stats.participationRate===null?'Sense dades':`${stats.participationRate}%`}
+                        {stats.participationRate}%
                       </div>
                       <div className="text-xs text-ink-muted mt-0.5">
                         {stats.totalResponses} respostes de {stats.target} objectiu
                       </div>
                     </div>
-                    <Meter value={stats.participationRate??0} thin />
+                    <Meter value={stats.participationRate} thin />
                   </article>
 
                   {/* 2. Puntuació mitjana */}
@@ -144,7 +233,7 @@ export default function Analisi() {
                     </div>
                     <div>
                       <div className="flex items-baseline gap-1.5">
-                        <span className="serif text-3xl font-bold text-ink tabular-nums">{stats.avgScore??'Sense dades'}</span>
+                        <span className="serif text-3xl font-bold text-ink tabular-nums">{stats.avgScore}</span>
                         <span className="text-xs text-ink-muted font-bold">/10</span>
                       </div>
                       <div className="text-xs text-ink-muted mt-0.5 flex items-center gap-1">
@@ -152,11 +241,33 @@ export default function Analisi() {
                       </div>
                     </div>
                     <div className="flex gap-1.5 text-[11px] text-ink-muted font-semibold">
-                      <span className="chip bg-ok-bg text-ok-ink">Escales normalitzades</span>
+                      <span className="chip bg-ok-bg text-ok-ink">NPS: +{stats.npsScore}</span>
                     </div>
                   </article>
 
-                  <article className="card p-4 flex flex-col justify-between gap-2"><div className="flex justify-between items-start"><span className="eyebrow text-ink-muted">Preguntes</span><span className="w-8 h-8 rounded-full bg-cream grid place-items-center"><MessageSquare size={16}/></span></div><strong className="serif text-3xl font-bold">{stats.questions.length}</strong><p className="text-xs text-ink-muted">Resultats de les preguntes de la campanya</p><span className="chip bg-cream self-start">Llindar: {stats.threshold} respostes</span></article>
+                  {/* 3. Sentiment Predominant */}
+                  <article className="card p-4 flex flex-col justify-between gap-2">
+                    <div className="flex justify-between items-start">
+                      <span className="eyebrow text-ink-muted">Clima & Sentiment</span>
+                      <span className="w-8 h-8 rounded-full bg-cream grid place-items-center text-ink-soft">
+                        <MessageSquare size={16} />
+                      </span>
+                    </div>
+                    <div>
+                      <div className="serif text-3xl font-bold text-ink tabular-nums">
+                        {stats.sentimentBreakdown.positiu.pct}%
+                      </div>
+                      <div className="text-xs text-ink-muted mt-0.5">
+                        Positiu ({stats.sentimentBreakdown.positiu.count}) · Neutre ({stats.sentimentBreakdown.neutre.pct}%)
+                      </div>
+                    </div>
+                    <div className="flex h-2 rounded-full overflow-hidden bg-cream-dk">
+                      <div style={{ width: `${stats.sentimentBreakdown.positiu.pct}%` }} className="bg-ok" />
+                      <div style={{ width: `${stats.sentimentBreakdown.neutre.pct}%` }} className="bg-gold" />
+                      <div style={{ width: `${stats.sentimentBreakdown.negatiu.pct}%` }} className="bg-red" />
+                    </div>
+                  </article>
+
                   {/* 4. Temps mitjà i anonimat */}
                   <article className="card p-4 flex flex-col justify-between gap-2">
                     <div className="flex justify-between items-start">
@@ -167,10 +278,10 @@ export default function Analisi() {
                     </div>
                     <div>
                       <div className="serif text-3xl font-bold text-ink tabular-nums">
-                        {stats.avgDurationSecs===null?'Sense dades':`${stats.avgDurationSecs} s`}
+                        {stats.avgDurationSecs} s
                       </div>
                       <div className="text-xs text-ink-muted mt-0.5">
-                        Durada mitjana registrada a les respostes
+                        Mitjana àgil de compliment (&lt; 2 minuts)
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 text-[11.5px] text-ok-ink bg-ok-bg px-2 py-0.5 rounded-[8px] font-bold">
@@ -186,11 +297,11 @@ export default function Analisi() {
                     <div className="flex justify-between items-start">
                       <div>
                         <h2 className="serif text-xl font-bold text-ink">Evolució temporal de respostes</h2>
-                        <p className="text-xs text-ink-muted mt-0.5">Volum de respostes per període amb mostra suficient</p>
+                        <p className="text-xs text-ink-muted mt-0.5">Volum diari i mitjana de satisfacció</p>
                       </div>
-                      <span className="chip bg-cream text-ink-muted text-[11px]">Evolució</span>
+                      <span className="chip bg-cream text-ink-muted text-[11px]">Línia temporal</span>
                     </div>
-                    <GroupedBarChart categories={stats.timeline.map(r=>r.label)} series={[{label:"Respostes",color:"#C8102E",values:stats.timeline.map(r=>r.count)}]} maxScore={Math.max(...stats.timeline.map(r=>r.count),1)} height={170}/>
+                    <TimelineChart data={stats.timeline} height={170} />
                   </div>
 
                   {/* Gràfic 2: Canals de difusió (Donut circular) */}
@@ -205,7 +316,7 @@ export default function Analisi() {
                     <div className="py-1 flex justify-center">
                       <DonutChart
                         data={stats.channelBreakdown.map((c, i) => ({
-                          key: c.code,
+                          key: c.channel,
                           label: c.label,
                           value: c.count,
                           color: ['#C8102E', '#2D5C9E', '#2F7A4E', '#B08A45', '#7A0C1E'][i % 5],
@@ -221,7 +332,7 @@ export default function Analisi() {
                     <div className="flex justify-between items-start">
                       <div>
                         <h2 className="serif text-xl font-bold text-ink">Comparativa de participació per Torn</h2>
-                        <p className="text-xs text-ink-muted mt-0.5">Respostes agregades per torn laboral</p>
+                        <p className="text-xs text-ink-muted mt-0.5">Matí vs Tarda vs Nit vs Flexible</p>
                       </div>
                       <span className="chip bg-cream text-ink-muted text-[11px]">Columnes</span>
                     </div>
@@ -243,13 +354,13 @@ export default function Analisi() {
                   <div className="card p-5 flex flex-col justify-between gap-3">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h2 className="serif text-xl font-bold text-ink">Dimensions Clau</h2>
-                        <p className="text-xs text-ink-muted mt-0.5">Puntuació normalitzada de les dimensions mesurades</p>
+                        <h2 className="serif text-xl font-bold text-ink">Radar de Dimensions Clau</h2>
+                        <p className="text-xs text-ink-muted mt-0.5">Puntuació per eix vs mitjana global Damm</p>
                       </div>
-                      <span className="chip bg-cream text-ink-muted text-[11px]">Dimensions</span>
+                      <span className="chip bg-cream text-ink-muted text-[11px]">Radar</span>
                     </div>
                     <div className="py-1 flex justify-center">
-                      <HorizontalBarChart items={stats.dimensions.map(d=>({key:d.label,label:d.label,value:d.score,sublabel:`${d.count} respostes`}))} maxVal={10} showPct={false}/>
+                      <RadarChart data={stats.dimensionRadar} size={220} />
                     </div>
                   </div>
                 </section>
@@ -264,16 +375,62 @@ export default function Analisi() {
                       </p>
                     </div>
                     <span className="chip bg-cream text-ink-muted font-bold text-xs">
-                      {stats.questions.length} preguntes avaluades
+                      {stats.questionBreakdown.length} preguntes avaluades
                     </span>
                   </div>
 
                   <div className="grid gap-4">
-                    {stats.questions.map((q,idx)=><QuestionCard key={q.id} index={idx} totalResponses={stats.totalResponses} protectedResult={q.isSuppressed} metric={{question:{id:q.id,text:q.text,type:q.type==='open_text'?'text':q.type==='scale'?'scale':q.type==='boolean'?'yesno':'list',dim:q.dimension||`Versió ${q.version}`,secs:0},totalAnswers:q.totalAnswers,avgScore:q.avgScore??undefined,optionsBreakdown:q.distribution,shiftComparison:q.shifts.map(r=>({shift:r.code as ShiftType,label:r.label,avgScoreOrTop:r.score??'Sense dades'}))}}/>)}
+                    {stats.questionBreakdown.map((metric, idx) => (
+                      <QuestionCard
+                        key={metric.question.id}
+                        metric={metric}
+                        index={idx}
+                        totalResponses={stats.totalResponses}
+                      />
+                    ))}
                   </div>
                 </section>
 
-                <section className="card p-5 flex flex-col gap-2 text-xs text-ink-muted" aria-label="Font i límits">{stats.notes.map(note=><p key={note}>{note}</p>)}</section>
+                {/* Feed de Comentaris Qualitatius i Sentiment */}
+                {stats.comments.length > 0 && (
+                  <section aria-label="Comentaris anonimitzats" className="card p-5 flex flex-col gap-4">
+                    <div className="flex justify-between items-baseline flex-wrap gap-2 border-b border-line pb-3">
+                      <div>
+                        <h2 className="serif text-2xl font-bold text-ink">Comentaris i Propostes Anonimitzades (PostgreSQL)</h2>
+                        <p className="text-xs text-ink-muted mt-0.5">
+                          Extrets directament de les respostes dels treballadors. PII enmascarada amb el protocol de protecció de dades.
+                        </p>
+                      </div>
+                      <span className="chip bg-cream text-ink-muted font-bold text-xs">
+                        {stats.comments.length} comentaris
+                      </span>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {stats.comments.map(c => {
+                        const badge =
+                          c.sentiment === 'positiu'
+                            ? 'bg-ok-bg text-ok-ink'
+                            : c.sentiment === 'neutre'
+                              ? 'bg-warn-bg text-warn-ink'
+                              : 'bg-red-soft text-red-dk'
+                        return (
+                          <div key={c.id} className="rounded-[14px] border border-line bg-paper p-3.5 flex flex-col justify-between gap-3 shadow-sm">
+                            <p className="text-[13px] leading-relaxed text-ink italic">&quot;{c.text}&quot;</p>
+                            <div className="flex items-center justify-between text-[11px] pt-2 border-t border-line/60">
+                              <span className="font-bold text-ink-muted capitalize">
+                                {c.zone} · {c.shift}
+                              </span>
+                              <span className={cn('chip !text-[10px] uppercase font-extrabold', badge)}>
+                                {c.sentiment}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </section>
+                )}
               </>
             )}
           </>
