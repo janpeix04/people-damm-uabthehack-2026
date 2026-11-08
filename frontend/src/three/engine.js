@@ -1893,7 +1893,7 @@ export function mountScene(container, kind, opts) {
     zones.forEach(function (z) {
       var a = W.anchors[z.key] || (W.zoneDept && W.anchors[W.zoneDept[z.sceneKey || z.key]]); if (!a) return;
       var esc = function (v) { return String(v).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); };
-      var name = esc(z.name), label = z.absent ? '' : esc(z.score);
+      var name = esc(z.name), label = z.absent || z.score === '?' ? '' : esc(z.score);
       var el = addLabel(a, '<button type="button" class="pin' + (z.absent ? ' off' : '') + '" data-z="' + esc(z.key) + '" aria-pressed="' + (z.key === selected) + '" aria-label="' + name + ': ' + (z.absent ? 'no hi ha equip en aquest centre' : esc(z.moodLabel)) + '"><span class="w" style="background:' + esc(z.bg) + '"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="' + esc(z.ink) + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + esc(z.path) + '"/></svg></span>' + name + '<em>' + label + '</em></button>');
       labels[labels.length - 1].pin = true;
       el.querySelector('button').addEventListener('click', function () { select(z.key); });
