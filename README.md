@@ -12,8 +12,11 @@
 
 Plataforma d'escolta activa, contínua i intel·ligent del clima laboral, amb IA i privacitat per disseny.
 
+[![Projecte guanyador](https://img.shields.io/badge/Guanyador-Repte%20Damm-f2b705?style=for-the-badge&labelColor=c8102e)](#-hackathon)
 [![UAB THE HACK! 2026](https://img.shields.io/badge/UAB%20THE%20HACK!-2026-c8102e?style=for-the-badge)](#-hackathon)
 [![Repte Estrella Damm](https://img.shields.io/badge/Repte-Estrella%20Damm-f2b705?style=for-the-badge)](./docs/Repte-Estrella-Damm-UAB-THE-HACK-2026.pdf)
+
+**Projecte guanyador del Repte Damm a UAB THE HACK! 2026.**
 
 ![React](https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178c6?logo=typescript&logoColor=white)
@@ -295,7 +298,7 @@ npm run test:e2e        # webhooks reals d'n8n
 
 ## 🏆 Hackathon
 
-Projecte desenvolupat a **UAB THE HACK! 2026** per al **Repte Estrella Damm**:
+**People Damm va ser el projecte guanyador del Repte Damm a UAB THE HACK! 2026**, on es va desenvolupar com a resposta al repte plantejat per Estrella Damm:
 
 > *Com podem mesurar el clima laboral de manera àgil, contínua i intel·ligent amb IA?*
 
