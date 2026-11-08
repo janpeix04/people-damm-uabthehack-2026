@@ -1856,12 +1856,13 @@ export function mountScene(container, kind, opts) {
     if (kind !== 'plaza') return;
     labels = labels.filter(function(l){ if (l.topic) { l.el.remove(); return false; } return true; });
     (topics || []).slice(0, W.bubbleAnchors.length).forEach(function(topic, idx){
-      var el = addLabel(W.bubbleAnchors[idx], '<div class="bubble"><p></p><div class="row"><span><b class="cnt"></b> +1</span>' + (opts.readOnly ? '' : '<button type="button" class="react"></button>') + '</div></div>');
+      var el = addLabel(W.bubbleAnchors[idx], '<div class="bubble"><p></p><div class="row"><span class="cnt"></span>' + (opts.readOnly ? '' : '<button type="button" class="react"></button>') + '</div></div>');
       labels[labels.length - 1].topic = true;
       // User content is always text, never HTML.
       el.querySelector('p').textContent = topic.text;
       var btn = el.querySelector('.react');
-      el.querySelector('.cnt').textContent = String(topic.likes || 0);
+      var votes = topic.likes || 0;
+      el.querySelector('.cnt').textContent = votes + (votes === 1 ? ' vot' : ' vots');
       if (!btn) return;
       btn.setAttribute('aria-pressed', String(!!topic.reacted));
       btn.textContent = topic.reacted ? '\u2713 Jo tamb\u00e9' : '+1 Jo tamb\u00e9';

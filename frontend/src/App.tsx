@@ -44,8 +44,8 @@ export default function App() {
 function AuthenticatedApp() {
   const {user}=useAuth()
   return (
-    <AppProvider key={user?.id || 'anonymous'}>
-      <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <AppProvider key={user?.id || 'anonymous'}>
         <Suspense fallback={<Loading />}>
           <Routes>
             <Route path="/" element={<Landing />} />
@@ -72,7 +72,7 @@ function AuthenticatedApp() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
-      </HashRouter>
-    </AppProvider>
+      </AppProvider>
+    </HashRouter>
   )
 }

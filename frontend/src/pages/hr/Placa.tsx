@@ -1,3 +1,4 @@
+import {useSearchParams} from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { hrPlazaCall } from '../../api/plaza'
 import type { Idea } from '../../data/types'
@@ -7,24 +8,33 @@ import { BeerMenuModal, TopicsModal } from '../../components/Panels'
 import { Modal } from '../../components/ui'
 import { useApp } from '../../store/AppContext'
 
+const IDEA_STATUS:Record<Idea['status'],{label:string;className:string}>={
+  moderant:{label:'En moderació',className:'bg-warn-bg text-warn-ink'},
+  publicada:{label:'Publicada',className:'bg-ok-bg text-ok-ink'},
+  rebutjada:{label:'Rebutjada',className:'bg-red-soft text-red-dk'},
+  arxivada:{label:'Arxivada',className:'bg-cream text-ink-muted'},
+}
+
 /** La Plaça vista per RRHH: l'escena a pantalla completa amb els controls flotant a sobre. */
 export default function HRPlaca() {
+  const [params]=useSearchParams()
+  const site=params.get('centre')||''
   const { ideas: publishedIdeas, toast, refreshPlaza } = useApp()
   const [ideas, setIdeas] = useState<Idea[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const refreshIdeas = async () => {
-    try { setIdeas(await hrPlazaCall<Idea[]>({ action: 'list' })); setError(null) }
+    try { setIdeas(await hrPlazaCall<Idea[]>({ action: 'list',site })); setError(null) }
     catch (e) { setError(e instanceof Error ? e.message : 'Error de connexió') }
   }
   const moderate = async (id: string, status: string) => {
     setBusy(true)
-    try { setIdeas(await hrPlazaCall<Idea[]>({ action: 'moderate', id, status })); await refreshPlaza(); setError(null) }
+    try { setIdeas(await hrPlazaCall<Idea[]>({ action: 'moderate', id, status,site })); await refreshPlaza(); setError(null) }
     catch (e) { setError(e instanceof Error ? e.message : 'Error') }
     finally { setBusy(false) }
   }
   const [modal, setModal] = useState<'topics' | 'ideas' | 'bar' | null>(null)
-  useEffect(() => { void refreshIdeas() }, [modal])
+  useEffect(() => { void refreshIdeas() }, [modal,site])
   const moderant = ideas.filter(i => i.status === 'moderant').length
 
   return (
@@ -52,9 +62,8 @@ export default function HRPlaca() {
         <div className="flex flex-col gap-2">
           {ideas.map(i => (
             <div key={i.id} className="border border-cream-dk rounded-[12px] p-3 flex flex-col gap-1.5">
-              <div className="flex justify-between gap-2 items-center"><span className="chip bg-cream text-ink-soft">{i.category}</span><span className={i.status === 'moderant' ? 'chip bg-warn-bg text-warn-ink' : 'chip bg-ok-bg text-ok-ink'}>{i.status === 'moderant' ? 'En moderació' : 'Publicada al tema'}</span></div>
+              <div className="flex justify-between gap-2 items-center"><span className="chip bg-cream text-ink-soft">{i.category}</span><span className={`chip ${IDEA_STATUS[i.status].className}`}>{IDEA_STATUS[i.status].label}</span></div>
               <p className="text-[13.5px] leading-snug">{i.text}</p>
-              <p className="text-xs">Estat: {i.status}</p>
               {i.status === 'moderant' && <div className="flex gap-2"><button disabled={busy} className="btn-ink" onClick={() => void moderate(i.id, 'published')}>Publicar</button><button disabled={busy} className="btn-line" onClick={() => void moderate(i.id, 'rejected')}>Rebutjar</button></div>}
             </div>
           ))}

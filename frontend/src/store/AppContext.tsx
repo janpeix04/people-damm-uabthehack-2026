@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { BASE_RESPONSES, FESTA_GOAL, INITIATIVES, PLAZA_MILESTONES, SURVEYS, TOTAL_HEADCOUNT } from '../data/mock'
 import type { ActionStatus, Avatar, DailyQuestion, Idea, Initiative, Reward, Survey } from '../data/types'
 import { AppApiError, openWallet, redeemReward, submitSurvey as submitSurveyApi, type WalletState } from '../api/app'
@@ -6,6 +6,7 @@ import { plazaCall, type PlazaState } from '../api/plaza'
 import { listHrSurveys, saveHrSurvey, updateHrStatus } from '../api/hr'
 import { useAuth } from './AuthContext'
 import { hrPlazaCall } from '../api/plaza'
+import {useSearchParams} from 'react-router-dom'
 
 export const POINTS_PER_SURVEY = 50
 
@@ -144,6 +145,8 @@ const AppCtx = createContext<Ctx | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const {user}=useAuth()
+  const [plazaParams]=useSearchParams()
+  const plazaSite=plazaParams.get('centre')??sessionStorage.getItem(`hr-centre:${user?.id}`)??user?.site?.code??''
   const [st, setSt] = useState<Persisted>(load)
   const [toasts, setToasts] = useState<{ id: number; msg: string }[]>([])
   const [remote, setRemote] = useState<Remote | null>(null)
@@ -151,13 +154,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [plazaRemote, setPlazaRemote] = useState<PlazaState | null>(null)
   const [plazaError, setPlazaError] = useState<string | null>(null)
   const [plazaLoading, setPlazaLoading] = useState(true)
+  const plazaRequest=useRef(0)
   const refreshPlaza = useCallback(async () => {
     if(!user){setPlazaLoading(false);return}
-    try { setPlazaRemote(user.role==='worker'?await plazaCall('state'):await hrPlazaCall<PlazaState>({action:'state'})); setPlazaError(null) }
-    catch (e) { setPlazaError(e instanceof Error ? e.message : 'Error de connexio') }
-    finally { setPlazaLoading(false) }
-  }, [user])
-  useEffect(() => { void refreshPlaza(); const timer = setInterval(() => void refreshPlaza(), 30000); return () => clearInterval(timer) }, [refreshPlaza])
+    const request=++plazaRequest.current
+    try { const data=user.role==='worker'?await plazaCall('state'):await hrPlazaCall<PlazaState>({action:'state',site:plazaSite}); if(request===plazaRequest.current){setPlazaRemote(data);setPlazaError(null)} }
+    catch (e) { if(request===plazaRequest.current)setPlazaError(e instanceof Error ? e.message : 'Error de connexio') }
+    finally { if(request===plazaRequest.current)setPlazaLoading(false) }
+  }, [user,plazaSite])
+  useEffect(() => { setPlazaRemote(null);setPlazaLoading(true);void refreshPlaza(); const timer = setInterval(() => void refreshPlaza(), 30000); return () => {clearInterval(timer);plazaRequest.current++} }, [refreshPlaza])
   const [hrSurveys, setHrSurveys] = useState<Survey[]>([])
   const [hrLoading, setHrLoading] = useState(true)
   const [hrError, setHrError] = useState<string | null>(null)

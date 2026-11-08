@@ -2,18 +2,30 @@ import { InputError } from './surveys.js';
 
 const avatarDefault={skin:1,hair:0,shirt:0,style:0,logo:true};
 const mapIdea=r=>({id:r.id,category:r.category,text:r.body_redacted,status:({pending:'moderant',published:'publicada',rejected:'rebutjada',archived:'arxivada'})[r.status],at:new Date(r.submitted_on).getTime(),likes:r.likes,reacted:r.reacted});
-export async function ideas(db,all=false,digest=null){return (await db.query(`select i.*,c.name category,
+export async function ideas(db,all=false,digest=null,site=null){return (await db.query(`select i.*,c.name category,
  (select count(*)::int from app_private.plaza_idea_reactions r where r.idea_id=i.id) likes,
  exists(select 1 from app_private.plaza_idea_reactions r where r.idea_id=i.id and r.wallet_digest=$1) reacted
- from plaza_ideas i join plaza_categories c on c.id=i.category_id ${all?'':"where i.status='published'"} order by i.submitted_on desc,i.id`,[digest])).rows.map(mapIdea)}
+ from plaza_ideas i join plaza_categories c on c.id=i.category_id where ($2::uuid is null or i.site_id=$2) ${all?'':"and i.status='published'"} order by i.submitted_on desc,i.id`,[digest,site])).rows.map(mapIdea)}
 async function wallet(db,token){
   if(typeof token!=='string'||!/^[0-9a-f]{64}$/.test(token))throw new InputError('invalid_wallet');
   await db.query('select app_private.wallet_person($1,true)',[token]);
   return (await db.query("select extensions.digest($1,'sha256') digest",[token])).rows[0].digest;
 }
 
-export async function plazaState(db,token){
+async function walletSite(db,token){
+ const row=(await db.query('select site_id from synthetic_people where id=app_private.wallet_person($1,false)',[token])).rows[0];
+ if(!row?.site_id)throw new InputError('Centre no assignat.',403);
+ return row.site_id;
+}
+async function hrSite(db,code){
+ if(!code)return null;
+ const row=(await db.query('select id from sites where code=$1 and active',[code])).rows[0];
+ if(!row)throw new InputError('Centre no trobat.',404);
+ return row.id;
+}
+export async function plazaState(db,token,site=null){
   const digest=token?await wallet(db,token):null;
+  if(token)site=await walletSite(db,token);
   const pref=(await db.query('select skin,hair,shirt,hair_style style,show_logo logo from app_private.worker_preferences where wallet_digest=$1',[digest])).rows[0]||avatarDefault;
   const w={headcount:0,participants:0,last_count:0,joined:false,resets_in:0};
   const q=(await db.query("select * from plaza_daily_questions where question_date=(now() at time zone 'Europe/Madrid')::date and status='published'")).rows[0];
@@ -27,7 +39,7 @@ export async function plazaState(db,token){
     if(todayTotal>=q.min_sample_size)results=opts.map(o=>({...o,pct:o.n/todayTotal*100}));
   }
   const reacted=[];
-  return {avatar:pref,ideas:await ideas(db,false,digest),plaza:{...w,lastWeek:w.headcount?w.last_count/w.headcount*100:0,resetsIn:w.resets_in,reacted,question,results,myAnswer,todayTotal}};
+  return {avatar:pref,ideas:await ideas(db,false,digest,site),plaza:{...w,lastWeek:w.headcount?w.last_count/w.headcount*100:0,resetsIn:w.resets_in,reacted,question,results,myAnswer,todayTotal}};
 }
 
 export async function appAction(db,action,b){
@@ -48,7 +60,7 @@ export async function appAction(db,action,b){
     if(typeof b.text!=='string'||b.text.trim().length<3||b.text.length>4000)throw new InputError('La idea ha de tenir entre 3 i 4.000 caràcters.');
     const cat=(await db.query('select id from plaza_categories where active and (id=$1 or name=$1)',[b.category])).rows[0];
     if(!cat)throw new InputError('Categoria no vàlida.');
-    await db.query('insert into plaza_ideas(category_id,body_redacted) values($1,$2)',[cat.id,b.text.trim()]);
+    await db.query('insert into plaza_ideas(category_id,body_redacted,site_id) values($1,$2,$3)',[cat.id,b.text.trim(),await walletSite(db,b.wallet)]);
   }else if(action==='daily'){
     const q=(await db.query("select id from plaza_daily_questions where question_date=(now() at time zone 'Europe/Madrid')::date and status='published' and id::text=$1 for share",[b.question])).rows[0];
     if(!q)throw new InputError('La pregunta ja no està oberta.',409);
@@ -59,7 +71,7 @@ export async function appAction(db,action,b){
     
   }else if(action==='reaction'){
     if(typeof b.idea!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(b.idea)||typeof b.on!=='boolean')throw new InputError('Reacció no vàlida.');
-    if(!(await db.query("select id from plaza_ideas where id=$1 and status='published' for share",[b.idea])).rowCount)throw new InputError('Opinió no trobada.',404);
+    if(!(await db.query("select id from plaza_ideas where id=$1 and status='published' and site_id=$2 for share",[b.idea,await walletSite(db,b.wallet)])).rowCount)throw new InputError('Opinió no trobada.',404);
     if(b.on)await db.query('insert into app_private.plaza_idea_reactions(idea_id,wallet_digest) values($1,$2) on conflict do nothing',[b.idea,digest]);
     else await db.query('delete from app_private.plaza_idea_reactions where idea_id=$1 and wallet_digest=$2',[b.idea,digest]);
   }else throw new InputError('Acció no trobada.',404);
@@ -86,12 +98,13 @@ async function validateAnswers(db,b){
 }
 
 export async function hrPlazaAction(db,b,user){
-  if(b.action==='state')return plazaState(db,null);
-  if(b.action==='list')return ideas(db,true);
+  const site=await hrSite(db,b.site);
+  if(b.action==='state')return plazaState(db,null,site);
+  if(b.action==='list')return ideas(db,true,null,site);
   if(b.action==='moderate'){
     if(!['published','rejected','archived'].includes(b.status))throw new InputError('Estat no vàlid.');
     const r=await db.query('update plaza_ideas set status=$2 where id::text=$1 returning id',[b.id,b.status]);if(!r.rowCount)throw new InputError('Idea no trobada.',404);
-    return ideas(db,true);
+    return ideas(db,true,null,site);
   }
   if(b.action==='question'){
     if(typeof b.text!=='string'||!b.text.trim()||b.text.length>1000||!Array.isArray(b.options)||b.options.length<2||b.options.length>6||b.options.some(o=>typeof o!=='string'||!o.trim()||o.length>300))throw new InputError('Indica una pregunta i entre 2 i 6 opcions.');

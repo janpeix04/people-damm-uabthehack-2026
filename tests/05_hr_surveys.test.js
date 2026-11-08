@@ -13,6 +13,18 @@ before(async () => {
 after(async () => { await db.close(); });
 const survey = (status='open') => ({title:'Prova RRHH',goal:'Millorar els torns',status,locale:'es',zones:['envasat','logistica'],channels:['app','qr'],opensAt:new Date(Date.now()-3600000).toISOString(),closesAt:new Date(Date.now()+86400000).toISOString(),questions:[{type:'faces',text:'Benestar?',secs:10},{type:'yesno',text:'Suport?',secs:10},{type:'text',text:'Propostes?',secs:20}]});
 
+test('RRHH: DB department codes target the exact audience, including Altres without map zones',async()=>{
+ await db.exec('BEGIN');
+ try{
+  await db.exec(fs.readFileSync('supabase/migrations/20261108170000_others_department.sql','utf8').replace(/^begin;|commit;$/gm,''));
+  await db.query("update synthetic_people set department_id=(select id from departments where code='others') where id=(select id from synthetic_people limit 1)");
+  const saved=await createSurvey(db,{...survey(),zones:[],departmentCodes:['others']},true);
+  assert.equal(saved.target,1);assert.deepEqual(saved.departmentCodes,['others']);
+  assert.deepEqual((await listSurveys(db,saved.id))[0].departmentCodes,['others']);
+  await assert.rejects(createSurvey(db,{...survey(),departmentCodes:['inventat']},true),/departaments/);
+ }finally{await db.exec('ROLLBACK')}
+});
+
 test('RRHH: publicació requereix aprovació i valida dates i públic', async () => {
   await assert.rejects(createSurvey(db,survey(),false),/aprovació humana/);
   await assert.rejects(createSurvey(db,{...survey(),closesAt:'invalid'},true),/tancament/);

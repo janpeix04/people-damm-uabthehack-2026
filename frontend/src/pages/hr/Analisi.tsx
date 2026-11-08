@@ -15,7 +15,6 @@ import { useApp } from '../../store/AppContext'
 import { PageHead } from '../../components/HRLayout'
 import { Meter, cn } from '../../components/ui'
 import {
-  ANALYTICS_FORMS,
   exportResponsesCsv,
   filterAndAggregateForm,
   type AnalyticsFormConfig,
@@ -27,30 +26,16 @@ import { QuestionCard } from '../../components/analytics/QuestionCard'
 
 export default function Analisi() {
   const [params, setParams] = useSearchParams()
-  const { hrSurveys } = useApp()
+  const { hrSurveys, hrLoading, hrError, refreshHr } = useApp()
 
-  // Integració de formularis: llista base + enquestes creades a la plataforma
-  const allForms = useMemo<AnalyticsFormConfig[]>(() => {
-    const existingIds = new Set(ANALYTICS_FORMS.map(f => f.id))
-    const customForms: AnalyticsFormConfig[] = hrSurveys
-      .filter(s => !existingIds.has(s.id))
-      .filter(s => {
-        const title = (s.title || '').trim().toLowerCase()
-        return !title.includes('com estem vivint la feina') &&
-          s.id !== 'pols-torns-novembre' &&
-          s.id !== 'pols-clima-octubre' &&
-          s.id !== 'seguiment-desembre'
-      })
-      .map(s => ({
-        ...s,
-        category: 'Operacions',
-        description: s.goal || 'Enquesta creada dinàmicament des de RRHH.',
-        version: 'v1.0',
-        responses: s.responses || 35,
-        target: s.target || 100,
-      }))
-    return [...ANALYTICS_FORMS, ...customForms].filter(f => !f.title.toLowerCase().includes('com estem vivint la feina'))
-  }, [hrSurveys])
+  const allForms = useMemo<AnalyticsFormConfig[]>(() => hrSurveys.map(s => ({
+    ...s,
+    category: 'Operacions',
+    description: s.goal,
+    version: 'v1.0',
+    responses: s.responses ?? 0,
+    target: s.target ?? 0,
+  })), [hrSurveys])
 
   // Formulari seleccionat (per defecte el de la query param o el primer)
   const selectedFormId = params.get('form') || allForms[0]?.id || 'pols-novembre'
@@ -75,18 +60,22 @@ export default function Analisi() {
 
   // Càlcul de mètriques agregades amb el motor d'analítica
   const stats = useMemo(() => {
-    return filterAndAggregateForm(currentForm, filters)
+    return currentForm ? filterAndAggregateForm(currentForm, filters) : null
   }, [currentForm, filters])
 
   // Descarregar dades en CSV
   const handleExportCsv = () => {
-    exportResponsesCsv(currentForm, stats)
+    if(currentForm&&stats)exportResponsesCsv(currentForm, stats)
   }
 
   // Imprimir informe
   const handlePrint = () => {
     window.print()
   }
+
+  if(hrLoading&&!allForms.length)return <p role="status">Carregant enquestes...</p>
+  if(hrError)return <div role="alert">{hrError}<button className="btn-line" onClick={()=>void refreshHr()}>Reintentar</button></div>
+  if(!currentForm||!stats)return <div className="card p-6">Encara no hi ha enquestes a la base de dades.</div>
 
   return (
     <div className="flex flex-col gap-6">

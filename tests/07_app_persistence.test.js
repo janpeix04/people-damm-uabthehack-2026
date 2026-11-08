@@ -5,7 +5,7 @@ import {PGlite} from '@electric-sql/pglite';
 import {pgcrypto} from '@electric-sql/pglite/contrib/pgcrypto';
 import {appAction,hrPlazaAction,plazaState} from '../server/app.js';
 let db;
-before(async()=>{db=new PGlite({extensions:{pgcrypto}});for(const f of ['20261107162128_init_people_listening_platform','SEED','20261108090000_worker_app_wallet_rewards','20261108100000_plaza_preferences_reward_operations','20261108110000_plaza_topic_reactions','20261108200000_plaza_idea_reactions'])await db.exec(fs.readFileSync(f==='SEED'?'supabase/seed.sql':`supabase/migrations/${f}.sql`,'utf8'))});
+before(async()=>{db=new PGlite({extensions:{pgcrypto}});for(const f of ['20261107162128_init_people_listening_platform','SEED','20261108090000_worker_app_wallet_rewards','20261108100000_plaza_preferences_reward_operations','20261108110000_plaza_topic_reactions','20261108200000_plaza_idea_reactions','20261108210000_plaza_sites'])await db.exec(fs.readFileSync(f==='SEED'?'supabase/seed.sql':`supabase/migrations/${f}.sql`,'utf8'))});
 after(async()=>{await db.close()});
 const wallet='a1'.repeat(32);
 test('App: avatar persists, anonymous idea waits for moderation, opinions do not track weekly participation or award points',async()=>{
@@ -19,10 +19,18 @@ test('App: avatar persists, anonymous idea waits for moderation, opinions do not
     const pending=await hrPlazaAction(db,{action:'list'});assert.equal(pending[0].status,'moderant');assert.ok(!pending[0].text.includes('demo@example.com'));
     await assert.rejects(appAction(db,'reaction',{wallet,idea:pending[0].id,on:true}),/trobada/);
     await hrPlazaAction(db,{action:'moderate',id:pending[0].id,status:'published'});
+    const site=(await db.query('select s.code from sites s join synthetic_people p on p.site_id=s.id where p.id=app_private.wallet_person($1,false)',[wallet])).rows[0].code;
+    const otherSite=(await db.query('select code from sites where code<>$1 and active limit 1',[site])).rows[0].code;
+    assert.equal((await hrPlazaAction(db,{action:'state',site})).ideas.length,1);
+    assert.equal((await hrPlazaAction(db,{action:'state',site:otherSite})).ideas.length,0);
+    assert.equal((await hrPlazaAction(db,{action:'list',site:otherSite})).length,0);
     assert.equal((await plazaState(db,wallet)).ideas.length,1);
     await appAction(db,'reaction',{wallet,idea:pending[0].id,on:true});await appAction(db,'reaction',{wallet,idea:pending[0].id,on:true});
     const state=await plazaState(db,wallet);assert.equal(state.plaza.participants,0);assert.equal(state.ideas[0].likes,1);assert.equal(state.ideas[0].reacted,true);
     const otherWallet='b2'.repeat(32);
+    assert.equal((await plazaState(db,otherWallet)).ideas.length,0,'other workplace cannot see the opinion');
+    await assert.rejects(appAction(db,'reaction',{wallet:otherWallet,idea:pending[0].id,on:true}),/trobada/);
+    await db.query('update synthetic_people set site_id=(select site_id from synthetic_people where id=app_private.wallet_person($1,false)) where id=app_private.wallet_person($2,false)',[wallet,otherWallet]);
     assert.equal((await plazaState(db,otherWallet)).ideas[0].reacted,false);
     await appAction(db,'reaction',{wallet:otherWallet,idea:pending[0].id,on:true});
     assert.equal((await plazaState(db,wallet)).ideas[0].likes,2);

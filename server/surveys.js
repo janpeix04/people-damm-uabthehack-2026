@@ -29,6 +29,7 @@ export async function listSurveys(db, slug) {
       where q.questionnaire_version_id=$1 order by q.position`, [v.id, locale])).rows;
     result.push({ id: c.slug, title: t?.title || c.name, goal: c.objective,
       status: c.status === 'published' ? (c.closes_at && new Date(c.closes_at) <= new Date() ? 'closed' : c.opens_at && new Date(c.opens_at) > new Date() ? 'scheduled' : 'open') : ['closed', 'archived'].includes(c.status) ? 'closed' : 'draft',
+      departmentCodes:c.target_filter.hr?.departmentCodes,
       zones: c.target_filter.hr?.zones || [...new Set((c.target_filter.collectives || ['fabriques']).flatMap(x => ({fabriques:['envasat','manteniment'],logistica:['logistica'],oficines:['oficines'],comercial:['comercial']})[x] || []))], channels: c.target_filter.hr?.channels || ['app'],
       locale, intro: t?.introduction, opensAt: date(c.opens_at), closesAt: date(c.closes_at), createdAt: date(c.created_at),
       responses: c.responses, target: c.target, source: 'db',
@@ -46,7 +47,9 @@ function validate(s, approved) {
   if (!['draft','open','scheduled'].includes(s.status)) throw new InputError('Estat no vàlid.');
   if (s.status !== 'draft' && approved !== true) throw new InputError('Cal l’aprovació humana abans de publicar.',403);
   if (!Array.isArray(s.questions) || s.questions.length < 3) throw new InputError('Calen almenys 3 preguntes.');
-  if (!Array.isArray(s.zones) || !s.zones.length || s.zones.some(z => !zones[z])) throw new InputError('Selecciona un públic vàlid.');
+  if (s.departmentCodes!==undefined) {
+    if(!Array.isArray(s.departmentCodes)||!s.departmentCodes.length||s.departmentCodes.some(d=>typeof d!=='string'))throw new InputError('Selecciona departaments vàlids.');
+  } else if (!Array.isArray(s.zones) || !s.zones.length || s.zones.some(z => !zones[z])) throw new InputError('Selecciona un públic vàlid.');
   if (!Array.isArray(s.channels) || !s.channels.length || s.channels.some(c => !channels.includes(c))) throw new InputError('Selecciona canals vàlids.');
   if (!Number.isFinite(Date.parse(s.opensAt)) || !Number.isFinite(Date.parse(s.closesAt)) || Date.parse(s.closesAt) <= Date.parse(s.opensAt)) throw new InputError('La data de tancament ha de ser posterior a l’obertura.');
   if (s.status !== 'draft' && Date.parse(s.closesAt) <= Date.now()) throw new InputError('La data de tancament ha de ser futura.');
@@ -61,10 +64,13 @@ function validate(s, approved) {
 // Caller owns the transaction: campaign, version, translations and audience commit together.
 export async function createSurvey(db, s, approved, editId) {
   validate(s, approved);
+  const departments=s.departmentCodes?[...new Set(s.departmentCodes)]:[...new Set(s.zones.flatMap(z=>zones[z]))];
+  const active=(await db.query('select code from departments where active and code=any($1::text[])',[departments])).rows;
+  if(active.length!==departments.length)throw new InputError('Hi ha departaments que no existeixen o estan inactius.');
   const id = editId || `enquesta-${randomUUID()}`;
   const published = s.status !== 'draft';
   const locale = s.locale || 'ca';
-  const metadata = {hr:{zones:s.zones,channels:s.channels,locale,dimensions:Object.fromEntries(s.questions.map((q,i)=>[`q${i+1}`,q.dim||'']))}};
+  const metadata = {hr:{departmentCodes:departments,zones:s.zones||[],channels:s.channels,locale,dimensions:Object.fromEntries(s.questions.map((q,i)=>[`q${i+1}`,q.dim||'']))}};
   const seconds = Math.max(30,Math.min(300,s.questions.reduce((n,q)=>n+(Number.isFinite(q.secs)?q.secs:10),0)));
   let c;
   if (editId) {
@@ -87,7 +93,6 @@ export async function createSurvey(db, s, approved, editId) {
       values($1,$2,$3,$4,$5,$6,$7) returning id`,[v.id,`q${i+1}`,i+1,type,q.required??q.type!=='text',type==='scale'?(q.type==='faces'?1:q.min??0):null,type==='scale'?(q.type==='faces'?5:q.max??10):null])).rows[0];
     await db.query('insert into public.question_translations(question_id,locale,prompt,help_text,options) values($1,$2,$3,$4,$5::jsonb)',[row.id,locale,q.text,q.help||null,JSON.stringify(q.type==='yesno'?['Sí','No','No ho sé']:q.options||[])]);
   }
-  const departments=[...new Set(s.zones.flatMap(z=>zones[z]))];
   await db.query(`insert into public.audience_assignments(campaign_id,synthetic_person_id,channel,locale)
     select $1,p.id,'web',$2 from public.synthetic_people p join public.departments d on d.id=p.department_id where d.code=any($3::text[])`,[c.id,locale,departments]);
   await db.query('update public.campaigns set target_population=(select count(*) from public.audience_assignments where campaign_id=$1) where id=$1',[c.id]);

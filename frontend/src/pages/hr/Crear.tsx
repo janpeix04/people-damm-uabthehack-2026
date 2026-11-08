@@ -3,9 +3,10 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowDown, ArrowUp, Clock, Info, Pencil, RefreshCw, Sparkles, Trash2 } from 'lucide-react'
 import { CHANNELS, MIN_SAMPLE, SURVEY_ZONES } from '../../data/mock'
 import type { ChannelKey, Question, Survey, ZoneKey } from '../../data/types'
-import { DEPARTAMENTS, generateSurvey, toQuestion, type N8nSurvey } from '../../api/n8n'
+import { generateSurvey, toQuestion, type N8nSurvey } from '../../api/n8n'
 import { useApp } from '../../store/AppContext'
 import { cn, PathIcon, PrivacyNote } from '../../components/ui'
+import {useDepartments} from '../../api/departments'
 import { SurveyRunner } from '../../components/SurveyRunner'
 
 const STEPS = ['Objectiu', 'Preguntes', 'Públic i canals', 'Revisió i publicació']
@@ -223,6 +224,8 @@ export default function Crear() {
   const [goal, setGoal] = useState('')
   const [durationMinutes, setDurationMinutes] = useState<number | ''>(2)
   const [lang, setLang] = useState<LangKey>('CASTELLANO')
+  const {departments:departmentCatalog,loading:departmentsLoading,error:departmentsError}=useDepartments()
+  const departmentNames=departmentCatalog.map(d=>d.name)
   const [departments, setDepartments] = useState<string[]>([])
 
   const [loading, setLoading] = useState(false)
@@ -239,16 +242,17 @@ export default function Crear() {
   const [closes, setCloses] = useState(plusDays(14))
   const [approved, setApproved] = useState(false)
   useEffect(() => {
-    if (!editId || loadedId === editId) return
+    if (!editId || loadedId === editId || departmentsLoading || departmentsError) return
     const saved = hrSurveys.find(s => s.id === editId)
     if (!saved || saved.status !== 'draft') return
+    setDepartments(departmentCatalog.filter(d=>saved.departmentCodes?.includes(d.code)||(!saved.departmentCodes&&getZonesForDepartments([d.name]).some(z=>saved.zones.includes(z)))).map(d=>d.name))
     setTitle(saved.title); setGoal(saved.goal); setZones(saved.zones); setChannels(saved.channels)
     setOpens((saved.opensAt || today()).slice(0, 10)); setCloses((saved.closesAt || plusDays(14)).slice(0, 10))
     setLang(saved.locale === 'en' ? 'ENGLISH' : saved.locale === 'es' ? 'CASTELLANO' : 'CATALÀ')
     setPool(saved.questions); setSel(saved.questions.map(q => q.id))
     setDraft({ id: 'manual', survey: { titulo: saved.title, preguntas: [], introduccion_transparencia: saved.intro }, warnings: [] })
     setLoadedId(editId); setStep(1)
-  }, [editId, loadedId, hrSurveys])
+  }, [editId, loadedId, hrSurveys, departmentCatalog, departmentsLoading, departmentsError])
 
   const currentLangObj = LANG_OPTIONS.find(l => l.key === lang) ?? LANG_OPTIONS[0]
   const collectiveStr = departments.length > 0 ? departments.join(', ') : 'Departaments de Damm'
@@ -258,7 +262,7 @@ export default function Crear() {
   const chosen = sel.map(id => byId[id]).filter(Boolean)
   const secs = chosen.reduce((a, q) => a + q.secs, 0)
   const valid = chosen.length >= 3
-  const people = SURVEY_ZONES.filter(z => zones.includes(z.key)).reduce((a, z) => a + z.headcount, 0)
+  const people = departmentCatalog.filter(d=>departments.includes(d.name)).reduce((n,d)=>n+d.headcount,0)
 
   // Sincronitza públic i canals derivats dels departaments de la Fase 1
   const syncPublicAndChannelsWithDepartments = (newDeps: string[]) => {
@@ -275,7 +279,7 @@ export default function Crear() {
   }
 
   const toggleAllDepartments = () => {
-    const next = departments.length === DEPARTAMENTS.length ? [] : [...DEPARTAMENTS]
+    const next = departments.length === departmentNames.length ? [] : [...departmentNames]
     setDepartments(next)
     syncPublicAndChannelsWithDepartments(next)
   }
@@ -364,7 +368,7 @@ export default function Crear() {
 
   /** Acceptar Fase 3 (Públic i canals) */
   const acceptPhase3 = () => {
-    if (zones.length === 0 || channels.length === 0) return
+    if (departments.length === 0 || channels.length === 0) return
     setAcceptedSteps(prev => Array.from(new Set([...prev, 2])))
     setMaxAcceptedStep(prev => Math.max(prev, 3))
     setStep(3)
@@ -448,6 +452,7 @@ export default function Crear() {
         goal,
         status: asDraft ? 'draft' : opens <= today() ? 'open' : 'scheduled',
         zones,
+        departmentCodes:departmentCatalog.filter(d=>departments.includes(d.name)).map(d=>d.code),
         questions: chosen,
         channels,
         opensAt: opens,
@@ -621,13 +626,16 @@ export default function Crear() {
                   <button
                     type="button"
                     onClick={toggleAllDepartments}
+                    disabled={departmentsLoading||!!departmentsError}
                     className="text-xs font-bold text-red-dk hover:underline"
                   >
-                    {departments.length === DEPARTAMENTS.length ? 'Deseleccionar tots' : 'Seleccionar tots els departaments'}
+                    {departments.length === departmentNames.length ? 'Deseleccionar tots' : 'Seleccionar tots els departaments'}
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {DEPARTAMENTS.map(d => {
+                  {departmentsLoading&&<p role="status" className="text-sm">Carregant departaments…</p>}
+                  {departmentsError&&<p role="alert" className="text-sm text-red">{departmentsError}</p>}
+                  {departmentNames.map(d => {
                     const on = departments.includes(d)
                     return (
                       <button
@@ -978,7 +986,7 @@ export default function Crear() {
                 <button
                   type="button"
                   className="btn-ink !h-11 px-6 font-bold"
-                  disabled={zones.length === 0 || channels.length === 0}
+                  disabled={departments.length === 0 || channels.length === 0}
                   onClick={acceptPhase3}
                 >
                   Acceptar i continuar · Revisió →
@@ -1250,7 +1258,7 @@ export default function Crear() {
                 <button
                   type="button"
                   className="btn-ink flex-1 !font-bold"
-                  disabled={zones.length === 0 || channels.length === 0}
+                  disabled={departments.length === 0 || channels.length === 0}
                   onClick={acceptPhase3}
                 >
                   Continuar · Revisió →

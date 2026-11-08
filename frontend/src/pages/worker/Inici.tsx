@@ -107,7 +107,7 @@ export default function WorkerInici() {
             <div className="flex flex-col gap-1.5">
               {ideas.slice(0, 3).map(idea => (
                 <div key={idea.id} className="flex justify-between items-center gap-3 rounded-[12px] px-3 py-2 text-sm bg-cream">
-                  <p className="min-w-0 line-clamp-2 break-words">{idea.text}</p><span className="shrink-0 text-xs text-ink-muted">{idea.likes||0} +1</span>
+                  <p className="min-w-0 line-clamp-2 break-words">{idea.text}</p><span className="shrink-0 text-xs text-ink-muted">{idea.likes||0} {idea.likes===1?'vot':'vots'}</span>
                 </div>
               ))}
             </div>

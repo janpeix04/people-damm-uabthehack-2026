@@ -50,6 +50,7 @@ export type SurveyStatus = 'draft' | 'scheduled' | 'open' | 'closed'
 export type ChannelKey = 'qr' | 'app' | 'teams' | 'email' | 'placa' | 'world' | 'whatsapp' | 'telegram' | 'tablet'
 
 export interface Survey {
+  departmentCodes?: string[]
   id: string
   title: string
   goal: string

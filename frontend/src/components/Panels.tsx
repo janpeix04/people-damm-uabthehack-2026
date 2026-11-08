@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Check, Mail } from 'lucide-react'
 import { HAIR_STYLES, HAIRS, IDEA_CATEGORIES, SHIRTS, SKINS, MOODS, zoneByKey } from '../data/mock'
 import type { Avatar, ZoneKey } from '../data/types'
-import { DAMM_BEERS, type Beer } from '../data/beers'
+import { DAMM_BEERS, beerImg, type Beer } from '../data/beers'
 import { useApp } from '../store/AppContext'
 import { cn, fmt, Meter, Modal, PrivacyNote, toneBg, MoodBadge } from './ui'
 
@@ -181,7 +181,7 @@ export function TopicsModal({ open, onClose }: { open: boolean; onClose: () => v
         {ideas.map(t => (
           <div key={t.id} className="flex items-center gap-3 rounded-[14px] p-3 bg-cream">
             <div className="flex-1 min-w-0"><small className="text-ink-muted">{t.category}</small><p className="break-words">{t.text}</p></div>
-            <strong className="shrink-0">{t.likes||0} +1</strong>
+            <strong className="shrink-0">{t.likes||0} {t.likes===1?'vot':'vots'}</strong>
           </div>
         ))}
         <p className="text-xs text-ink-muted mt-1">Opinions publicades després de moderació, sense mostrar-ne l’autor.</p>
@@ -238,24 +238,28 @@ export function AvatarModal({ open, onClose }: { open: boolean; onClose: () => v
   )
 }
 
-/** Carta de la barra de La Plaça: totes les cerveses pròpies de Damm (noms en tipografia genèrica, sense logotips). */
+/** Carta de la barra de La Plaça: les cerveses de Damm amb la foto de cada ampolla. */
 export function BeerMenuModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const taps = DAMM_BEERS.filter(b => b.tap), bottles = DAMM_BEERS.filter(b => !b.tap)
-  const row = (b: Beer) => (
-    <li key={b.key} className="flex items-center gap-3 py-2 border-b border-line last:border-0">
-      <span className="w-9 h-9 shrink-0 rounded-full grid place-items-center text-[11px] font-extrabold ring-2 ring-white shadow" style={{ background: b.label, color: b.ink }} aria-hidden>
-        {b.name.replace(/[^A-Za-zÀ-ÿ ]/g, '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+  const card = (b: Beer) => (
+    <li key={b.key} className="flex gap-3 items-center rounded-[16px] border border-line bg-white p-2.5 pr-3">
+      <span className="w-[64px] h-[104px] shrink-0 rounded-[12px] grid place-items-center overflow-hidden" style={{ background: `linear-gradient(180deg, #FFFFFF 0%, ${b.label}22 100%)` }}>
+        <img src={beerImg(b)} alt="" loading="lazy" className="h-[96px] w-auto object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,.18)]" />
       </span>
-      <span className="min-w-0"><strong className="block text-[15px] leading-tight">{b.name}</strong><span className="text-xs text-ink-muted">{b.style} · {b.desc}</span></span>
+      <span className="min-w-0">
+        <strong className="block text-[15px] leading-tight">{b.name}</strong>
+        <span className="inline-block mt-1 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: b.label, color: b.ink }}>{b.style}</span>
+        <span className="block mt-1 text-xs leading-snug text-ink-muted">{b.desc}</span>
+      </span>
     </li>
   )
   return (
-    <Modal open={open} onClose={onClose} title="La Barra · cerveses Damm">
-      <p className="text-sm text-ink-muted -mt-1">Totes les cerveses pròpies del grup Damm. Tria-la, però amb moderació.</p>
-      <h3 className="eyebrow mt-3">De barril</h3>
-      <ul>{taps.map(row)}</ul>
-      <h3 className="eyebrow mt-3">En ampolla</h3>
-      <ul>{bottles.map(row)}</ul>
+    <Modal open={open} onClose={onClose} title="La Barra · cerveses Damm" wide>
+      <p className="text-sm text-ink-muted -mt-1">Les cerveses de la casa. Si en beus, amb moderació.</p>
+      <h3 className="eyebrow mt-4 mb-2">De barril</h3>
+      <ul className="grid sm:grid-cols-2 gap-2">{taps.map(card)}</ul>
+      <h3 className="eyebrow mt-4 mb-2">En ampolla</h3>
+      <ul className="grid sm:grid-cols-2 gap-2">{bottles.map(card)}</ul>
     </Modal>
   )
 }
