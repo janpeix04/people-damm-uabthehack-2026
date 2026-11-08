@@ -4,6 +4,7 @@ import { cn, Logo } from './ui'
 import { useApp } from '../store/AppContext'
 import { SessionButton } from '../store/AuthContext'
 import UserSite from './UserSite'
+import DailyMood from './DailyMood'
 
 const TABS: { to: string; label: string; Icon: typeof Home }[] = [
   { to: '/app', label: 'Inici', Icon: Home },
@@ -51,6 +52,7 @@ export default function WorkerLayout() {
       </header>
       <div className="shrink-0 border-b border-line bg-paper px-4 md:px-6 py-2"><div className="max-w-6xl mx-auto"><UserSite /></div></div>
 
+      <div className="shrink-0"><DailyMood /></div>
       <main className={cn('flex-1 min-h-0', fullBleed ? 'overflow-hidden pb-[calc(76px+env(safe-area-inset-bottom,0px))] md:pb-0' : 'pb-[96px] md:pb-0')}>
         <div key={location.pathname} className="page-enter h-full"><Outlet /></div>
       </main>

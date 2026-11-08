@@ -1,50 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Check, Mail } from 'lucide-react'
-import { HAIR_STYLES, HAIRS, IDEA_CATEGORIES, PLAZA_MILESTONES, PLAZA_TOPICS, SHIRTS, SKINS, MOODS, zoneByKey } from '../data/mock'
+import { HAIR_STYLES, HAIRS, IDEA_CATEGORIES, SHIRTS, SKINS, MOODS, zoneByKey } from '../data/mock'
 import type { Avatar, ZoneKey } from '../data/types'
 import { useApp } from '../store/AppContext'
 import { cn, fmt, Meter, Modal, PrivacyNote, toneBg, MoodBadge } from './ui'
-
-/** Fites col·lectives de la Festa de la setmana (participació a La Plaça). */
-export function FestaMilestones() {
-  const { plazaWeek } = useApp()
-  const next = PLAZA_MILESTONES.find(m => plazaWeek.pct < m.at)
-  return (
-    <div className="grid grid-cols-4 gap-1.5 mt-3">
-      {PLAZA_MILESTONES.map(m => {
-        const done = plazaWeek.pct >= m.at, isNext = m === next
-        return (
-          <div key={m.label} className={cn('flex flex-col items-center gap-1 text-center text-[11px] font-semibold', done || isNext ? 'text-ink' : 'text-ink-muted')}>
-            <span className={cn('w-[30px] h-[30px] rounded-full grid place-items-center', done ? 'bg-ok text-white' : isNext ? 'bg-gold text-white ring-4 ring-gold/20' : 'bg-[#EFE9E1] text-[#8A7F78]')}>{done ? '✓' : m.mark}</span>
-            {m.label}<br />{m.at}%
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-/** Festa de la setmana: participació única a La Plaça (es reinicia cada dilluns). */
-export function FestaWeekPanel({ hr, className }: { hr?: boolean; className?: string }) {
-  const { plazaWeek: w } = useApp()
-  const missing = w.next ? (w.next.missing === 1 ? 'Falta 1 persona' : `Falten ${w.next.missing} persones`) : null
-  return (
-    <section aria-label="Festa de la setmana" className={cn('bg-paper/95 border border-line rounded-[18px] shadow-lift px-4 py-3', className)}>
-      <div className="flex justify-between items-baseline gap-2"><h2 className="serif text-[19px] sm:text-[21px]">Festa de la setmana</h2><strong className="text-sm tabular-nums">{Math.floor(w.pct)}%</strong></div>
-      <Meter value={w.pct} goal={w.goal} className="mt-2" />
-      <p className="text-[12px] text-ink-muted mt-1.5">
-        {missing ? <>{missing} per a <strong className="text-ink">{w.next!.label.toLowerCase()}</strong></> : 'Totes les fites aconseguides!'} · es reinicia {w.resetsIn === 1 ? 'demà' : 'dilluns'}
-      </p>
-      <div className="hidden sm:block"><FestaMilestones /></div>
-      <p className="hidden sm:block text-[11px] leading-snug text-ink-muted mt-2.5 pt-2 border-t border-cream-dk">
-        {hr
-          ? <>{w.participants} de {w.headcount} persones han participat a La Plaça aquesta setmana · la setmana passada, {w.lastWeek}%.</>
-          : <>Compta cada persona un cop per setmana: pregunta del dia, +1 o idea. {w.joined && <strong className="text-ok">✓ Ja hi has sumat.</strong>}</>}
-      </p>
-    </section>
-  )
-}
 
 /** Pregunta del dia: un toc per respondre; el resultat agregat només es veu un cop respost (i amb un mínim de respostes). */
 export function DailyQuestion({ hr, className }: { hr?: boolean; className?: string }) {
@@ -210,16 +170,20 @@ export function IdeaModal({ open, onClose }: { open: boolean; onClose: () => voi
 }
 
 export function TopicsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const {ideas,plazaLoading,plazaError}=useApp()
   return (
     <Modal open={open} onClose={onClose} title="Temes de la setmana">
       <div className="flex flex-col gap-2">
-        {PLAZA_TOPICS.map(t => (
-          <div key={t.label} className="flex items-center gap-3 rounded-[14px] p-3" style={{ background: toneBg(t.tone) }}>
-            <div className="flex-1"><strong className="block">{t.label}</strong><small className="text-ink-muted">{t.n} opinions · {t.trend}</small></div>
-            <span className="w-28 h-2 rounded-full bg-white overflow-hidden"><span className="block h-full bg-ink" style={{ width: `${(t.n / 64) * 100}%` }} /></span>
+        {plazaLoading&&<p role="status">Carregant opinions…</p>}
+        {plazaError&&<p role="alert">{plazaError}</p>}
+        {!plazaLoading&&!plazaError&&!ideas.length&&<p>Encara no hi ha opinions publicades. Pots enviar una idea a la bústia.</p>}
+        {ideas.map(t => (
+          <div key={t.id} className="flex items-center gap-3 rounded-[14px] p-3 bg-cream">
+            <div className="flex-1 min-w-0"><small className="text-ink-muted">{t.category}</small><p className="break-words">{t.text}</p></div>
+            <strong className="shrink-0">{t.likes||0} +1</strong>
           </div>
         ))}
-        <p className="text-xs text-ink-muted mt-1">Opinions agrupades i moderades. Mai es mostren comentaris individuals.</p>
+        <p className="text-xs text-ink-muted mt-1">Opinions publicades després de moderació, sense mostrar-ne l’autor.</p>
       </div>
     </Modal>
   )

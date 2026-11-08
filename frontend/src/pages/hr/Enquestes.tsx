@@ -56,7 +56,7 @@ export default function Enquestes() {
                   </div>
                   <div className="text-right"><div className="serif text-[30px] leading-none tabular-nums">{pct}%</div><div className="text-xs text-ink-muted">{s.responses} de {s.target}</div></div>
                 </div>
-                <Meter value={pct} goal={60} />
+                <Meter value={pct} />
                 {s.status !== 'scheduled' && s.source !== 'db' && (
                   <div className="flex flex-wrap gap-1.5">
                     {s.zones.map(k => {

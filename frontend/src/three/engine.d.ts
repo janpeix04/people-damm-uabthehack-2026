@@ -37,9 +37,9 @@ export interface MountOptions {
   /** Plaça: % de participació setmanal (activa garlandes, bancs, concert i focs). Per defecte, 100. */
   festa?: number
   /** Plaça: índexs de les bafarades on aquesta persona ja ha fet +1 aquesta setmana. */
-  reacted?: number[]
+  topics?: {id:string;text:string;likes?:number;reacted?:boolean}[]
   /** Plaça: s'ha fet (o desfet) +1 en una bafarada. */
-  onReact?: (index: number, on: boolean) => void
+  onReact?: (id: string, on: boolean) => Promise<void>
   /** Plaça: vista de només lectura (RRHH), sense botons de +1. */
   readOnly?: boolean
 }
@@ -49,6 +49,7 @@ export interface SceneHandle {
   setFesta(pct: number): void
   /** Damm World: refà els fars i les etiquetes amb dades noves. */
   setZones(zones: ZonePin[]): void
+  setTopics(topics: NonNullable<MountOptions['topics']>): void
   setAvatar(a: AvatarColors): void
   select(zone: string): void
   dispose(): void

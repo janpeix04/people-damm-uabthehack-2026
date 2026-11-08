@@ -21,6 +21,7 @@ test('Department consolidation preserves people, responses, historical analytics
   const s=await createSurvey(db,{title:'Fàbrica',goal:'Benestar',status:'draft',zones:['envasat','malta'],channels:['app'],opensAt:'2026-01-01',closesAt:'2099-01-01',questions:Array.from({length:3},(_,i)=>({text:`Pregunta ${i}`,type:'scale'}))},false);
   const factory=(await db.query("select count(*)::int n from synthetic_people p join departments d on d.id=p.department_id where d.code='fabrica'")).rows[0].n;
   assert.equal(s.target,factory);
+  await db.exec(fs.readFileSync('supabase/migrations/20261108190000_daily_mood.sql','utf8'));
   const overview=await departmentOverview(db);
   assert.deepEqual(overview.map(d=>d.code),['fabrica','logistica','comercial','oficina']);
   assert.equal(overview.reduce((n,d)=>n+d.headcount,0),727);

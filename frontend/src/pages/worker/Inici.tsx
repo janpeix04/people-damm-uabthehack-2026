@@ -1,14 +1,13 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight, Check, ClipboardCheck, Gift, Lock, MessageCircle, Sparkles } from 'lucide-react'
-import { PLAZA_TOPICS } from '../../data/mock'
 import { POINTS_PER_SURVEY, useApp } from '../../store/AppContext'
-import { FestaCard, toneBg } from '../../components/ui'
+import { PlazaCard } from '../../components/ui'
 import { RewardsCatalog } from '../../components/Rewards'
 import { SurveyCard } from './Enquestes'
 
 /** Inici de l’app del treballador. */
 export default function WorkerInici() {
-  const { pending, points, backend } = useApp()
+  const { pending, points, backend, ideas } = useApp()
   const next = pending[0]
 
   return (
@@ -89,7 +88,7 @@ export default function WorkerInici() {
         </div>
         <div className="flex flex-col gap-3">
           <h2 className="serif text-[26px] md:text-[30px]">Entre tots</h2>
-          <FestaCard />
+          <PlazaCard />
         </div>
       </section>
 
@@ -102,11 +101,11 @@ export default function WorkerInici() {
         <Link to="/app/placa" className="card overflow-hidden grid md:grid-cols-[1.1fr_1fr] hover:shadow-card transition">
           <svg viewBox="0 0 170 92" className="w-full h-full block min-h-[160px]" preserveAspectRatio="xMidYMid slice" aria-hidden><rect width="170" height="92" fill="#CFE6F4" /><rect y="56" width="170" height="36" fill="#EBD8BA" /><rect x="6" y="26" width="34" height="32" fill="#F3E7D2" /><path d="M3 26 L23 14 L43 26z" fill="#C2512F" /><rect x="42" y="18" width="30" height="40" fill="#FFFFFF" /><rect x="74" y="28" width="40" height="30" fill="#E2B98F" /><path d="M71 28 L94 15 L117 28z" fill="#B5462B" /><rect x="116" y="22" width="48" height="36" fill="#F2E6D2" /><rect x="116" y="44" width="48" height="5" fill="#C8102E" /><ellipse cx="85" cy="74" rx="20" ry="6" fill="#DCD3C6" /><ellipse cx="85" cy="72" rx="16" ry="4" fill="#7FC6E0" /><circle cx="40" cy="70" r="4" fill="#EFC3A1" /><rect x="37" y="74" width="6" height="8" rx="3" fill="#C8102E" /><circle cx="130" cy="72" r="4" fill="#B57A52" /><rect x="127" y="76" width="6" height="8" rx="3" fill="#1E2A44" /></svg>
           <div className="p-4 md:p-6 flex flex-col gap-3">
-            <p className="text-[15px] leading-snug"><strong>{PLAZA_TOPICS[0].n} persones</strong> parlen de {PLAZA_TOPICS[0].label.toLowerCase()} aquesta setmana.</p>
+            <p className="text-[15px] leading-snug">Comparteix una idea i descobreix les opinions publicades a La Plaça.</p>
             <div className="flex flex-col gap-1.5">
-              {PLAZA_TOPICS.slice(0, 3).map(t => (
-                <div key={t.label} className="flex justify-between items-center rounded-[12px] px-3 py-2 text-sm" style={{ background: toneBg(t.tone) }}>
-                  <strong>{t.label}</strong><span className="text-xs text-ink-muted">{t.n} opinions · {t.trend}</span>
+              {ideas.slice(0, 3).map(t => (
+                <div key={t.id} className="flex justify-between items-center gap-3 rounded-[12px] px-3 py-2 text-sm bg-cream">
+                  <p className="min-w-0 line-clamp-2 break-words">{t.text}</p><span className="shrink-0 text-xs text-ink-muted">{t.likes||0} +1</span>
                 </div>
               ))}
             </div>

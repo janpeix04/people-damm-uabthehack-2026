@@ -3,7 +3,7 @@ import { Search, Sparkles } from 'lucide-react'
 import { AI_RECS, channelLabel, MOODS, zoneByKey } from '../../data/mock'
 import {useDepartments} from '../../api/departments'
 import { useApp } from '../../store/AppContext'
-import { FestaCard, fmt, Meter, PathIcon, MoodBadge } from '../../components/ui'
+import { PlazaCard, fmt, Meter, PathIcon, MoodBadge } from '../../components/ui'
 
 export default function HRInici() {
   const {departments,loading,error}=useDepartments()
@@ -32,9 +32,9 @@ export default function HRInici() {
       <section className="flex flex-wrap gap-5 items-stretch">
         <div className="flex-[999_1_460px] min-w-0 flex flex-col justify-center gap-2">
           <h1 className="serif text-[34px] sm:text-[40px] leading-[1.05]">Bon dia, equip de Persones</h1>
-          <p className="text-base leading-relaxed text-ink-muted max-w-[620px]">Consulta el clima i la participació dels quatre departaments: Fàbrica, Logística, Comercial i Oficina.</p>
+          <p className="text-base leading-relaxed text-ink-muted max-w-[620px]">Consulta el clima i la participació de Fàbrica, Logística, Comercial, Oficina i Altres (sense especificar departament).</p>
         </div>
-        <div className="flex-[1_1_340px] min-w-0"><FestaCard /></div>
+        <div className="flex-[1_1_340px] min-w-0"><PlazaCard /></div>
       </section>
 
       <section aria-label="Indicadors" className="grid gap-3.5 grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
@@ -105,7 +105,7 @@ export default function HRInici() {
                     <td className="py-3 px-2 font-bold"><Link to={`/rrhh/enquestes/${s.id}`} className="hover:text-red-dk">{s.title}</Link></td>
                     <td className="py-3 px-2 text-ink-muted">{s.zones.length >= 8 ? 'Tota la planta' : s.zones.map(k => zoneByKey(k).name).join(', ')}</td>
                     <td className="py-3 px-2"><span className="flex flex-wrap gap-1">{s.channels.map(c => <span key={c} className="text-[11px] font-bold bg-cream rounded-md px-1.5 py-0.5">{channelLabel(c).split(' ')[0]}</span>)}</span></td>
-                    <td className="py-3 px-2"><div className="flex items-center gap-2"><Meter value={pct} goal={60} thin className="flex-1" /><span className="text-xs font-bold tabular-nums">{pct}%</span></div></td>
+                    <td className="py-3 px-2"><div className="flex items-center gap-2"><Meter value={pct} thin className="flex-1" /><span className="text-xs font-bold tabular-nums">{pct}%</span></div></td>
                     <td className="py-3 px-2 text-ink-muted">{new Date(s.closesAt).toLocaleDateString('ca-ES', { day: 'numeric', month: 'short' })}</td>
                   </tr>
                 )

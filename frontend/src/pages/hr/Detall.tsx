@@ -70,7 +70,7 @@ export default function Detall() {
           <p className="text-xs text-ink-muted">Tots els canals porten aquí. Accés amb el compte de treballador, sense instal·lar res.</p>
           <div>
             <div className="flex justify-between items-baseline mb-1.5"><span className="eyebrow">Participació</span><strong className="tabular-nums">{pct}% · {s.responses} de {s.target}</strong></div>
-            <Meter value={pct} goal={60} />
+            <Meter value={pct} />
           </div>
           <div className="flex flex-wrap gap-1.5">
             {s.zones.map(k => { const z = zoneByKey(k); return <span key={k} className="chip bg-cream text-ink-soft">{z.name}</span> })}

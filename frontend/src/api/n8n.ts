@@ -9,7 +9,7 @@ import type { Question, ZoneKey } from '../data/types'
 const BASE = '/api/hr/automation'
 const TIMEOUT_MS = 60_000
 
-export const DEPARTAMENTS = ['Fàbrica', 'Logística', 'Comercial', 'Oficina'] as const
+export const DEPARTAMENTS = ['Fàbrica', 'Logística', 'Comercial', 'Oficina', 'Altres'] as const
 export type Departament = (typeof DEPARTAMENTS)[number]
 export const COLECTIUS = DEPARTAMENTS
 export type Colectiu = Departament

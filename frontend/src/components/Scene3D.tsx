@@ -47,7 +47,7 @@ export const Scene3D = forwardRef<SceneHandle | null, Props>(function Scene3D({ 
           avatar: avatar ? avatarColors(avatar) : undefined,
           onAction: a => optsRef.current.onAction?.(a),
           onZone: z => optsRef.current.onZone?.(z),
-          onReact: (i, on) => optsRef.current.onReact?.(i, on),
+          onReact: async (i, on) => { await optsRef.current.onReact?.(i, on) },
         })
         setState('ready')
       }, 30)
@@ -61,6 +61,8 @@ export const Scene3D = forwardRef<SceneHandle | null, Props>(function Scene3D({ 
   // la Festa de la setmana es reflecteix a l'escena en directe (garlandes, bancs, concert, focs)
   useEffect(() => { if (handle.current && opts.festa != null) handle.current.setFesta(opts.festa) }, [opts.festa, state])
   useEffect(() => { if (state==='ready' && opts.initialZone) handle.current?.select(opts.initialZone) }, [opts.initialZone,state])
+  const topicsKey = JSON.stringify(opts.topics ?? [])
+  useEffect(() => { if (state === 'ready' && kind === 'plaza') handle.current?.setTopics(opts.topics ?? []) }, [topicsKey, state, kind]) // eslint-disable-line react-hooks/exhaustive-deps
   // Damm World: quan canvien les dades (p. ex. RRHH canvia de centre) es refan els fars i les etiquetes sense remuntar l'escena
   const zonesKey = JSON.stringify(opts.zones ?? null)
   useEffect(() => { if (state === 'ready' && opts.zones) handle.current?.setZones(opts.zones) }, [zonesKey, state]) // eslint-disable-line react-hooks/exhaustive-deps

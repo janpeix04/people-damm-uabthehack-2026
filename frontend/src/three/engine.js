@@ -906,7 +906,12 @@ function buildPlaza(){
   var fw = new THREE.Points(fwG, new THREE.PointsMaterial({ size: .95, map: T.glow, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
   fw.frustumCulled = false; fw.visible = false; S.add(fw);
   var FWC = [new THREE.Color('#FFD45C'), new THREE.Color('#FF4D5E'), new THREE.Color('#FFFFFF'), new THREE.Color('#7FD3FF')];
-  var fwNext = 0, fwIdx = 0, fwOn = false, concertOn = false, openK = 0;
+  var fwOn = false, concertOn = false, openK = 0;
+  function fireworks(){
+    if (RM) return;
+    for (var b = 0; b < FW_B; b++) launch(b);
+    fwOn = true; fw.visible = true;
+  }
   function launch(b){
     var cx = (Math.random() - .5) * 18, cy = 11 + Math.random() * 4, cz = -9 + Math.random() * 6, c = FWC[Math.floor(Math.random() * FWC.length)];
     fwBase[b] = c; fwLife[b] = 1.8;
@@ -925,7 +930,6 @@ function buildPlaza(){
       notes.forEach(function(n){ var L = (t * .3 + n.ph) % 1; n.s.position.set(n.x + Math.sin(L * 6 + n.ph * 9) * .4, 2.6 + L * 5, -12.6); n.s.material.opacity = Math.sin(L * Math.PI); });
     }
     if (!fwOn) return;
-    if (t > fwNext) { launch(fwIdx); fwIdx = (fwIdx + 1) % FW_B; fwNext = t + .7 + Math.random() * .9; }
     for (var b = 0; b < FW_B; b++) {
       if (fwLife[b] <= 0) continue;
       fwLife[b] -= dt; var L = Math.max(0, fwLife[b] / 1.8), col = fwBase[b];
@@ -938,12 +942,12 @@ function buildPlaza(){
       }
     }
     fwG.attributes.position.needsUpdate = true; fwG.attributes.color.needsUpdate = true;
+    if (!fwLife.some(function(life){ return life > 0; })) { fwOn = false; fw.visible = false; }
   });
   function setFesta(p){
-    garland.visible = p >= 25;
-    newBenches.visible = p >= 40;
-    concertOn = p >= 60; band.visible = concertOn;
-    fwOn = p >= 75 && !RM; fw.visible = fwOn;
+    garland.visible = true;
+    newBenches.visible = true;
+    concertOn = true; band.visible = concertOn;
     if (RM) openK = concertOn ? 1 : 0;
   }
 
@@ -1013,7 +1017,7 @@ function buildPlaza(){
 
   // a la vista de RRHH no hi ha "tu": s'amaga el personatge i l'anella
   function showMe(on){ ring.visible = on; if (me.obj) me.obj.visible = on; }
-  return { scene: S, anims: anims, pickables: pickables, rebuildMe: rebuildMe, burst: burst, showMe: showMe, walkTo: walkTo, setFesta: setFesta,
+  return { scene: S, anims: anims, pickables: pickables, rebuildMe: rebuildMe, burst: burst, fireworks: fireworks, showMe: showMe, walkTo: walkTo, setFesta: setFesta,
     // la càmera segueix el personatge mentre camina
     follow: function(){ return me.obj && me.obj.visible && me.obj.userData.go ? me.obj.position : null; },
     me: function(){ return me.obj && me.obj.visible ? me.obj.position : null; },
@@ -1021,13 +1025,7 @@ function buildPlaza(){
     view: { pos: V(0, 16, 32), target: V(0, 5, -2), min: 5, max: 36, polar: 1.4, bounds: [-11, 11, -9, 9], azim: .62,
       // la càmera no pot entrar dins dels edificis laterals ni del fons
       keepIn: function(p){ var mx = 15 + Math.max(0, p.z - 13) * 1.1; p.x = Math.min(Math.max(p.x, -mx), mx); if (p.z < -9) p.z = -9; if (p.y < 1.2) p.y = 1.2; } },
-    bubbles: [
-      ['Aquesta setmana es parla molt dels descansos', 64, V(-10.5, 2.35, 4.5)],
-      ['Hi ha idees per millorar la comunicació', 42, V(-5, 2.35, -7.6)],
-      ['Diversos equips destaquen el bon ambient', 51, V(3.6, 2.35, 6)],
-      ['La nova sala de descans s’ha rebut molt bé', 33, V(12, 3.75, -9.1)],
-      ['Es demana conèixer els torns amb més antelació', 39, V(11, 2.35, 4.8)]
-    ],
+    bubbleAnchors: [V(-10.5, 2.35, 4.5), V(-5, 2.35, -7.6), V(3.6, 2.35, 6), V(12, 3.75, -9.1), V(11, 2.35, 4.8)],
     anchors: { kiosk: V(-13, 5.2, -4.5), idea: V(15, 2.9, -2.5), stage: V(0, 5.6, -12.2), me: meAnchor } };
 }
 
@@ -1166,9 +1164,8 @@ function buildWorld(){
   var B_MAST = new THREE.CylinderGeometry(.16, .22, 4.2, 10), B_BASE = new THREE.CylinderGeometry(.9, 1.1, .5, 18);
   var B_LAMP = new THREE.SphereGeometry(1.05, 24, 16), B_CAGE = new THREE.TorusGeometry(1.12, .08, 6, 24), B_CAP = new THREE.ConeGeometry(.75, .55, 18);
   var B_GLASS = new THREE.CylinderGeometry(.95, .78, 6, 24, 1, true), B_BEER = new THREE.CylinderGeometry(.86, .7, 1, 24), B_FOAM = new THREE.CylinderGeometry(.9, .9, .4, 24);
-  var B_TICK = new THREE.TorusGeometry(.97, .06, 6, 28);
   var METAL = std('#3A3D42', .45, .6), GLASS_M = new THREE.MeshStandardMaterial({ color: '#E8F2F6', transparent: true, opacity: .16, roughness: .08, depthWrite: false, side: THREE.DoubleSide });
-  var BEER_W = std('#8E3E02', .3, 0, { emissive: '#2A1000', emissiveIntensity: .5 }), FOAM_W = std('#FFF8EA', .9), TICK_M = std('#C8102E', .5);
+  var BEER_W = std('#8E3E02', .3, 0, { emissive: '#2A1000', emissiveIntensity: .5 }), FOAM_W = std('#FFF8EA', .9);
   var beacons = {};
   function beacon(key, x, y, z){
     var g = new THREE.Group(); g.position.set(x, y, z); g.scale.setScalar(1.7); g.userData.keep = true; S.add(g);
@@ -1181,13 +1178,12 @@ function buildWorld(){
     mesh(B_CAP, METAL, 0, 6.65, 0, g, false);
     var glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.soft, color: '#FFFFFF', transparent: true, opacity: .7, depthWrite: false, fog: false }));
     glow.position.y = 5.4; glow.scale.set(7, 7, 1); g.add(glow);
-    // got de participació: s'omple de cervesa; la marca vermella és l'objectiu del 60 %
+    // got de participació: s'omple segons el percentatge real, sense marca d'objectiu.
     var cup = new THREE.Group(); cup.position.set(2.6, .25, 0); g.add(cup);
     mesh(B_BASE, METAL, 0, 0, 0, cup).scale.set(1, .4, 1);
     var beer = mesh(B_BEER, BEER_W, 0, .5, 0, cup, false);
     var foam = mesh(B_FOAM, FOAM_W, 0, 1, 0, cup, false);
     mesh(B_GLASS, GLASS_M, 0, 3.1, 0, cup, false, false);
-    mesh(B_TICK, TICK_M, 0, .1 + 6 * .6, 0, cup, false).rotation.x = Math.PI / 2;
     var warn = new THREE.Sprite(new THREE.SpriteMaterial({ map: WARN_TEX, transparent: true, depthWrite: false, fog: false }));
     warn.position.set(-1.9, 6.6, 0); warn.scale.set(2.6, 2.6, 1); warn.visible = false; g.add(warn);
     var B = beacons[key] = { g: g, lamp: lamp, glow: glow, beer: beer, foam: foam, warn: warn, mood: 'nodata', fill: 0, target: 0, ph: x * .37 };
@@ -1416,82 +1412,108 @@ function buildWorld(){
   for (var zb = 0; zb < 6; zb++) { zebra.push([13.5 + zb * 1, .075, 4.2]); zebra.push([-10, .075, -5.6 + zb * 1.05, Math.PI / 2]); zebra.push([30, .075, -5.6 + zb * 1.05, Math.PI / 2]); }
   inst(geoBox(.55, .02, 2.6), dash, zebra, false);
 
-  // --- parc i terrassa al centre (on hi havia gespa buida) ---
-  var PX = -7, PZ = 23;
-  bx(34, .1, 2.4, walk, PX, .06, PZ, S, false); bx(2.4, .1, 34, walk, PX, .061, PZ, S, false);
-  mesh(cyl(6.2, 6.2, .12, 40), walk, PX, .07, PZ, S, false);
-  // font
+  // --- PARC CENTRAL amb el pavelló d'«Altres» ---
+  // Distribució (x -25..10, z 4..42):
+  //   nord-oest: pavelló d'Altres (serveis generals) amb terrassa davant · nord-est: parterres
+  //   centre-est: plaça amb font · sud-oest: estany amb pont · sud-est: aparcament
   var stone = std('#D6CEC0', .8), waterM = std('#3C8FB0', .08, .3, { transparent: true, opacity: .85 });
-  mesh(cyl(3.4, 3.6, .9, 36), stone, PX, .45, PZ, S); mesh(cyl(3.05, 3.05, .1, 36), waterM, PX, .82, PZ, S, false);
-  mesh(cyl(.35, .5, 2.4, 14), stone, PX, 1.6, PZ, S); mesh(cyl(1.5, .5, .5, 24), stone, PX, 2.9, PZ, S); mesh(cyl(1.3, 1.3, .06, 24), waterM, PX, 3.13, PZ, S, false);
+  var tableM = std('#B5875A', .8), poleM = std('#E9E4DA', .5), umbM = std('#9C0D19', .85, 0, { side: THREE.DoubleSide });
+  var paveM = std('#E4DCCD', .85), timber = std('#A8754A', .75), whiteW = std('#F4F1EA', .7);
+  // camins: eix nord-sud des de l'avinguda fins a l'aparcament i eix est-oest per la plaça
+  bx(2.6, .1, 25, walk, 2, .06, 16.5, S, false);
+  bx(33, .1, 2.6, walk, -8.5, .061, 23, S, false);
+  mesh(cyl(6, 6, .12, 40), paveM, 2, .07, 23, S, false);
+
+  // ===== pavelló d'Altres: dues plantes, vidre a baix, llistons de fusta a dalt i coberta verda =====
+  var O = zone('others');
+  var OX = -14, OZ = 11.5, OW = 16, OD = 8;
+  bx(OW + 3, .12, OD + 9, paveM, OX, .06, OZ + 2.5, O, false);
+  // planta baixa de vidre amb pilars de fusta
+  bx(OW, 3.4, OD, glassD, OX, 1.7, OZ, O);
+  for (var op = 0; op <= 8; op++) bx(.35, 3.4, .35, timber, OX - OW / 2 + op * OW / 8, 1.7, OZ + OD / 2 + .05, O);
+  // planta de dalt (volada) amb llistons
+  bx(OW + 1.2, 3.2, OD + 1.2, whiteW, OX, 5.1, OZ, O);
+  for (var sl = 0; sl < 34; sl++) bx(.16, 2.6, .12, timber, OX - OW / 2 - .3 + sl * (OW + .6) / 33, 5.1, OZ + OD / 2 + .66, O, false);
+  bx(OW + 1.4, .3, OD + 1.4, std('#D9D3C7', .8), OX, 6.85, OZ, O);
+  // coberta verda amb arbustos
+  bx(OW + .6, .25, OD + .6, std('#6E9E45', .95), OX, 7.1, OZ, O, false);
+  for (var gr = 0; gr < 14; gr++) mesh(new THREE.SphereGeometry(.5, 8, 6), pick([leafM, leafM2]), OX - OW / 2 + 1 + (gr % 7) * 2.2, 7.45, OZ - 2.4 + Math.floor(gr / 7) * 4.6, O).scale.y = .6;
+  // marquesina d'entrada i rètol
+  bx(5, .2, 2.4, whiteW, OX, 3.5, OZ + OD / 2 + 1.2, O); [-2.3, 2.3].forEach(function(dx){ bx(.15, 3.5, .15, timber, OX + dx, 1.75, OZ + OD / 2 + 2.3, O); });
+  bx(7.4, 1.25, .12, std('#7A0C1E', .6), OX, 6.1, OZ + OD / 2 + .78, O, false);
+  sign('ALTRES ÀREES', 7, 1, OX, 6.1, OZ + OD / 2 + .86, O, { tw: 1024, th: 146, bg: '#9C0D19', fg: '#FFFFFF', font: '800 100px Figtree, sans-serif' });
+  // vidre de la porta i interior càlid
+  bx(2.6, 2.6, .08, std('#FFE7B0', .4, 0, { emissive: '#FFC977', emissiveIntensity: .35 }), OX, 1.4, OZ + OD / 2 + .02, O, false);
+
+  // terrassa del pavelló (cafeteria): taules de pícnic, para-sols i garlandes
+  var umbG = new THREE.ConeGeometry(2.1, .75, 8, 1, true);
+  var TABLES = [[-21, 19.5], [-15.5, 19.5], [-10, 19.5]];
+  TABLES.forEach(function(p){
+    var g = new THREE.Group(); g.position.set(p[0], 0, p[1]); S.add(g);
+    bx(2.4, .1, 1, tableM, 0, .78, 0, g); [-.9, .9].forEach(function(dx){ bx(.1, .76, .9, tableM, dx, .38, 0, g, false); });
+    [-.95, .95].forEach(function(dz){ bx(2.4, .08, .36, tableM, 0, .46, dz, g); bx(.08, .44, .3, tableM, -.9, .22, dz, g, false); bx(.08, .44, .3, tableM, .9, .22, dz, g, false); });
+    mesh(cyl(.05, .05, 2.6, 8), poleM, 0, 1.3, 0, g, false); mesh(umbG, umbM, 0, 2.75, 0, g);
+    for (var bt = 0; bt < 2; bt++) { var bb = mesh(BOTTLE.glass, BOTTLE.glassM, -.4 + bt * .8, .83, 0, g, false); bb.scale.setScalar(2.2); }
+  });
+  [[-21, 18.5, 0], [-15.5, 20.5, Math.PI], [-10, 18.5, 0], [-10.5, 20.5, Math.PI]].forEach(function(p, i){
+    makePerson(S, people, { x: p[0], y: .02, z: p[1], seated: true, rot: p[2], beer: i !== 2, skin: pick(['#EFC3A1', '#B57A52', '#F6D7C3', '#8A5A3B']), shirt: pick(['#C8102E', '#F4EFE6', '#1E2A44', '#E8A21B']), hair: pick(['#2E1F17', '#5A3A22', '#D9B15A']), hairStyle: i % 4 }).scale.setScalar(1.15);
+  });
+  var GP = [[-23.5, 17.5], [-7.5, 17.5], [-7.5, 21.6], [-23.5, 21.6]], bulbs = [];
+  GP.forEach(function(p){ mesh(cyl(.08, .1, 4.4, 8), dk, p[0], 2.2, p[1], S); });
+  [[0, 1], [3, 2], [0, 3], [1, 2]].forEach(function(e){
+    var p0 = V(GP[e[0]][0], 4.3, GP[e[0]][1]), p1 = V(GP[e[1]][0], 4.3, GP[e[1]][1]);
+    catenary(S, p0, p1, .9, 16).forEach(function(q, qi){ if (qi % 2 === 0) bulbs.push([q.x, q.y - .12, q.z]); });
+  });
+  var bulbM = std('#FFF1C4', .3, 0, { emissive: '#FFC86B', emissiveIntensity: .9 });
+  inst(new THREE.SphereGeometry(.13, 8, 6), bulbM, bulbs, false);
+  anims.push(function(dt, t){ bulbM.emissiveIntensity = RM ? .9 : .75 + Math.sin(t * 2) * .25; });
+
+  // ===== plaça amb font (centre-est) =====
+  var PX = 2, PZ = 23;
+  mesh(cyl(3.2, 3.4, .9, 36), stone, PX, .45, PZ, S); mesh(cyl(2.85, 2.85, .1, 36), waterM, PX, .82, PZ, S, false);
+  mesh(cyl(.35, .5, 2.4, 14), stone, PX, 1.6, PZ, S); mesh(cyl(1.4, .5, .5, 24), stone, PX, 2.9, PZ, S); mesh(cyl(1.2, 1.2, .06, 24), waterM, PX, 3.13, PZ, S, false);
   var jetM = new THREE.MeshBasicMaterial({ color: '#E6F5FB', transparent: true, opacity: .6, depthWrite: false });
   var jet = mesh(cyl(.08, .22, 1.6, 10, true), jetM, PX, 3.9, PZ, S, false, false); jet.userData.keep = true;
   var drops = [];
   for (var dr = 0; dr < 8; dr++) { var dm = mesh(new THREE.SphereGeometry(.12, 8, 6), jetM, PX, 3, PZ, S, false, false); dm.userData.keep = true; drops.push(dm); }
   anims.push(function(dt, t){
     jet.scale.y = RM ? 1 : .85 + Math.sin(t * 6) * .15;
-    drops.forEach(function(d, i){ var a = i / drops.length * Math.PI * 2, L = RM ? .5 : (t * .9 + i * .37) % 1; d.position.set(PX + Math.cos(a) * L * 1.6, 4.4 + L * 1.2 - L * L * 3.4, PZ + Math.sin(a) * L * 1.6); });
+    drops.forEach(function(d, i){ var an = i / drops.length * Math.PI * 2, L = RM ? .5 : (t * .9 + i * .37) % 1; d.position.set(PX + Math.cos(an) * L * 1.5, 4.4 + L * 1.2 - L * L * 3.4, PZ + Math.sin(an) * L * 1.5); });
   });
-  // terrassa: taules de pícnic amb para-sols vermells, bar i garlandes de llums
-  var tableM = std('#B5875A', .8), poleM = std('#E9E4DA', .5), umbM = std('#9C0D19', .85, 0, { side: THREE.DoubleSide });
-  var umbG = new THREE.ConeGeometry(2.2, .8, 8, 1, true);
-  var TABLES = [[-20, 8.5], [-14.5, 8.5], [-20, 14.5], [-14.5, 14.5], [-25, 11.5]];
-  TABLES.forEach(function(p, ti){
-    var g = new THREE.Group(); g.position.set(p[0], 0, p[1]); S.add(g);
-    bx(2.4, .1, 1, tableM, 0, .78, 0, g); [-.9, .9].forEach(function(dx){ bx(.1, .76, .9, tableM, dx, .38, 0, g, false); });
-    [-.95, .95].forEach(function(dz){ bx(2.4, .08, .36, tableM, 0, .46, dz, g); bx(.08, .44, .3, tableM, -.9, .22, dz, g, false); bx(.08, .44, .3, tableM, .9, .22, dz, g, false); });
-    mesh(cyl(.05, .05, 2.6, 8), poleM, 0, 1.3, 0, g, false); mesh(umbG, umbM, 0, 2.75, 0, g);
-    for (var bt = 0; bt < 3; bt++) { var bb = mesh(BOTTLE.glass, BOTTLE.glassM, -.6 + bt * .55, .83, rr(-.25, .25), g, false); bb.scale.setScalar(2.2); }
-  });
-  [[-20, 7.5, 0, .2], [-14.5, 15.5, Math.PI, -.1], [-20, 15.5, Math.PI, .4], [-24.2, 12.5, Math.PI * .8, 0]].forEach(function(p, i){
-    var c = makePerson(S, people, { x: p[0], y: .02, z: p[1], seated: true, rot: p[2], beer: i !== 2, skin: pick(['#EFC3A1', '#B57A52', '#F6D7C3', '#8A5A3B']), shirt: pick(['#C8102E', '#F4EFE6', '#1E2A44', '#E8A21B']), hair: pick(['#2E1F17', '#5A3A22', '#D9B15A']), hairStyle: i % 4, logo: i % 2 === 0 });
-    c.scale.setScalar(1.15);
-  });
-  // bar de la terrassa
-  var barG = new THREE.Group(); barG.position.set(-21.5, 0, 19.5); S.add(barG);
-  bx(5, 1.3, 1.6, std('#9C0D19', .7), 0, .65, 0, barG); bx(5.3, .12, 1.9, tableM, 0, 1.36, .1, barG);
-  bx(5, 2.6, .2, std('#F4EFE6', .8), 0, 1.3, -1.6, barG); [-2.4, 2.4].forEach(function(dx){ bx(.15, 3.2, .15, tableM, dx, 1.6, -.8, barG); bx(.15, 3.2, .15, tableM, dx, 1.6, .9, barG); });
-  var awn = bx(5.6, .1, 3, umbM, 0, 3.25, 0, barG); awn.rotation.x = .12;
-  sign('BAR · TERRASSA', 4.6, .6, 0, 2.7, -1.48, barG, { tw: 1024, th: 136, bg: '#9C0D19', fg: '#FFFFFF', font: '800 92px Figtree, sans-serif' });
-  for (var kg = 0; kg < 4; kg++) mesh(cyl(.3, .3, .65, 14), steel, -1.8 + kg * 1.2, 1.75, -1.1, barG);
-  makePerson(S, people, { x: -21.5, z: 18.4, skin: '#D9A074', shirt: '#9C0D19', hair: '#2E1F17', hairStyle: 1, logo: true, rot: 0, talk: true });
-  makePerson(S, people, { x: -21, z: 21.6, skin: '#F6D7C3', shirt: '#2F6FB3', hair: '#5A3A22', rot: Math.PI, beer: true }).scale.setScalar(1.15);
-  // garlandes de llums entre pals
-  var GP = [[-27, 6], [-12, 6], [-12, 17], [-27, 17]], bulbs = [];
-  GP.forEach(function(p){ mesh(cyl(.08, .1, 4.6, 8), dk, p[0], 2.3, p[1], S); });
-  [[0, 1], [1, 2], [2, 3], [3, 0], [0, 2]].forEach(function(e){
-    var a = V(GP[e[0]][0], 4.5, GP[e[0]][1]), b = V(GP[e[1]][0], 4.5, GP[e[1]][1]);
-    catenary(S, a, b, 1.1, 18).forEach(function(q, qi){ if (qi % 2 === 0) bulbs.push([q.x, q.y - .12, q.z]); });
-  });
-  var bulbM = std('#FFF1C4', .3, 0, { emissive: '#FFC86B', emissiveIntensity: .9 });
-  inst(new THREE.SphereGeometry(.13, 8, 6), bulbM, bulbs, false);
-  anims.push(function(dt, t){ bulbM.emissiveIntensity = RM ? .9 : .75 + Math.sin(t * 2) * .25; });
-  // parterres de flors i bancs al quadrant de la dreta
+  // bancs en cercle al voltant de la font
+  for (var bn = 0; bn < 6; bn++) { if (bn % 3 === 0) continue; var ba = bn / 6 * Math.PI * 2 + Math.PI / 6; bench(S, PX + Math.cos(ba) * 4.9, PZ + Math.sin(ba) * 4.9, -ba - Math.PI / 2); }
+  // parterres de flors (nord-est), entre l'avinguda i la plaça
   var flowers = [];
-  [[-1, 9, 8, 3], [5, 9, 3, 6], [-1, 15.5, 8, 2.4]].forEach(function(b){
-    bx(b[2], .45, b[3], std('#7A5A3C', .9), b[0], .22, b[1], S);
-    for (var fl = 0; fl < b[2] * b[3] * 1.4; fl++) flowers.push([b[0] + rr(-b[2] / 2 + .3, b[2] / 2 - .3), .62, b[1] + rr(-b[3] / 2 + .3, b[3] / 2 - .3), 0, 0, rr(.18, .28)]);
+  [[-3.5, 9.5, 6, 4], [6.8, 9.5, 5, 4], [-3.5, 15, 6, 2.4], [6.8, 15, 5, 2.4]].forEach(function(bd){
+    bx(bd[2], .45, bd[3], std('#7A5A3C', .9), bd[0], .22, bd[1], S);
+    for (var fl = 0; fl < bd[2] * bd[3] * 1.4; fl++) flowers.push([bd[0] + rr(-bd[2] / 2 + .3, bd[2] / 2 - .3), .62, bd[1] + rr(-bd[3] / 2 + .3, bd[3] / 2 - .3), 0, 0, rr(.18, .28)]);
   });
   flowerM.forEach(function(fm, fi){ inst(new THREE.SphereGeometry(1, 6, 5), fm, flowers.filter(function(_, i){ return i % 4 === fi; }), false); });
-  bench(S, -3, 20.2, 0); bench(S, -11, 25.8, Math.PI); bench(S, -3, 25.8, Math.PI); bench(S, -11, 20.2, 0);
-  [[-11.5, 6.5], [-2.5, 6.5], [-11.5, 39.5], [-2.5, 39.5]].forEach(function(p){ lamp(S, p[0], p[1]); });
-  // estany amb pont al quadrant del fons
-  var pond = mesh(cyl(1, 1, .1, 40), waterM, -18, .1, 33, S, false); pond.scale.set(6.5, 1, 4.2);
-  mesh(cyl(1, 1, .14, 40), std('#BDB4A2', .9), -18, .05, 33, S, false).scale.set(7.1, 1, 4.8);
-  var bridge = new THREE.Group(); bridge.position.set(-18, 0, 33); S.add(bridge);
-  for (var pl = 0; pl < 9; pl++) bx(.5, .14, 2.2, tableM, -2 + pl * .5, .45 + Math.sin(pl / 8 * Math.PI) * .45, 0, bridge);
-  [-1.1, 1.1].forEach(function(dz){ for (var rp2 = 0; rp2 < 5; rp2++) bx(.08, .8, .08, tableM, -2 + rp2, .9 + Math.sin(rp2 / 4 * Math.PI) * .45, dz, bridge, false); });
-  var lily = []; for (var li = 0; li < 9; li++) lily.push([-18 + rr(-5, 5), .17, 33 + rr(-3, 3), 0, 0, rr(.35, .55), .1]);
+  [[0, 5.5], [4, 5.5], [-6, 26.5], [6, 30], [-23, 26]].forEach(function(p){ lamp(S, p[0], p[1]); });
+
+  // ===== estany amb pont (sud-oest) =====
+  var pond = mesh(cyl(1, 1, .1, 40), waterM, -15, .1, 33.5, S, false); pond.scale.set(7.5, 1, 4.6);
+  mesh(cyl(1, 1, .14, 40), std('#BDB4A2', .9), -15, .05, 33.5, S, false).scale.set(8.1, 1, 5.2);
+  var bridge = new THREE.Group(); bridge.position.set(-15, 0, 33.5); bridge.rotation.y = Math.PI / 2; S.add(bridge);
+  for (var pl = 0; pl < 11; pl++) bx(.5, .14, 2.2, tableM, -2.5 + pl * .5, .45 + Math.sin(pl / 10 * Math.PI) * .5, 0, bridge);
+  [-1.1, 1.1].forEach(function(dz){ for (var rp2 = 0; rp2 < 6; rp2++) bx(.08, .8, .08, tableM, -2.5 + rp2, .9 + Math.sin(rp2 / 5 * Math.PI) * .5, dz, bridge, false); });
+  var lily = []; for (var li = 0; li < 10; li++) lily.push([-15 + rr(-6, 6), .17, 33.5 + rr(-3.2, 3.2), 0, 0, rr(.35, .55), .1]);
   inst(cyl(1, 1, .4, 12), leafM2, lily, false);
-  // aparcament al quadrant de la dreta del fons
-  bx(16, .08, 12, std('#6E7076', .9), 3, .05, 33, S, false);
-  for (var ps = 0; ps < 6; ps++) { bx(.12, .02, 4, dash, -4 + ps * 2.6, .1, 29.8, S, false); bx(.12, .02, 4, dash, -4 + ps * 2.6, .1, 36.2, S, false); }
-  ['#C8102E', '#F4F5F7', '#1E2A44', '#E8A21B', '#3A3532', '#7FA6C2'].forEach(function(c, i){ var cc = car(c); cc.position.set(-2.7 + (i % 3) * 5.2, 0, i < 3 ? 29.8 : 36.2); cc.rotation.y = i < 3 ? 0 : Math.PI; S.add(cc); });
-  // arbres al voltant del parc
-  [[-26, 25], [-26, 31], [-26, 38], [-12, 38.5], [8.5, 25], [8.5, 9], [-27, 3.5], [-6, 3.5], [6, 3.5], [-12, 29]].forEach(function(p, i){ tree(S, p[0], p[1], .55 + (i % 3) * .1); });
-  [[-5, 22.3], [-9, 23.5], [-6.5, 18.5]].forEach(function(p, i){ makePerson(S, people, { x: p[0], z: p[1], skin: pick(['#EFC3A1', '#B57A52', '#F6D7C3']), shirt: pick(['#C8102E', '#F4EFE6', '#2F6FB3']), hair: pick(['#2E1F17', '#5A3A22']), hairStyle: i, talk: i !== 1, face: [PX, PZ] }).scale.setScalar(1.15); });
-  makePerson(S, people, { x: 0, z: 0, skin: '#F6D7C3', shirt: '#E8A21B', hair: '#5A3A22', hairStyle: 3, speed: 1, path: [[-23, 23], [-11.5, 23], [-7, 18.5], [-2.5, 23], [9, 23]] }).scale.setScalar(1.15);
-  makePerson(S, people, { x: 0, z: 0, skin: '#8A5A3B', shirt: '#F4EFE6', hair: '#1D1D24', hairStyle: 2, speed: .9, path: [[-7, 39], [-7, 27.5], [-11.5, 23], [-7, 18.5], [-7, 7]] }).scale.setScalar(1.15);
+  bx(2.4, .1, 11, walk, -15, .06, 25.5, S, false);
+
+  // ===== aparcament (sud-est) =====
+  bx(14, .08, 11, std('#6E7076', .9), 3.5, .05, 35.5, S, false);
+  for (var ps = 0; ps < 5; ps++) { bx(.12, .02, 4, dash, -2 + ps * 2.6 + 1.3, .1, 32.4, S, false); bx(.12, .02, 4, dash, -2 + ps * 2.6 + 1.3, .1, 38.6, S, false); }
+  ['#C8102E', '#F4F5F7', '#1E2A44', '#E8A21B', '#3A3532', '#7FA6C2'].forEach(function(c, i){ if (i === 4) return; var cc = car(c); cc.position.set(0 + (i % 3) * 2.6 + (i >= 3 ? 2.6 : 0), 0, i < 3 ? 32.4 : 38.6); cc.rotation.y = i < 3 ? 0 : Math.PI; S.add(cc); });
+
+  // arbres: tanquen el parc pels costats i fan ombra a l'estany
+  [[-24, 29], [-24, 36], [-24, 41], [-8, 29], [-7, 38], [-16, 41], [9, 18], [-24, 5], [-8.5, 5], [8.5, 41]].forEach(function(p, i){ tree(S, p[0], p[1], .55 + (i % 3) * .1); });
+  // gent passejant
+  [[-1.5, 19.5], [5.5, 26.5]].forEach(function(p, i){ makePerson(S, people, { x: p[0], z: p[1], skin: pick(['#EFC3A1', '#B57A52', '#F6D7C3']), shirt: pick(['#C8102E', '#F4EFE6', '#2F6FB3']), hair: pick(['#2E1F17', '#5A3A22']), hairStyle: i, talk: true, face: [PX, PZ] }).scale.setScalar(1.15); });
+  makePerson(S, people, { x: 0, z: 0, skin: '#F6D7C3', shirt: '#E8A21B', hair: '#5A3A22', hairStyle: 3, speed: 1, path: [[-24, 23], [-3, 23], [2, 17.8], [7, 23], [10, 23], [7, 23], [2, 28.2], [-3, 23]] }).scale.setScalar(1.15);
+  makePerson(S, people, { x: 0, z: 0, skin: '#8A5A3B', shirt: '#F4EFE6', hair: '#1D1D24', hairStyle: 2, speed: .9, path: [[2, 4], [2, 17], [-3.2, 23], [2, 28.8], [2, 31]] }).scale.setScalar(1.15);
+  makePerson(S, people, { x: -14, z: 17, skin: '#D9A074', shirt: '#7A0C1E', hair: '#2E1F17', hairStyle: 1, talk: true, face: [-12.6, 17.4] }).scale.setScalar(1.15);
+  makePerson(S, people, { x: -12.6, z: 17.4, skin: '#EFC3A1', shirt: '#F4EFE6', hair: '#D9B15A', hairStyle: 3, face: [-14, 17] }).scale.setScalar(1.15);
 
   // --- pati de barrils i caixes davant d'Envasat ---
   bx(17, .1, 13, concrete, 31, .05, 34.5, S, false);
@@ -1560,7 +1582,8 @@ function buildWorld(){
     fabrica: { zones: ['malta', 'fermentacio', 'coccio', 'envasat'], at: [15, 14.4, -28] },
     logistica: { zones: ['logistica'], at: [41, 21.4, -25] },
     comercial: { zones: ['comercial'], at: [48, 6, 31] },
-    oficina: { zones: ['oficines'], at: [-49, 15, 21] }
+    oficina: { zones: ['oficines'], at: [-49, 15, 21] },
+    others: { zones: ['others'], at: [-15.5, 7.25, 11.5] }
   };
   var ZONE_DEPT = {};
   Object.keys(DEPTS).forEach(function(k){ DEPTS[k].zones.forEach(function(z){ ZONE_DEPT[z] = k; }); });
@@ -1610,7 +1633,7 @@ function buildWorld(){
   var ringG = new THREE.RingGeometry(.93, 1, 80), ringM = new THREE.MeshBasicMaterial({ color: '#C8102E', transparent: true, opacity: .75, depthWrite: false });
   var rings = [0, 1, 2, 3].map(function(){ var r = mesh(ringG, ringM, 0, .3, 0, S, false, false); r.rotation.x = -Math.PI / 2; r.visible = false; r.userData.keep = true; return r; });
   anims.push(function(dt, t){ ringM.opacity = .55 + Math.sin(t * 3) * .2; });
-  var ZC = { malta: [-51.5, -31, 9], fermentacio: [-20, -31.5, 21], coccio: [11, -27, 14], logistica: [44, -23, 16], envasat: [32, 16, 12.5], oficines: [-42, 21, 17], comercial: [49, 33, 9] };
+  var ZC = { others: [-14, 13, 11], malta: [-51.5, -31, 9], fermentacio: [-20, -31.5, 21], coccio: [11, -27, 14], logistica: [44, -23, 16], envasat: [32, 16, 12.5], oficines: [-42, 21, 17], comercial: [49, 33, 9] };
   function select(k){
     var list = DEPTS[k] ? DEPTS[k].zones : ZONE_DEPT[k] ? DEPTS[ZONE_DEPT[k]].zones : [k];
     rings.forEach(function(r, i){ var c = ZC[list[i]]; r.visible = !!c; if (c) { r.position.set(c[0], .3, c[1]); r.scale.set(c[2], c[2], 1); } });
@@ -1714,7 +1737,7 @@ export function mountScene(container, kind, opts) {
   if (!texturesBuilt) { buildTextures(); texturesBuilt = true; }
   if (!cache[kind]) { cache[kind] = kind === 'plaza' ? buildPlaza() : buildWorld(); var fz = freezeStatic(cache[kind]); if (window.__damm3d) window.__damm3d.freeze = fz; }
   var W = cache[kind];
-  var festaPct = opts.festa == null ? 100 : opts.festa;
+  var festaPct = 100;
   if (kind === 'plaza') { if (opts.avatar) W.rebuildMe(opts.avatar); W.showMe(!!opts.avatar); W.setFesta(festaPct); }
 
   var canvas = renderer.domElement;
@@ -1762,7 +1785,7 @@ export function mountScene(container, kind, opts) {
   function addLabel(anchor, html) { var el = document.createElement('div'); el.className = 'lab'; el.innerHTML = html; overlay.appendChild(el); labels.push({ el: el, a: anchor }); return el; }
   function act(a) { if (opts.onAction) opts.onAction(a); }
   var stageBtn = null;
-  function paintStage() { if (stageBtn) { var on = festaPct >= 60; stageBtn.textContent = on ? '♪ Concert en directe' : 'Concert · s’obre al 60%'; stageBtn.className = on ? 'tag red' : 'tag light'; } }
+  function paintStage() { if (stageBtn) { stageBtn.textContent = '♪ Concert en directe'; stageBtn.className = 'tag red'; } }
   var zones = opts.zones || [], selected = null;
   function pinFor(k) {
     var dept = W.zoneDept && W.zoneDept[k];
@@ -1778,15 +1801,30 @@ export function mountScene(container, kind, opts) {
     if (opts.onZone) opts.onZone(k);
   }
 
-  if (kind === 'plaza') {
-    W.bubbles.forEach(function (b, idx) {
-      var el = addLabel(b[2], '<div class="bubble"><p>' + b[0] + '</p><div class="row"><span><b class="cnt">' + b[1] + '</b> en parlen</span><button type="button" class="react" aria-pressed="false">+1 Jo també</button></div></div>');
-      var btn = el.querySelector('.react'), cnt = el.querySelector('.cnt');
-      function paint(on) { btn.setAttribute('aria-pressed', String(on)); btn.textContent = on ? '✓ Jo també' : '+1 Jo també'; cnt.textContent = String(b[1] + (on ? 1 : 0)); }
-      if (opts.reacted && opts.reacted.indexOf(idx) >= 0) paint(true);
-      if (opts.readOnly) { btn.disabled = true; btn.title = 'Vista de RRHH'; }
-      btn.addEventListener('click', function () { var on = btn.getAttribute('aria-pressed') !== 'true'; paint(on); if (opts.onReact) opts.onReact(idx, on); });
+  function renderTopics(topics){
+    if (kind !== 'plaza') return;
+    labels = labels.filter(function(l){ if (l.topic) { l.el.remove(); return false; } return true; });
+    (topics || []).slice(0, W.bubbleAnchors.length).forEach(function(topic, idx){
+      var el = addLabel(W.bubbleAnchors[idx], '<div class="bubble"><p></p><div class="row"><span><b class="cnt"></b> +1</span>' + (opts.readOnly ? '' : '<button type="button" class="react"></button>') + '</div></div>');
+      labels[labels.length - 1].topic = true;
+      // User content is always text, never HTML.
+      el.querySelector('p').textContent = topic.text;
+      var btn = el.querySelector('.react');
+      el.querySelector('.cnt').textContent = String(topic.likes || 0);
+      if (!btn) return;
+      btn.setAttribute('aria-pressed', String(!!topic.reacted));
+      btn.textContent = topic.reacted ? '\u2713 Jo tamb\u00e9' : '+1 Jo tamb\u00e9';
+      btn.addEventListener('click', async function(){
+        if (!opts.onReact || btn.disabled) return;
+        var on = !topic.reacted; btn.disabled = true;
+        try { await opts.onReact(topic.id, on); if (on) { W.fireworks(); poke(); } }
+        catch (e) { btn.disabled = false; btn.title = e.message || 'Error'; }
+      });
     });
+  }
+
+  if (kind === 'plaza') {
+    renderTopics(opts.topics || []);
     if (opts.surveyTag) addLabel(W.anchors.kiosk, '<button type="button" class="tag red">' + opts.surveyTag + '</button>').querySelector('button').addEventListener('click', function () { act('survey'); });
     addLabel(W.anchors.idea, '<button type="button" class="tag">Bústia d’idees · anònima</button>').querySelector('button').addEventListener('click', function () { act('idea'); });
     stageBtn = addLabel(W.anchors.stage, '<button type="button" class="tag light"></button>').querySelector('button');
@@ -1904,14 +1942,12 @@ export function mountScene(container, kind, opts) {
   frame();
 
   var api = {
+    setTopics: renderTopics,
     setZones: function (list) { if (kind === 'world') renderPins(list); },
     burst: function () { if (W.burst) W.burst(); },
-    // canvia l'estat de la Festa de la setmana; si se supera una fita, confeti
-    setFesta: function (p) {
-      if (!W.setFesta || p === festaPct) return;
-      var crossed = [25, 40, 60, 75].some(function (m) { return festaPct < m && p >= m; });
-      festaPct = p; W.setFesta(p); paintStage(); poke();
-      if (crossed && W.burst) W.burst();
+    // Compatibility with older callers: the plaza is always fully open.
+    setFesta: function () {
+      if (W.setFesta) { W.setFesta(100); paintStage(); poke(); }
     },
     setAvatar: function (a) { if (W.rebuildMe) W.rebuildMe(a); },
     select: select,

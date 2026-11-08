@@ -2,7 +2,6 @@ import { useEffect, useRef, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { MOODS } from '../data/mock'
 import type { Mood } from '../data/types'
-import { useApp } from '../store/AppContext'
 
 export const cn = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
 export const fmt = (n: number, d = 1) => n.toLocaleString('ca-ES', { minimumFractionDigits: d, maximumFractionDigits: d })
@@ -45,31 +44,17 @@ export function MoodBadge({ w, size = 46, icon = 24 }: { w: Mood; size?: number;
   )
 }
 
-export function Meter({ value, goal, className, thin }: { value: number; goal?: number; className?: string; thin?: boolean }) {
+export function Meter({ value, className, thin }: { value: number; className?: string; thin?: boolean }) {
   return (
     <div className={cn('relative rounded-full bg-cream-dk', thin ? 'h-2' : 'h-3', className)} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(value)}>
       <div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-wine to-red transition-[width] duration-700" style={{ width: `${Math.min(100, value)}%` }} />
-      {goal != null && <div className="absolute -top-1 -bottom-1 w-0.5 bg-ink rounded" style={{ left: `${goal}%` }} />}
     </div>
   )
 }
 
-/** Resum de la Festa de la setmana (participació única a La Plaça, es reinicia cada dilluns). */
-export function FestaCard({ compact }: { compact?: boolean }) {
-  const { plazaWeek: w } = useApp()
-  return (
-    <section className={cn('card flex flex-col gap-2', compact ? 'p-4' : 'p-5')} aria-label="Festa de la setmana a La Plaça">
-      <div className="flex justify-between items-baseline gap-2">
-        <h2 className={cn('serif', compact ? 'text-[19px]' : 'text-[21px]')}>Festa de la setmana</h2>
-        <strong className="text-sm tabular-nums">{Math.floor(w.pct)}%</strong>
-      </div>
-      <Meter value={w.pct} goal={w.goal} />
-      <p className="text-[12.5px] text-ink-muted">
-        <strong className="text-ink">{w.participants}</strong> persones han opinat a La Plaça aquesta setmana
-        {w.next ? <> · {w.next.missing === 1 ? 'falta 1' : `falten ${w.next.missing}`} per a {w.next.label.toLowerCase()}</> : ' · totes les fites aconseguides!'}
-      </p>
-    </section>
-  )
+/** Accés informatiu a les opinions, sense seguiment de participació. */
+export function PlazaCard() {
+  return <section className="card flex flex-col gap-2 p-5"><h2 className="serif text-[21px]">La Plaça</h2><p className="text-sm text-ink-muted">Un espai per compartir opinions i idees voluntàriament, sense punts ni recompenses. El concert està sempre actiu.</p></section>
 }
 
 export function PrivacyNote({ children, className }: { children: ReactNode; className?: string }) {
