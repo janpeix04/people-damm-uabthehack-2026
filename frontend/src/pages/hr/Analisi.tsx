@@ -1,68 +1,284 @@
+import { useState } from 'react'
+import { useSearchParams, Link } from 'react-router-dom'
+import {
+  Download,
+  MessageSquare,
+  Printer,
+  Sparkles,
+  Users,
+  Clock,
+  AlertTriangle,
+  TrendingUp,
+  ShieldCheck,
+  RefreshCw,
+} from 'lucide-react'
 import RepresentationPanel from '../../components/analytics/RepresentationPanel'
-import {useState} from 'react'
-import {Link,useSearchParams} from 'react-router-dom'
-import {AlertTriangle,Download,RefreshCw,Printer} from 'lucide-react'
-import {PageHead} from '../../components/HRLayout'
-import {DonutChart,GroupedBarChart,HorizontalBarChart} from '../../components/analytics/AnalyticsCharts'
-import {downloadAnalytics,useSurveyAnalytics,type AnalyticsGroup,type AnalyticsQuestion} from '../../api/analytics'
+import {useSurveyAnalytics,downloadAnalytics} from '../../api/analytics'
+import type {ShiftType} from '../../data/surveyAnalytics'
+import { PageHead } from '../../components/HRLayout'
+import { Meter } from '../../components/ui'
 
-const COLORS=['#C8102E','#2D5C9E','#2F7A4E','#B08A45','#7A0C1E']
-const value=(n:number|null|undefined,suffix='')=>n==null?'Sense dades':`${n}${suffix}`
-const hidden='Desglossament ocult: hi ha grups amb menys respostes que el llindar de privacitat.'
+import { DonutChart, GroupedBarChart, HorizontalBarChart } from '../../components/analytics/AnalyticsCharts'
+import { QuestionCard } from '../../components/analytics/QuestionCard'
 
-function Breakdown({title,rows}:{title:string;rows:AnalyticsGroup[]}){
- return <section className="card p-5 flex flex-col gap-4"><h2 className="serif text-xl">{title}</h2>{rows.length?<HorizontalBarChart items={rows.map((r,i)=>({key:r.code,label:r.label,value:r.count,pct:r.pct,color:COLORS[i%COLORS.length],sublabel:r.score===null?undefined:`Mitjana: ${r.score} /10`}))}/>:<p className="text-sm text-ink-muted">{hidden}</p>}</section>
-}
-function QuestionResult({q,threshold}:{q:AnalyticsQuestion;threshold:number}){
- const [view,setView]=useState<'bar'|'donut'|'shift'>('bar')
- return <article className="card p-5 flex flex-col gap-4">
-  <div className="flex flex-wrap justify-between items-start gap-3"><div className="flex-1 min-w-0"><p className="eyebrow">Versió {q.version}{q.dimension?` · ${q.dimension}`:''}</p><h3 className="serif text-xl mt-1">{q.text}</h3><p className="text-xs text-ink-muted mt-2">{q.totalAnswers} respostes{q.avgScore!==null?` · Mitjana normalitzada: ${q.avgScore} /10`:''}</p></div>
-   {!q.isSuppressed&&q.type!=='open_text'&&<div className="flex gap-1 flex-wrap">{(['bar','donut','shift'] as const).map(mode=><button key={mode} aria-pressed={view===mode} onClick={()=>setView(mode)} className={view===mode?'btn-ink !h-9 !text-xs':'btn-line !h-9 !text-xs'}>{mode==='bar'?'Barres':mode==='donut'?'Donut':'Per torn'}</button>)}</div>}
-  </div>
-  {q.isSuppressed?<p className="text-sm text-ink-muted">Resultat protegit: calen {threshold} respostes a aquesta pregunta.</p>:q.type==='open_text'?<p className="text-sm text-ink-muted">S’ha registrat text obert a la BD. No s’exposen comentaris individuals. L’agrupació temàtica i l’anàlisi de sentiment encara no estan connectades.</p>:view==='shift'?q.shifts.length?<div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">{q.shifts.map(s=><div key={s.code} className="rounded-xl bg-cream p-3"><strong>{s.label}</strong><p className="text-sm mt-1">{s.count} respostes</p><p className="text-sm">{value(s.score,' /10')}</p></div>)}</div>:<p className="text-sm text-ink-muted">{hidden}</p>:!q.distribution.length?<p className="text-sm text-ink-muted">Distribució protegida: una o més opcions tenen menys de {threshold} respostes.</p>:view==='donut'?<div className="flex justify-center"><DonutChart data={q.distribution.map((d,i)=>({key:d.label,label:d.label,value:d.count,color:COLORS[i%COLORS.length]}))} centerLabel="Respostes" centerValue={q.totalAnswers}/></div>:<HorizontalBarChart items={q.distribution.map((d,i)=>({key:d.label,label:d.label,value:d.count,pct:d.pct,color:COLORS[i%COLORS.length]}))} maxVal={q.totalAnswers}/>}
- </article>
-}
+export default function Analisi() {
+  const [params,setParams]=useSearchParams()
+  const site=params.get('centre')||''
+  const filters={survey:params.get('form')||'',site,department:params.get('departament')||'',shift:params.get('torn')||'',channel:params.get('canal')||'',dateRange:params.get('periode')||'all'}
+  const {data,error,loading,refresh}=useSurveyAnalytics(filters)
+  const [exportError,setExportError]=useState('')
+  const currentForm=data?.form
+  const stats=data?.stats
+  const update=(key:string,value:string)=>setParams(prev=>{const next=new URLSearchParams(prev);if(value)next.set(key,value);else next.delete(key);return next},{replace:true})
+  const handleExportCsv=async()=>{setExportError('');try{await downloadAnalytics({...filters,survey:currentForm?.id||filters.survey})}catch(e){setExportError(e instanceof Error?e.message:'Error CSV')}}
+  const handlePrint=()=>window.print()
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Capçalera de la pàgina */}
+      <PageHead
+        eyebrow="People Analytics · Escolta Activa"
+        title="Anàlisi i Insights de Formularis"
+        sub="Escolta activa: resultats agregats, participació i cobertura de les enquestes."
+        actions={
+          <div className="flex items-center gap-2 flex-wrap no-print">
+            <button
+              type="button"
+              onClick={()=>void handleExportCsv()}
+              disabled={!stats||stats.isSuppressed||loading||!!error}
+              className="btn-line"
+              title="Descarregar informe de mètriques agregades en format CSV"
+            >
+              <Download size={16} aria-hidden />
+              <span>Exportar CSV</span>
+            </button>
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="btn-line"
+              title="Generar versió per imprimir o desar en PDF"
+            >
+              <Printer size={16} aria-hidden />
+              <span>Imprimir informe</span>
+            </button>
+            <Link to="/rrhh/crear" className="btn-red">
+              <Sparkles size={16} aria-hidden />
+              <span>Nova enquesta</span>
+            </Link>
+          </div>
+        }
+      />
 
-export default function Analisi(){
- const [params,setParams]=useSearchParams()
- const filters={survey:params.get('form')||'',site:params.get('centre')||'',department:params.get('departament')||'',shift:params.get('torn')||'',channel:params.get('canal')||'',dateRange:params.get('periode')||'all'}
- const {data,error,loading,refresh}=useSurveyAnalytics(filters)
- const [exportError,setExportError]=useState(''),[exporting,setExporting]=useState(false)
- const stats=data?.stats
- const update=(key:string,v:string)=>setParams(prev=>{const next=new URLSearchParams(prev);if(v)next.set(key,v);else next.delete(key);return next},{replace:true})
- const download=async()=>{setExporting(true);setExportError('');try{await downloadAnalytics({...filters,survey:data?.form?.id||filters.survey})}catch(e){setExportError(e instanceof Error?e.message:'Error d’exportació')}finally{setExporting(false)}}
- return <div className="flex flex-col gap-6">
-  <PageHead eyebrow="People Analytics" title="Anàlisi i Insights de Formularis" sub="Respostes de PostgreSQL, filtres al servidor i resultats agregats protegits." actions={<div className="flex flex-wrap gap-2 no-print"><button className="btn-line" disabled={loading} onClick={refresh}><RefreshCw size={16}/>Actualitzar</button><button className="btn-line" disabled={!stats||stats.isSuppressed||exporting||loading||!!error} onClick={()=>void download()}><Download size={16}/>{exporting?'Exportant…':'CSV agregat'}</button><button className="btn-line" onClick={()=>window.print()}><Printer size={16}/>Imprimir</button><Link className="btn-red" to="/rrhh/crear">Nova enquesta</Link></div>}/>
-  {error&&<p role="alert" className="card p-4 text-red-dk">{error}</p>}
-  {exportError&&<p role="alert" className="text-red-dk">{exportError}</p>}
-  {loading&&!data&&<p role="status">Carregant l’anàlisi de la base de dades…</p>}
-  {data&&<>
-   <section className="card p-4 flex flex-col gap-4 no-print" aria-label="Filtres d’anàlisi">
-    <label className="text-sm font-bold">Enquesta<select className="input mt-1" value={data.form?.id||''} onChange={e=>update('form',e.target.value)}>{data.forms.map(form=><option key={form.id} value={form.id}>{form.title} ({form.responses} respostes{filters.site?' en aquest centre':''})</option>)}</select></label>
-    <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
-     <label className="text-xs font-bold">Departament<select className="input mt-1" value={filters.department} onChange={e=>update('departament',e.target.value)}><option value="">Tots</option>{data.options.departments.map(d=><option key={d.code} value={d.code}>{d.label}</option>)}</select></label>
-     <label className="text-xs font-bold">Torn<select className="input mt-1" value={filters.shift} onChange={e=>update('torn',e.target.value)}><option value="">Tots</option>{data.options.shifts.map(d=><option key={d.code} value={d.code}>{d.label}</option>)}</select></label>
-     <label className="text-xs font-bold">Canal<select className="input mt-1" value={filters.channel} onChange={e=>update('canal',e.target.value)}><option value="">Tots</option>{data.options.channels.map(d=><option key={d.code} value={d.code}>{d.label}</option>)}</select></label>
-     <label className="text-xs font-bold">Dates<select className="input mt-1" value={filters.dateRange} onChange={e=>update('periode',e.target.value)}><option value="all">Tot l’històric</option><option value="7d">Últims 7 dies</option><option value="30d">Últims 30 dies</option><option value="90d">Últims 90 dies</option></select></label>
+      <div className="flex flex-col gap-6">
+        {/* Barra de Filtres interactius */}
+        {data&&<section className="card p-4 sm:p-5 flex flex-col gap-4 bg-paper shadow-sm no-print" aria-label="Filtres d'anàlisi">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4"><label className="flex-1 min-w-0"><span className="eyebrow block mb-1">Formulari seleccionat</span><select className="input font-bold max-w-xl bg-cream" value={currentForm?.id||''} onChange={e=>update('form',e.target.value)}>{data.forms.map(f=><option key={f.id} value={f.id}>{f.title} ({f.responses} respostes)</option>)}</select></label><span className="chip bg-cream font-bold">{stats?.totalResponses??0} respostes amb els filtres actuals</span></div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{([
+            ['Departament','departament',filters.department,data.options.departments],
+            ['Torn laboral','torn',filters.shift,data.options.shifts],
+            ['Canal de difusió','canal',filters.channel,data.options.channels],
+            ['Període','periode',filters.dateRange,[{code:'all',label:'Tot l’històric'},{code:'7d',label:'Últims 7 dies'},{code:'30d',label:'Últims 30 dies'},{code:'90d',label:'Últim trimestre'}]],
+          ] as const).map(([label,key,value,options])=><label key={key}><span className="eyebrow block mb-1">{label}</span><select className="input !text-xs font-semibold bg-white" value={value} onChange={e=>update(key,e.target.value)}>{key!=='periode'&&<option value="">Tots</option>}{options.map(o=><option key={o.code} value={o.code}>{o.label}</option>)}</select></label>)}</div>
+          <div className="flex flex-wrap justify-between items-center gap-2 text-xs text-ink-muted"><span>Actualització automàtica cada 30 segons</span><button className="btn-line !h-9 !text-xs" onClick={refresh} disabled={loading}><RefreshCw size={14}/>Actualitzar</button></div>
+        </section>}
+        {currentForm&&<RepresentationPanel survey={currentForm.id} site={site}/>}
+        {exportError&&<p role="alert" className="text-red-dk">{exportError}</p>}
+
+
+        {loading && !stats && (
+          <div className="card p-10 flex items-center justify-center gap-3 text-ink-muted">
+            <RefreshCw className="animate-spin text-red" size={22} />
+            <span className="serif text-lg">Consultant dades reals a PostgreSQL...</span>
+          </div>
+        )}
+
+        {error && (
+          <div className="card p-4 bg-red-soft text-red-dk border border-red/30">
+            {error}
+          </div>
+        )}
+
+        {stats && (
+          <>
+            {/* Advertència de k-anonimat si n < 10 */}
+            {stats.isSuppressed ? (
+              <div className="card p-6 bg-warn-bg text-warn-ink border border-warn/30 flex items-start gap-4">
+                <AlertTriangle size={24} className="shrink-0 mt-0.5 text-warn" />
+                <div>
+                  <h3 className="serif text-xl font-bold">Mostra protegida per privacitat (k-anonimat)</h3>
+                  <p className="text-sm mt-1 leading-relaxed">
+                    {stats.suppressionReason||`Calen almenys ${stats.threshold} respostes per mostrar resultats agregats.`} El CSV també està protegit.
+                  </p>
+                  <p className="text-xs font-bold mt-2">Prova d’ampliar el rang de dates o seleccionar tots els departaments.</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Targetes KPI resum */}
+                <section aria-label="Mètriques clau del formulari" className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+                  {/* 1. Participació */}
+                  <article className="card p-4 flex flex-col justify-between gap-2">
+                    <div className="flex justify-between items-start">
+                      <span className="eyebrow text-ink-muted">Participació</span>
+                      <span className="w-8 h-8 rounded-full bg-cream grid place-items-center text-ink-soft">
+                        <Users size={16} />
+                      </span>
+                    </div>
+                    <div>
+                      <div className="serif text-3xl font-bold text-ink tabular-nums">
+                        {stats.participationRate===null?'Sense dades':`${stats.participationRate}%`}
+                      </div>
+                      <div className="text-xs text-ink-muted mt-0.5">
+                        {stats.totalResponses} respostes de {stats.target} objectiu
+                      </div>
+                    </div>
+                    <Meter value={stats.participationRate??0} thin />
+                  </article>
+
+                  {/* 2. Puntuació mitjana */}
+                  <article className="card p-4 flex flex-col justify-between gap-2">
+                    <div className="flex justify-between items-start">
+                      <span className="eyebrow text-ink-muted">Puntuació Mitjana</span>
+                      <span className="w-8 h-8 rounded-full bg-ok-bg text-ok-ink grid place-items-center">
+                        <TrendingUp size={16} />
+                      </span>
+                    </div>
+                    <div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="serif text-3xl font-bold text-ink tabular-nums">{stats.avgScore??'Sense dades'}</span>
+                        <span className="text-xs text-ink-muted font-bold">/10</span>
+                      </div>
+                      <div className="text-xs text-ink-muted mt-0.5 flex items-center gap-1">
+                        <span className="text-ok font-bold">▲ Real</span> segons respostes BD
+                      </div>
+                    </div>
+                    <div className="flex gap-1.5 text-[11px] text-ink-muted font-semibold">
+                      <span className="chip bg-ok-bg text-ok-ink">Escales normalitzades</span>
+                    </div>
+                  </article>
+
+                  <article className="card p-4 flex flex-col justify-between gap-2"><div className="flex justify-between items-start"><span className="eyebrow text-ink-muted">Preguntes</span><span className="w-8 h-8 rounded-full bg-cream grid place-items-center"><MessageSquare size={16}/></span></div><strong className="serif text-3xl font-bold">{stats.questions.length}</strong><p className="text-xs text-ink-muted">Resultats de les preguntes de la campanya</p><span className="chip bg-cream self-start">Llindar: {stats.threshold} respostes</span></article>
+                  {/* 4. Temps mitjà i anonimat */}
+                  <article className="card p-4 flex flex-col justify-between gap-2">
+                    <div className="flex justify-between items-start">
+                      <span className="eyebrow text-ink-muted">Temps de resposta</span>
+                      <span className="w-8 h-8 rounded-full bg-cream grid place-items-center text-ink-soft">
+                        <Clock size={16} />
+                      </span>
+                    </div>
+                    <div>
+                      <div className="serif text-3xl font-bold text-ink tabular-nums">
+                        {stats.avgDurationSecs===null?'Sense dades':`${stats.avgDurationSecs} s`}
+                      </div>
+                      <div className="text-xs text-ink-muted mt-0.5">
+                        Durada mitjana registrada a les respostes
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[11.5px] text-ok-ink bg-ok-bg px-2 py-0.5 rounded-[8px] font-bold">
+                      <ShieldCheck size={14} /> K-anonimat actiu
+                    </div>
+                  </article>
+                </section>
+
+                {/* Panell de Gràfics Principals */}
+                <section aria-label="Tipus de gràfics analítics" className="grid gap-5 lg:grid-cols-2">
+                  {/* Gràfic 1: Evolució temporal (Línia) */}
+                  <div className="card p-5 flex flex-col justify-between gap-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h2 className="serif text-xl font-bold text-ink">Evolució temporal de respostes</h2>
+                        <p className="text-xs text-ink-muted mt-0.5">Volum de respostes per període amb mostra suficient</p>
+                      </div>
+                      <span className="chip bg-cream text-ink-muted text-[11px]">Evolució</span>
+                    </div>
+                    <GroupedBarChart categories={stats.timeline.map(r=>r.label)} series={[{label:"Respostes",color:"#C8102E",values:stats.timeline.map(r=>r.count)}]} maxScore={Math.max(...stats.timeline.map(r=>r.count),1)} height={170}/>
+                  </div>
+
+                  {/* Gràfic 2: Canals de difusió (Donut circular) */}
+                  <div className="card p-5 flex flex-col justify-between gap-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h2 className="serif text-xl font-bold text-ink">Distribució per Canal de difusió</h2>
+                        <p className="text-xs text-ink-muted mt-0.5">Origen de les respostes registrades</p>
+                      </div>
+                      <span className="chip bg-cream text-ink-muted text-[11px]">Gràfic circular</span>
+                    </div>
+                    <div className="py-1 flex justify-center">
+                      <DonutChart
+                        data={stats.channelBreakdown.map((c, i) => ({
+                          key: c.code,
+                          label: c.label,
+                          value: c.count,
+                          color: ['#C8102E', '#2D5C9E', '#2F7A4E', '#B08A45', '#7A0C1E'][i % 5],
+                        }))}
+                        centerLabel="Total"
+                        centerValue={stats.totalResponses}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Gràfic 3: Comparativa per Torn de feina (Columnes agrupades) */}
+                  <div className="card p-5 flex flex-col justify-between gap-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h2 className="serif text-xl font-bold text-ink">Comparativa de participació per Torn</h2>
+                        <p className="text-xs text-ink-muted mt-0.5">Respostes agregades per torn laboral</p>
+                      </div>
+                      <span className="chip bg-cream text-ink-muted text-[11px]">Columnes</span>
+                    </div>
+                    <GroupedBarChart
+                      categories={stats.shiftBreakdown.map(s => s.label)}
+                      series={[
+                        {
+                          label: 'Respostes aportades',
+                          color: '#C8102E',
+                          values: stats.shiftBreakdown.map(s => s.count),
+                        },
+                      ]}
+                      maxScore={Math.max(...stats.shiftBreakdown.map(s => s.count), 10)}
+                      height={160}
+                    />
+                  </div>
+
+                  {/* Gràfic 4: Radar de Dimensions clau (Spider / Radar) */}
+                  <div className="card p-5 flex flex-col justify-between gap-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h2 className="serif text-xl font-bold text-ink">Dimensions Clau</h2>
+                        <p className="text-xs text-ink-muted mt-0.5">Puntuació normalitzada de les dimensions mesurades</p>
+                      </div>
+                      <span className="chip bg-cream text-ink-muted text-[11px]">Dimensions</span>
+                    </div>
+                    <div className="py-1 flex justify-center">
+                      <HorizontalBarChart items={stats.dimensions.map(d=>({key:d.label,label:d.label,value:d.score,sublabel:`${d.count} respostes`}))} maxVal={10} showPct={false}/>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Desglossament per Preguntes individuals */}
+                <section aria-label="Desglossament de preguntes" className="flex flex-col gap-4">
+                  <div className="flex justify-between items-baseline flex-wrap gap-2">
+                    <div>
+                      <h2 className="serif text-2xl font-bold text-ink">Desglossament per Pregunta</h2>
+                      <p className="text-xs text-ink-muted mt-0.5">
+                        Dades en temps real de les preguntes oficials de la campanya.
+                      </p>
+                    </div>
+                    <span className="chip bg-cream text-ink-muted font-bold text-xs">
+                      {stats.questions.length} preguntes avaluades
+                    </span>
+                  </div>
+
+                  <div className="grid gap-4">
+                    {stats.questions.map((q,idx)=><QuestionCard key={q.id} index={idx} totalResponses={stats.totalResponses} protectedResult={q.isSuppressed} metric={{question:{id:q.id,text:q.text,type:q.type==='open_text'?'text':q.type==='scale'?'scale':q.type==='boolean'?'yesno':'list',dim:q.dimension||`Versió ${q.version}`,secs:0},totalAnswers:q.totalAnswers,avgScore:q.avgScore??undefined,optionsBreakdown:q.distribution,shiftComparison:q.shifts.map(r=>({shift:r.code as ShiftType,label:r.label,avgScoreOrTop:r.score??'Sense dades'}))}}/>)}
+                  </div>
+                </section>
+
+                <section className="card p-5 flex flex-col gap-2 text-xs text-ink-muted" aria-label="Font i límits">{stats.notes.map(note=><p key={note}>{note}</p>)}</section>
+              </>
+            )}
+          </>
+        )}
+      </div>
     </div>
-    <p className="text-xs text-ink-muted">{stats?.totalResponses??0} respostes amb aquests filtres · dades actualitzades {new Date(data.generatedAt).toLocaleTimeString('ca-ES')} · actualització automàtica cada 30 segons.</p>
-   </section>
-   {!data.form&&<p className="card p-6">Encara no hi ha enquestes a la BD.</p>}
-   {data.form&&<RepresentationPanel survey={data.form.id} site={filters.site}/>}
-   {stats&&<>
-    <section className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4" aria-label="Indicadors">
-     {[['Respostes',String(stats.totalResponses)],['Públic objectiu',String(stats.target)],['Participació',value(stats.participationRate,'%')],['Llindar de privacitat',String(stats.threshold)]].map(([label,n])=><article key={label} className="card p-4"><p className="eyebrow">{label}</p><strong className="block text-3xl mt-2">{n}</strong></article>)}
-    </section>
-    {stats.isSuppressed?<section className="card p-5 flex gap-3 bg-warn-bg text-warn-ink" role="status"><AlertTriangle className="shrink-0"/><div><h2 className="font-bold">Mostra protegida per privacitat</h2><p className="text-sm mt-1">{stats.suppressionReason||`Calen almenys ${stats.threshold} respostes per mostrar resultats.`} Amplia els filtres. El CSV també està bloquejat.</p></div></section>:<>
-     <section className="grid sm:grid-cols-2 gap-4"><article className="card p-5"><p className="eyebrow">Mitjana d’escales normalitzades</p><strong className="block text-3xl mt-2">{value(stats.avgScore,' /10')}</strong><p className="text-xs text-ink-muted mt-2">Es normalitza cada escala al seu rang i es calcula la mitjana per resposta. Sense comparatives ni NPS inventats.</p></article><article className="card p-5"><p className="eyebrow">Temps mitjà registrat</p><strong className="block text-3xl mt-2">{value(stats.avgDurationSecs,' s')}</strong><p className="text-xs text-ink-muted mt-2">Només es mostra quan hi ha prou durades informades.</p></article></section>
-     <section className="grid lg:grid-cols-2 gap-5"><Breakdown title="Participació per canal" rows={stats.channelBreakdown}/><Breakdown title="Participació per torn" rows={stats.shiftBreakdown}/><Breakdown title="Participació per departament" rows={stats.departmentBreakdown}/>
-      <article className="card p-5 flex flex-col gap-4"><h2 className="serif text-xl">Evolució temporal</h2><p className="text-xs text-ink-muted">Per dia, setmana o mes, segons la mostra disponible.</p>{stats.timeline.length?<GroupedBarChart categories={stats.timeline.map(r=>r.label)} series={[{label:'Respostes',color:COLORS[0],values:stats.timeline.map(r=>r.count)}]} maxScore={Math.max(...stats.timeline.map(r=>r.count),1)}/>:<p className="text-sm text-ink-muted">{hidden}</p>}</article>
-     </section>
-     <section className="card p-5 flex flex-col gap-4"><h2 className="serif text-xl">Dimensions mesurades</h2>{stats.dimensions.length?<HorizontalBarChart items={stats.dimensions.map(d=>({key:d.label,label:d.label,value:d.score,sublabel:`${d.count} respostes · ${d.score} /10`}))} maxVal={10} showPct={false}/>:<p className="text-sm text-ink-muted">No hi ha dimensions amb escales i mostra suficient. No s’afegeixen valors de referència ficticis.</p>}</section>
-     <section className="flex flex-col gap-4" aria-label="Resultats per pregunta"><h2 className="serif text-2xl">Desglossament per pregunta</h2>{stats.questions.map(q=><QuestionResult key={q.id} q={q} threshold={stats.threshold}/>)}</section>
-    </>}
-    <section className="card p-4 text-xs text-ink-muted flex flex-col gap-2" aria-label="Font i límits de l’anàlisi">{stats.notes.map(note=><p key={note}>{note}</p>)}</section>
-   </>}
-  </>}
- </div>
+  )
 }

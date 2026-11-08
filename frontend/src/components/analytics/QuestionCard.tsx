@@ -10,38 +10,52 @@ export function QuestionCard({
   metric,
   index,
   totalResponses,
+  protectedResult = false,
 }: {
   metric: QuestionMetric
   index: number
+  protectedResult?: boolean
   totalResponses: number
 }) {
-  const { question, totalAnswers, avgScore, optionsBreakdown, shiftComparison } = metric
+  const { question, totalAnswers, avgScore, optionsBreakdown, scaleDistribution, shiftComparison } = metric
   const [viewMode, setViewMode] = useState<'bar' | 'donut' | 'shift'>('bar')
+  const [scaleGranularity, setScaleGranularity] = useState<'points' | 'bins'>('points')
 
   const qTypeLabels: Record<string, string> = {
-    scale: 'Escala (0–10)',
+    scale: 'Escala normalitzada',
     faces: 'Emocional',
     list: 'Selecció d’opcions',
     yesno: 'Binària (Sí / No)',
     text: 'Resposta oberta',
   }
 
+  const isScale = question.type === 'scale'
+  const hasScaleDist = isScale && !!scaleDistribution && scaleDistribution.length > 0
+
   // Preparació de dades per al Donut
   const donutData = optionsBreakdown.map((opt, i) => ({
     key: opt.label,
     label: opt.label,
     value: opt.count,
-    color: PALETTE[i % PALETTE.length],
+    color: opt.color || PALETTE[i % PALETTE.length],
   }))
 
-  // Preparació de dades per a Barres
-  const barData = optionsBreakdown.map((opt, i) => ({
-    key: opt.label,
-    label: opt.label,
-    value: opt.count,
-    pct: opt.pct,
-    color: PALETTE[i % PALETTE.length],
-  }))
+  // Preparació de dades per a Barres (suporta punts individuals 0-10 o trams NPS)
+  const activeBarData = hasScaleDist && scaleGranularity === 'points'
+    ? scaleDistribution!.map(pt => ({
+        key: String(pt.score),
+        label: pt.label,
+        value: pt.count,
+        pct: pt.pct,
+        color: pt.color,
+      }))
+    : optionsBreakdown.map((opt, i) => ({
+        key: opt.label,
+        label: opt.label,
+        value: opt.count,
+        pct: opt.pct,
+        color: opt.color || PALETTE[i % PALETTE.length],
+      }))
 
   const participationPct = totalResponses > 0 ? Math.round((totalAnswers / totalResponses) * 100) : 0
 
@@ -128,14 +142,14 @@ export function QuestionCard({
 
       {/* Cos amb el gràfic seleccionat */}
       <div className="pt-1">
-        {question.type === 'text' ? (
+        {protectedResult ? <p className="text-sm text-ink-muted">Resultat protegit: mostra insuficient.</p> : question.type === 'text' ? (
           <div className="flex flex-col gap-3 text-xs text-ink-soft bg-cream/60 rounded-[14px] p-4">
             <div className="flex items-center gap-2 text-ink-muted">
               <MessageSquare size={16} />
               <span>{totalAnswers} persones han aportat comentaris de millora en aquesta pregunta.</span>
             </div>
             <div className="text-[12px] text-ink-muted italic">
-              Els comentaris individuals s’anonimitzen per complet i s’agrupen a la secció inferior d’insights de text.
+              Només es mostra el recompte agregat. No s’exposen comentaris individuals.
             </div>
           </div>
         ) : viewMode === 'donut' ? (
@@ -158,16 +172,45 @@ export function QuestionCard({
             </div>
           </div>
         ) : (
-          <HorizontalBarChart items={barData} maxVal={totalAnswers} />
+          <div className="flex flex-col gap-2.5">
+            {hasScaleDist && (
+              <div className="flex items-center justify-between pb-2 mb-1 border-b border-line/60">
+                <span className="text-xs font-semibold text-ink-muted">Format del gràfic:</span>
+                <div className="inline-flex rounded-[8px] bg-cream p-0.5 border border-line text-[11px] font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setScaleGranularity('points')}
+                    className={cn(
+                      'px-2.5 py-0.5 rounded-[6px] transition',
+                      scaleGranularity === 'points' ? 'bg-white text-ink shadow-sm font-bold' : 'text-ink-muted hover:text-ink'
+                    )}
+                  >
+                    Punts (0–10)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setScaleGranularity('bins')}
+                    className={cn(
+                      'px-2.5 py-0.5 rounded-[6px] transition',
+                      scaleGranularity === 'bins' ? 'bg-white text-ink shadow-sm font-bold' : 'text-ink-muted hover:text-ink'
+                    )}
+                  >
+                    Trams (NPS)
+                  </button>
+                </div>
+              </div>
+            )}
+            <HorizontalBarChart items={activeBarData} maxVal={totalAnswers} />
+          </div>
         )}
       </div>
 
       <div className="flex items-center justify-between text-[11px] text-ink-muted pt-2 border-t border-line/60">
         <span className="flex items-center gap-1">
           <ShieldCheck size={13} className="text-ok" />
-          K-anonimat garantit (respostes agregades, identificadors eliminats)
+          Resultats agregats amb llindar de privacitat
         </span>
-        <span>Temps estimat: {question.secs}s</span>
+
       </div>
     </article>
   )

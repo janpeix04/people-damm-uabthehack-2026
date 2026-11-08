@@ -62,8 +62,8 @@ export const ANALYTICS_FORMS: AnalyticsFormConfig[] = [
     channels: ['qr', 'app', 'teams', 'placa', 'world'],
     opensAt: '2026-11-01',
     closesAt: '2026-11-20',
-    responses: 349,
-    target: 727,
+    responses: 1420,
+    target: 2500,
     createdAt: '2026-10-28',
     questions: [
       Q('p1', 'Benestar', 'faces', 10, 'Com et sents aquesta setmana a la feina?', {
@@ -95,8 +95,8 @@ export const ANALYTICS_FORMS: AnalyticsFormConfig[] = [
     channels: ['qr', 'app', 'teams', 'placa'],
     opensAt: '2026-11-04',
     closesAt: '2026-11-25',
-    responses: 198,
-    target: 347,
+    responses: 780,
+    target: 1350,
     createdAt: '2026-11-02',
     questions: [
       Q('t1', 'Organització', 'faces', 10, 'Com valores l’adaptació al nou sistema de torns?', {
@@ -129,8 +129,8 @@ export const ANALYTICS_FORMS: AnalyticsFormConfig[] = [
     channels: ['qr', 'app', 'teams'],
     opensAt: '2026-10-20',
     closesAt: '2026-11-15',
-    responses: 245,
-    target: 332,
+    responses: 980,
+    target: 1600,
     createdAt: '2026-10-18',
     questions: [
       Q('s1', 'Seguretat', 'scale', 10, 'Del 0 al 10, com de segura consideres la teva línia o estació de feina?', {
@@ -159,8 +159,8 @@ export const ANALYTICS_FORMS: AnalyticsFormConfig[] = [
     channels: ['app', 'teams', 'email', 'qr'],
     opensAt: '2026-10-15',
     closesAt: '2026-11-30',
-    responses: 112,
-    target: 140,
+    responses: 390,
+    target: 550,
     createdAt: '2026-10-12',
     questions: [
       Q('o1', 'Acollida', 'faces', 10, 'Com valores la teva experiència d’acollida durant el primer mes?', {
@@ -189,8 +189,8 @@ export const ANALYTICS_FORMS: AnalyticsFormConfig[] = [
     channels: ['teams', 'email', 'app'],
     opensAt: '2026-10-25',
     closesAt: '2026-11-18',
-    responses: 164,
-    target: 215,
+    responses: 620,
+    target: 850,
     createdAt: '2026-10-22',
     questions: [
       Q('c1', 'Flexibilitat', 'scale', 10, 'Del 0 al 10, com valores la flexibilitat d’horaris i teletreball?', {
@@ -208,6 +208,70 @@ export const ANALYTICS_FORMS: AnalyticsFormConfig[] = [
         max: 10,
       }),
       Q('c5', 'Propostes', 'text', 15, 'Quina millora operativa o de benestar proposaries per a oficines?'),
+    ],
+  },
+  {
+    id: 'clima-tardor-2026',
+    title: 'Avaluació de Clima i Benestar · Tardor 2026',
+    category: 'Clima',
+    goal: 'Diagnòstic integral de clima laboral, compromís i satisfacció a tots els centres.',
+    description: 'Enquesta general de clima de tardor a tot el grup per analitzar satisfacció i ambient.',
+    status: 'closed',
+    version: 'v2.0',
+    zones: ['envasat', 'logistica', 'coccio', 'malta', 'fermentacio', 'oficines', 'comercial', 'manteniment'],
+    channels: ['app', 'teams', 'qr', 'email'],
+    opensAt: '2026-09-15',
+    closesAt: '2026-10-15',
+    responses: 1650,
+    target: 2500,
+    createdAt: '2026-09-10',
+    questions: [
+      Q('cl1', 'Satisfacció', 'scale', 10, 'Del 0 al 10, com valores el teu nivell de satisfacció general a Damm?', {
+        min: 0,
+        max: 10,
+      }),
+      Q('cl2', 'Reconeixement', 'faces', 10, 'Sents que la teva feina i el teu esforç són reconeguts pel teu responsable directe?', {
+        options: ['Molt reconegut', 'Reconegut', 'Poc reconegut', 'Gens reconegut'],
+      }),
+      Q('cl3', 'Desenvolupament', 'list', 10, 'Tens accés a oportunitats d’aprenentatge i creixement professional?', {
+        options: ['Sempre', 'Sovint', 'Poques vegades', 'Mai'],
+      }),
+      Q('cl4', 'Ambient', 'scale', 10, 'Del 0 al 10, com de còmode et sents amb l’ambient de treball i col·laboració?', {
+        min: 0,
+        max: 10,
+      }),
+      Q('cl5', 'Recomanació', 'yesno', 8, 'Recomanaries Damm com a excel·lent lloc de treball a familiars i amics?'),
+      Q('cl6', 'Propostes', 'text', 15, 'Quina proposta destacaries per millorar el clima laboral a la teva unitat?'),
+    ],
+  },
+  {
+    id: 'sostenibilitat-esg',
+    title: 'Sostenibilitat, Eficiència Energètica i Residus',
+    category: 'Operacions',
+    goal: 'Mesurar la percepció i participació en els programes de residu zero i transició ecològica.',
+    description: 'Enquesta transversal sobre hàbits de reciclatge, estalvi d\'aigua i reducció d\'emissions.',
+    status: 'closed',
+    version: 'v1.0',
+    zones: ['envasat', 'logistica', 'coccio', 'oficines', 'comercial'],
+    channels: ['app', 'teams', 'email', 'qr'],
+    opensAt: '2026-09-01',
+    closesAt: '2026-10-01',
+    responses: 1280,
+    target: 2500,
+    createdAt: '2026-08-28',
+    questions: [
+      Q('so1', 'Sensibilització', 'scale', 10, 'Del 0 al 10, com valores el compromís mediambiental i la sostenibilitat a Damm?', {
+        min: 0,
+        max: 10,
+      }),
+      Q('so2', 'Mitjans', 'list', 10, 'A la teva feina diària disposes de mitjans suficients per separar residus?', {
+        options: ['Sempre', 'Majoritàriament', 'Freqüentment en falten', 'No'],
+      }),
+      Q('so3', 'Eficiència', 'faces', 10, 'Com valores les iniciatives d’estalvi d’aigua i eficiència energètica?', {
+        options: ['Molt bones', 'Correctes', 'Millorables', 'Insuficients'],
+      }),
+      Q('so4', 'Circularitat', 'yesno', 8, 'Coneixes o participes en el programa de residu zero i envasos circulars?'),
+      Q('so5', 'Propostes', 'text', 15, 'Quina acció pràctica d’estalvi de recursos suggeriries a la teva planta o seu?'),
     ],
   },
 ]
@@ -267,26 +331,40 @@ const COMMENTS_POOL: Record<string, { text: string; sentiment: SentimentType; ca
     { text: 'Molt bones eines i suport tècnic per part de l’equip de sistemes.', sentiment: 'positiu', cat: 'IT' },
     { text: 'L’ambient a l’edifici històric és genial per col·laborar.', sentiment: 'positiu', cat: 'Cultura' },
   ],
-}
+  'clima-tardor-2026': [
+    { text: 'Damm ofereix una estabilitat laboral excel·lent; cal mantenir el suport de coordinació.', sentiment: 'positiu', cat: 'Cultura' },
+    { text: 'Molt bona iniciativa les trobades trimestrals per conèixer els resultats del grup.', sentiment: 'positiu', cat: 'Comunicació' },
+    { text: 'Cal agilitzar els processos de compra de recanvis industrials per evitar aturades de línia.', sentiment: 'negatiu', cat: 'Instal·lacions' },
+    { text: 'Agrairia més opcions de desenvolupament tècnic intern i formació continuada.', sentiment: 'neutre', cat: 'Formació' },
+    { text: 'L’ambient entre companys i el treball en equip és el millor que té Damm.', sentiment: 'positiu', cat: 'Ambient' },
+  ],
+  'sostenibilitat-esg': [
+    { text: 'L’eliminació de plàstics d’un sol ús ha estat un èxit rotund a tot el centre.', sentiment: 'positiu', cat: 'Sostenibilitat' },
+    { text: 'Caldria instal·lar més punts de recàrrega de vehicles elèctrics al pàrquing.', sentiment: 'neutre', cat: 'Instal·lacions' },
+    { text: 'L’aprofitament del bagàs i el llevat per a economia circular ens enorgulleix molt.', sentiment: 'positiu', cat: 'Sostenibilitat' },
+    { text: 'Més contenidors de reciclatge específic de cartró i taps a peu de màquina.', sentiment: 'negatiu', cat: 'Reciclatge' },
+    { text: 'Molt bones les xerrades de sensibilització ambiental a l’arrencada de torn.', sentiment: 'positiu', cat: 'Formació' },
+  ],
+};
 
 // Plantilla sintètica per centre i departament (la mateixa que synthetic_people a la BD), per repartir
 // les respostes entre centres de manera realista i calcular l'objectiu de cada centre.
 type Dept = 'fabrica' | 'logistica' | 'comercial' | 'oficina'
 const SITE_HEADCOUNT: Record<string, Partial<Record<Dept, number>>> = {
-  cc_damm_el_prat: { fabrica: 68, logistica: 36, comercial: 13, oficina: 10 },
-  font_salem_el_puig: { fabrica: 26, logistica: 35, comercial: 12 },
-  logistic_bcn_zal: { logistica: 72 },
-  seu_central_bcn: { oficina: 58, comercial: 11 },
-  estrella_levante_murcia: { fabrica: 26, comercial: 12, oficina: 13 },
-  cervezas_victoria_malaga: { fabrica: 26, comercial: 12, oficina: 13 },
-  font_salem_santarem: { fabrica: 24, comercial: 12, oficina: 13 },
-  cacaolat_santa_coloma: { fabrica: 24, comercial: 12, oficina: 13 },
-  la_moravia_lleida: { fabrica: 43 },
-  logistic_murcia: { logistica: 37 },
-  cafes_garriga_barbera: { fabrica: 24, comercial: 11 },
-  font_salem_salem: { fabrica: 25 },
-  veri_osca: { fabrica: 24 },
-  fuente_liviana_conca: { fabrica: 22 },
+  cc_damm_el_prat: { fabrica: 230, logistica: 70, comercial: 40, oficina: 41 },
+  font_salem_el_puig: { fabrica: 115, logistica: 60, comercial: 25 },
+  logistic_bcn_zal: { logistica: 160, fabrica: 25, oficina: 14 },
+  seu_central_bcn: { oficina: 110, comercial: 55, fabrica: 15, logistica: 16 },
+  estrella_levante_murcia: { fabrica: 105, comercial: 38, oficina: 20, logistica: 15 },
+  cervezas_victoria_malaga: { fabrica: 105, comercial: 38, oficina: 20, logistica: 15 },
+  font_salem_santarem: { fabrica: 110, comercial: 36, oficina: 15, logistica: 15 },
+  cacaolat_santa_coloma: { fabrica: 110, comercial: 35, oficina: 15, logistica: 15 },
+  la_moravia_lleida: { fabrica: 140, oficina: 15, logistica: 14 },
+  logistic_murcia: { logistica: 135, oficina: 14, comercial: 14 },
+  cafes_garriga_barbera: { fabrica: 115, comercial: 32, oficina: 14 },
+  font_salem_salem: { fabrica: 125, oficina: 14, logistica: 13 },
+  fuente_liviana_conca: { fabrica: 120, oficina: 14, logistica: 14 },
+  veri_osca: { fabrica: 115, oficina: 14, logistica: 14 },
 }
 // Clima de cada centre respecte a la mitjana (punts sobre 10): els centres logístics van més carregats,
 // la seu central i les plantes petites, millor.
@@ -456,11 +534,20 @@ export interface AggregateStats {
   isSuppressed: boolean
 }
 
+export interface ScalePointMetric {
+  score: number
+  label: string
+  count: number
+  pct: number
+  color?: string
+}
+
 export interface QuestionMetric {
   question: Question
   totalAnswers: number
   avgScore?: number
-  optionsBreakdown: { label: string; count: number; pct: number }[]
+  optionsBreakdown: { label: string; count: number; pct: number; color?: string }[]
+  scaleDistribution?: ScalePointMetric[]
   shiftComparison?: { shift: ShiftType; label: string; avgScoreOrTop: string | number }[]
   zoneComparison?: { zone: ZoneKey; label: string; count: number; avgScore?: number }[]
 }
@@ -706,17 +793,32 @@ export function filterAndAggregateForm(
 
       // Distribució per trams (0-4 molt baix, 5-6 mitjà, 7-8 bo, 9-10 excel·lent)
       const bins = [
-        { label: 'Excel·lent (9-10)', count: numAnswers.filter(v => v >= 9).length },
-        { label: 'Notable (7-8)', count: numAnswers.filter(v => v >= 7 && v <= 8).length },
-        { label: 'Moderat (5-6)', count: numAnswers.filter(v => v >= 5 && v <= 6).length },
-        { label: 'Crític (0-4)', count: numAnswers.filter(v => v <= 4).length },
+        { label: 'Excel·lent (9–10)', count: numAnswers.filter(v => v >= 9).length, color: '#2F7A4E' },
+        { label: 'Notable (7–8)', count: numAnswers.filter(v => v >= 7 && v <= 8).length, color: '#2D5C9E' },
+        { label: 'Moderat (5–6)', count: numAnswers.filter(v => v >= 5 && v <= 6).length, color: '#E3A21A' },
+        { label: 'Crític (0–4)', count: numAnswers.filter(v => v <= 4).length, color: '#C8102E' },
       ]
 
       const optionsBreakdown = bins.map(b => ({
         label: b.label,
         count: b.count,
         pct: totalAnswers > 0 ? Math.round((b.count / totalAnswers) * 100) : 0,
+        color: b.color,
       }))
+
+      const maxVal = typeof q.max === 'number' ? q.max : 10
+      const scaleDistribution: ScalePointMetric[] = []
+      for (let pt = maxVal; pt >= 0; pt--) {
+        const count = numAnswers.filter(n => Math.round(n) === pt).length
+        const color = pt >= 9 ? '#2F7A4E' : pt >= 7 ? '#2D5C9E' : pt >= 5 ? '#E3A21A' : '#C8102E'
+        scaleDistribution.push({
+          score: pt,
+          label: `${pt} / ${maxVal}`,
+          count,
+          pct: totalAnswers > 0 ? Math.round((count / totalAnswers) * 100) : 0,
+          color,
+        })
+      }
 
       // Comparativa per torns
       const shiftComparison = (['mati', 'tarda', 'nit', 'flexible'] as ShiftType[])
@@ -738,6 +840,7 @@ export function filterAndAggregateForm(
         totalAnswers,
         avgScore: qAvg,
         optionsBreakdown,
+        scaleDistribution,
         shiftComparison,
       }
     } else if (q.type === 'faces' || q.type === 'list') {
@@ -827,47 +930,56 @@ export function filterAndAggregateForm(
 // EXPORTADOR CSV
 // ---------------------------------------------------------------------------
 
-export function exportResponsesCsv(form: AnalyticsFormConfig, _stats?: AggregateStats, site?: string): void {
-  const headers = ['ID', 'Data', 'Centre', 'Zona', 'Torn', 'Canal', 'Sentiment', 'Durada(s)']
-  form.questions.forEach((q, idx) => {
-    headers.push(`P${idx + 1}: ${q.text.replace(/,/g, ' ')}`)
-  })
+export function exportResponsesCsv(form: AnalyticsFormConfig, stats?: AggregateStats, site?: string): void {
+  const rows: string[] = []
+  rows.push(['Mètrica / Secció', 'Valor', 'Detall addicional'].map(x => '"' + x + '"').join(','))
+  rows.push(['Enquesta', '"' + form.title.replace(/"/g, '""') + '"', '"' + form.id + '"'].join(','))
+  rows.push(['Centre seleccionat', '"' + (site || 'Tot el grup Damm') + '"', '""'].join(','))
+  rows.push(['Total respostes reals (BD)', stats ? String(stats.totalResponses) : String(form.responses), '""'].join(','))
+  rows.push(['Població objectiu', stats ? String(stats.target) : String(form.target), '""'].join(','))
+  rows.push(['Taxa de participació', stats ? stats.participationRate + '%' : '""', '""'].join(','))
+  rows.push(['Puntuació mitjana', stats ? stats.avgScore + '/10' : '""', '""'].join(','))
+  rows.push(['NPS Score', stats ? '+' + stats.npsScore : '""', '""'].join(','))
+  rows.push(['Temps mitjà de resposta', stats ? stats.avgDurationSecs + ' s' : '""', '""'].join(','))
+  rows.push(['', '', ''].join(','))
 
-  // CSV content
-  const rows: string[] = [headers.join(',')]
-
-  const responses = ALL_RESPONSES.filter(r => r.formId === form.id && (!site || r.site === site))
-  responses.forEach(r => {
-    const row = [
-      r.id,
-      r.submittedAt.slice(0, 10),
-      r.site,
-      r.zone,
-      r.shift,
-      r.channel,
-      r.sentiment,
-      r.durationSeconds,
-    ]
-
-    form.questions.forEach(q => {
-      const val = r.answers[q.id]
-      if (val === undefined || val === null) {
-        row.push('')
-      } else if (typeof val === 'boolean') {
-        row.push(val ? 'Sí' : 'No')
-      } else {
-        row.push(`"${String(val).replace(/"/g, '""')}"`)
-      }
+  if (stats && stats.channelBreakdown.length > 0) {
+    rows.push(['--- CANALS DE DIFUSIÓ ---', '', ''].join(','))
+    stats.channelBreakdown.forEach(c => {
+      rows.push(['"' + c.label + '"', c.count + ' respostes', c.pct + '%'].join(','))
     })
+    rows.push(['', '', ''].join(','))
+  }
 
-    rows.push(row.join(','))
-  })
+  if (stats && stats.shiftBreakdown.length > 0) {
+    rows.push(['--- PARTICIPACIÓ PER TORN ---', '', ''].join(','))
+    stats.shiftBreakdown.forEach(s => {
+      rows.push(['"' + s.label + '"', s.count + ' respostes', s.pct + '%'].join(','))
+    })
+    rows.push(['', '', ''].join(','))
+  }
+
+  if (stats && stats.zoneBreakdown.length > 0) {
+    rows.push(['--- DESGLOSSAMENT PER DEPARTAMENT ---', '', ''].join(','))
+    stats.zoneBreakdown.forEach(z => {
+      rows.push(['"' + z.name + '"', z.count + ' respostes', 'Nota: ' + z.avgScore + '/10'].join(','))
+    })
+    rows.push(['', '', ''].join(','))
+  }
+
+  if (stats && stats.comments.length > 0) {
+    rows.push(['--- PROPOSTES I COMENTARIS ANONIMITZATS ---', '', ''].join(','))
+    rows.push(['Comentari', 'Departament / Torn', 'Sentiment'].join(','))
+    stats.comments.forEach(c => {
+      rows.push(['"' + c.text.replace(/"/g, '""') + '"', '"' + c.zone + ' · ' + c.shift + '"', '"' + c.sentiment + '"'].join(','))
+    })
+  }
 
   const blob = new Blob(['\uFEFF' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `damm_analitica_${form.id}_${new Date().toISOString().slice(0, 10)}.csv`
+  a.download = 'damm_analitica_real_' + form.id + '_' + new Date().toISOString().slice(0, 10) + '.csv'
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
